@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "${workspaceRoot}/env/bin/python",
+    "python.unitTest.unittestArgs": [
+        "-v",
+        "-s",
+        "./src",
+        "-p",
+        "test*.py"
+    ],
+    "python.unitTest.unittestEnabled": true
+}

@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/src/manager.py",
+            "args": [
+                "-d", "${workspaceRoot}/test_output",
+                "-p", "../peersim-generic-DHT"
+            ],
+            "cwd": "${workspaceRoot}/src",
+            "env": {},
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        }
+    ]
+}

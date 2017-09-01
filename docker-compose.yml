@@ -1,0 +1,6 @@
+version: '2.0'
+
+services:
+  analysis:
+    image: peersim-generic-dht-analysis
+    build: .
