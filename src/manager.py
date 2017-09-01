@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Updated on August, 2017
 @author: Todd Baumeister <tbaumeist@gmail.com>
