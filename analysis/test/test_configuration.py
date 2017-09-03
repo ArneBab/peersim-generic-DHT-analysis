@@ -17,10 +17,10 @@ class TestConfiguration(unittest.TestCase):
         config.next()
         config['random_seed'] = '234524'
         self.assertTrue(config['random_seed'] == '234524')
-        content = config.generate_config()
+        content = config.generate_experiement_config()
         self.assertTrue('234524' in content)
         while(config.next()):
-            content = config.generate_config()
+            content = config.generate_experiement_config()
 
     def test_invalid_template_file_name(self):
         with self.assertRaises(IOError):

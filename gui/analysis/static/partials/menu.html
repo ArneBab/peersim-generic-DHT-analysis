@@ -1,0 +1,21 @@
+<div class="row">
+    <div class="col-sm-8">
+        <h2><span class="glyphicon glyphicon-tower"></span>DHT Anonymity Analysis</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <span ng-repeat="x in files.breadCrumbs">
+            <a href="{{x.url}}">-&gt; {{x.name}}</a>&nbsp;
+        </span>
+    </div>
+</div>
+<hr/>
+<div class="row">
+    <div class="col-sm-12">
+        <span ng-repeat="x in files.nextFilePaths">
+            &nbsp;<a href="{{x.url}}" class="btn btn-primary">{{x.name}}</a>&nbsp;
+        </span>
+    </div>
+</div>
+<hr/>

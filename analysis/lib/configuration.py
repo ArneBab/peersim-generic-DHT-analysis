@@ -9,6 +9,8 @@ import os
 from random import randint
 from string import Template
 
+ROUTING_DATA_FILE_NAME = 'routing.json'
+GRAPH_DATA_PATH = 'graphs'
 
 class Configuration(object):
     '''
@@ -24,13 +26,16 @@ class Configuration(object):
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count='1',
-        size=[10, 100, 1000],
-        repeat=[1,2,3,4,5,6,7,8,9,10],
-        look_ahead=[1, 2],
+        size=[100],
+        #size=[10, 100, 1000],
+        repeat=[1],
+        #repeat=[1,2,3,4,5,6,7,8,9,10],
+        look_ahead=[1],
+        #look_ahead=[1, 2],
         routing_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x), 'routing.json'),
+            Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x), 'graphs')
+            Configuration.file_path_for_config(x), GRAPH_DATA_PATH)
     )
 
     def __init__(self, output_directory='', template_file_name=None):
@@ -49,12 +54,18 @@ class Configuration(object):
         '''
         return Configuration.file_path_for_config(self._permutations[self._state_iterator])
 
-    def generate_config(self):
+    def generate_experiement_config(self):
         '''
         Get the current configuration as a string
         '''
         template_engine = Template(self._template_string)
         return template_engine.substitute(self._permutations[self._state_iterator])
+
+    def get_config(self):
+        '''
+        Get the dict of the current settings
+        '''
+        return self._permutations[self._state_iterator]
 
     def next(self):
         '''

@@ -2,17 +2,38 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python",
+            "name": "GUI",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/src/manager.py",
+            "program": "${workspaceRoot}/env/bin/flask",
+            "cwd": "${workspaceRoot}/gui/",
+            "env": {
+                "FLASK_APP": "${workspaceRoot}/gui/start.py",
+                "ANALYSIS_DATA_DIR": "${workspaceRoot}/test_output"
+            },
+            "args": [
+                "run",
+                "--no-debugger",
+                "--no-reload"
+            ],
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        },
+        {
+            "name": "Analysis",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/analysis/manager.py",
             "args": [
                 "-d", "${workspaceRoot}/test_output",
-                "-p", "../peersim-generic-DHT"
+                "-p", "../../peersim-generic-DHT"
             ],
-            "cwd": "${workspaceRoot}/src",
+            "cwd": "${workspaceRoot}/analysis",
             "env": {},
             "debugOptions": [
                 "RedirectOutput"
