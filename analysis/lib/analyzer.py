@@ -79,7 +79,8 @@ class Analyzer(object):
                         float(sample_total) * 100.0
 
         # convert to graph format and save to file
-        graph_datasets = []
+        graph_data = []
+        graph_series = []
         # index starts at 1 (sorry :( )
         for i in range(1, len(frequencies.items()) + 1):
             data = []
@@ -89,9 +90,9 @@ class Analyzer(object):
                     data.append(frequencies[i][j])
                 else:
                     data.append(0)
-            graph_datasets.append(
-                self._generate_graph_dataset('choice %d' % i, data))
-        return self._generate_graph_data(x_label_list[1:], graph_datasets)
+            graph_series.append('choice %d' % i)
+            graph_data.append(data)
+        return self._generate_graph_data(x_label_list[1:], graph_series, graph_data)
 
     def _load_graphs(self):
         for graph_name in self._get_files(self._graph_data_directory, '.gml'):
@@ -101,8 +102,5 @@ class Analyzer(object):
     def _get_files(self, directory, name_filter):
         return sorted([f for f in os.listdir(directory) if f.endswith(name_filter)])
 
-    def _generate_graph_data(self, x_label_list, dataset_list):
-        return {'labels': x_label_list, 'datasets': dataset_list}
-
-    def _generate_graph_dataset(self, label, data_list):
-        return {'label': label, 'data': data_list}
+    def _generate_graph_data(self, label, series_list, data_list):
+        return {'label': label, 'data': data_list, 'series': series_list}

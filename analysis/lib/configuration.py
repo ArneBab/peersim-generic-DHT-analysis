@@ -30,12 +30,12 @@ class Configuration(object):
         #size=[10, 100, 1000],
         repeat=[1],
         #repeat=[1,2,3,4,5,6,7,8,9,10],
-        look_ahead=[1],
-        #look_ahead=[1, 2],
+        look_ahead=[1, 2],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x), GRAPH_DATA_PATH)
+            Configuration.file_path_for_config(x), GRAPH_DATA_PATH),
+        path=lambda x: Configuration.file_path_for_config(x, '')
     )
 
     def __init__(self, output_directory='', template_file_name=None):
@@ -140,13 +140,15 @@ class Configuration(object):
         self._permutations[self._state_iterator][key] = value
 
     @staticmethod
-    def file_path_for_config(config):
+    def file_path_for_config(config, output_base_directory=None):
         '''
         Generate a file path for storing data related to the given configuration
         :param config: Dictionary of the configuration values
         :return: relative file path
         '''
         path = config['output_base_directory']
+        if output_base_directory is not None:
+            path = output_base_directory
         used_variables = ['look_ahead', 'size', 'repeat']
         for key in used_variables:
             path = os.path.join(path, str(key), str(config[key]))

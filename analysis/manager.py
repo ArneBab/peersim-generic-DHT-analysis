@@ -66,7 +66,10 @@ class Manager(object):
                 exp_files[CONST_CONFIG] = config_file_name
             self._experiement_configurations.append(exp_files)
 
-        logging.info('Generated %s experiment configurations' %
+        with open(os.path.join(output_directory, 'experiments.json'), 'w') as e_file:
+            e_file.write(json.dumps(self._experiement_configurations))
+
+        logging.info('Generated %s experiment configurations',
                      len(self._experiement_configurations))
 
     def run_experiments(self, simulator_path):
@@ -75,14 +78,14 @@ class Manager(object):
         '''
         experiment_count = 1
         for experiment_file in self._experiement_configurations:
-            logging.info('Running command %d of %d' % (
-                experiment_count, len(self._experiement_configurations)))
+            logging.info('Running command %d of %d',
+                         experiment_count, len(self._experiement_configurations))
             experiment_count = experiment_count + 1
 
             exp = Executioner(simulator_path)
             exit_code = exp.run(experiment_file[CONST_EXPERIMENT])
             if exit_code > 0:
-                logging.error('Returned exit code %d' % exit_code)
+                logging.error('Returned exit code %d', exit_code)
                 raise Exception('Simulator failed to run')
 
     def run_analysis(self):
@@ -91,13 +94,15 @@ class Manager(object):
         '''
         count = 1
         for experiment_file in self._experiement_configurations:
-            logging.info('Running analysis %d of %d' % (
-                count, len(self._experiement_configurations)))
+            logging.info('Running analysis %d of %d',
+                         count, len(self._experiement_configurations))
             count = count + 1
 
             analyzer = Analyzer(experiment_file[CONST_CONFIG])
-            os.makedirs(os.path.join(analyzer.base_data_directory,
-                                     CONST_METRICS_DIR))
+            if not os.path.exists(os.path.join(analyzer.base_data_directory,
+                                               CONST_METRICS_DIR)):
+                os.makedirs(os.path.join(analyzer.base_data_directory,
+                                         CONST_METRICS_DIR))
             # global stats
             with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
                                    CONST_STAT_GRAPH_FILE_NAME), 'w') as s_file:

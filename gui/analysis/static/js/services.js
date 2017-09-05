@@ -26,60 +26,18 @@ angular.module('challengerApp.services', [])
       interceptor: getErrorInterceptor(toastr, $state, $rootScope, AuthService)
     }
   })
-}).factory('WoprCaptured', function ($resource, $state, $rootScope, toastr, serverConfig, AuthService) {
-  return $resource(serverConfig.wopr_url + '/api/v1/user/captured/:uuid', { uuid: '@uuid' }, {
-    get: {
-      method: 'GET',
-      interceptor: getErrorInterceptor(toastr, $state, $rootScope, AuthService)
-    },
+}).factory('RoutingChoiceService', function ($resource) {
+  return $resource('/api/v1/experiments/:id/metrics/routing-choice', { id: '@id' })
+}).factory('ExperimentService', function ($resource, toastr) {
+  return $resource('/api/v1/experiments/:id', {id: '@id'}, {
     query: {
-      method: 'GET', isArray: true,
-      interceptor: getErrorInterceptor(toastr, $state, $rootScope, AuthService)
-    }
-  })
-}).factory('UserService', function ($resource, serverConfig, toastr) {
-  return $resource(serverConfig.wopr_url + '/api/v1/user', {}, {
-    get: {
-      method: 'GET'
+      method: 'GET', isArray: false
     }
   })
 }).factory('FileService', function ($resource, $state, $stateParams, $rootScope, toastr) {
-    return $resource('/api/v1/files', { path: '@path' }, {
-      query: {
-        method: 'GET', isArray: false,
-        interceptor: getErrorInterceptor(toastr, $state, $rootScope)
-      }
-    })
-  })
-
-function extractData(data) {
-    return angular.fromJson(data).items;
-}
-
-function getErrorInterceptor (toastr, $state, $rootScope) {
-  return {
-    // This is the responseError interceptor
-    responseError: function (response) {
-      if (response.data.message) {
-
-        var messages = []
-        if (typeof response.data.message === 'string') {
-          messages.push(response.data.message)
-        } else {
-          for (var i in response.data.message) {
-            messages.push(response.data.message[i])
-          }
-        }
-        messages.forEach(function (entry) {
-          toastr.error(entry, 'Error',
-            {
-              closeButton: true,
-              timeOut: 12000,
-              extendedTimeOut: 2000,
-              newestOnTop: true
-            })
-        })
-      }
+  return $resource('/api/v1/files', { path: '@path' }, {
+    query: {
+      method: 'GET', isArray: false
     }
-  }
-}
+  })
+})

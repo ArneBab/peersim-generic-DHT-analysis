@@ -5,6 +5,9 @@ Updated on September, 2017
 
 Main application setup
 '''
+import os
+import logging
+import json
 from flask import Flask
 from flask_restful import Api
 
@@ -20,18 +23,50 @@ def create_app(config_object=Config):
     app = Flask(__name__.split('.')[0])
     app.url_map.strict_slashes = False
     app.config.from_object(config_object)
+    logging.getLogger().setLevel(logging.INFO)
     register_resources(app)
+    load_experiment_data(app)
     return app
 
 
 def register_resources(app):
     """Register Flask blueprints."""
-    import analysis.resources.home
-    import analysis.resources.api.files
+    import analysis.resources.home as home
+    import analysis.resources.api.experiments as exp
+    import analysis.resources.api.metrics.routingChoice as routing_choice
 
     # home handler
-    app.add_url_rule('/', None, analysis.resources.home.home_handler)
+    app.add_url_rule('/', None, home.home_handler)
 
     api = Api(app)
-    api.add_resource(analysis.resources.api.files.FileList, '/api/v1/files')
-    #api.register_resource(SingleQuote, '/quote/<int:id>')
+    api.add_resource(exp.ExperimentList, '/api/v1/experiments')
+    api.add_resource(exp.Experiment, '/api/v1/experiments/<int:id>')
+    api.add_resource(routing_choice.RoutingChoice,
+                     '/api/v1/experiments/<int:id>/metrics/routing-choice')
+
+
+def load_experiment_data(app):
+    '''
+    Read the experiment config information from disk
+    '''
+    logging.info('Loading the experiment data ...')
+    experiment_config_file = os.path.join(
+        app.config['DATA_DIRECTORY'], 'experiments.json')
+    with open(experiment_config_file, 'r') as e_file:
+        experiments_config = json.loads(e_file.read())
+
+    # read in each experiment config file
+    configs = []
+    exp_id = 0
+    for exp in experiments_config:
+        with open(exp['config'], 'r') as c_file:
+            config = json.loads(c_file.read())
+            config['id'] = exp_id
+            exp_id = exp_id + 1
+            config['self'] = exp['config']
+            configs.append(config)
+    logging.info(
+        'Loading the experiment data: Loaded %d experiments', len(configs))
+
+    # add to the config so anyone can access it
+    app.config['EXPERIMENT_LIST'] = configs
