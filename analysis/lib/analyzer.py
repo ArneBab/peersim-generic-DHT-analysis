@@ -9,7 +9,7 @@ import os
 import json
 import networkx as nx
 
-from .configuration import ROUTING_DATA_FILE_NAME, GRAPH_DATA_PATH
+from .configuration import GRAPH_DATA_PATH
 from .routingMetrics import RoutingMetrics
 
 
@@ -80,16 +80,12 @@ class Analyzer(object):
             graph_data.append(data)
         return self._generate_graph_data(x_label_list[1:], graph_series, graph_data)
 
-    def run_routing_metrics(self):
+    def get_routing_metrics(self, routing_data_file_name):
         '''
         Calculate routing related metrics
         :return: RoutingMetric object
         '''
-        routing_metrics = RoutingMetrics(self._load_graphs())
-        with open(os.path.join(self.base_data_directory, ROUTING_DATA_FILE_NAME)) as r_file:
-            for data_line in r_file.readlines():
-                routing_metrics.add_route_data(json.loads(data_line))
-        return routing_metrics
+        return RoutingMetrics(self._load_graphs(), routing_data_file_name)
 
     def _load_graphs(self):
         graphs = {}
@@ -103,4 +99,4 @@ class Analyzer(object):
         return sorted([f for f in os.listdir(directory) if f.endswith(name_filter)])
 
     def _generate_graph_data(self, label, series_list, data_list):
-        return {'label': label, 'data': data_list, 'series': series_list}
+        return {'labels': label, 'data': data_list, 'series': series_list}

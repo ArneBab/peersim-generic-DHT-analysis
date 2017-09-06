@@ -26,16 +26,10 @@ angular.module('challengerApp.services', [])
       interceptor: getErrorInterceptor(toastr, $state, $rootScope, AuthService)
     }
   })
-}).factory('RoutingChoiceService', function ($resource) {
-  return $resource('/api/v1/experiments/:id/metrics/routing-choice', { id: '@id' })
+}).factory('MetricService', function ($resource) {
+  return $resource('/api/v1/experiments/:id/metrics/:metric', { id: '@id', metric: '@metric' })
 }).factory('ExperimentService', function ($resource, toastr) {
   return $resource('/api/v1/experiments/:id', {id: '@id'}, {
-    query: {
-      method: 'GET', isArray: false
-    }
-  })
-}).factory('FileService', function ($resource, $state, $stateParams, $rootScope, toastr) {
-  return $resource('/api/v1/files', { path: '@path' }, {
     query: {
       method: 'GET', isArray: false
     }

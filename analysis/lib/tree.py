@@ -32,7 +32,8 @@ class RoutingTree(object):
 
         # add the rest of the tree
         for child_id in nx_graph.neighbors(previous_node_id):
-            self._build_tree(nx_graph, child_id, max_hop - 1, previous_node)
+            self._build_tree(nx_graph, child_id, max_hop - 1,
+                             previous_node, [start_node_id, previous_node_id])
 
     def get_data_at_level(self, level):
         '''
@@ -52,23 +53,27 @@ class RoutingTree(object):
         '''
         return len(self._levels.keys())
 
-    def _build_tree(self, nx_graph, node_id, current_hop, parent_node):
+    def _build_tree(self, nx_graph, node_id, current_hop, parent_node, current_path):
         if current_hop <= 0:
             return
         # check if we already routed through this node
-        current_path = self._get_path(parent_node)
         if node_id in current_path:
             return
+        new_path = current_path[:]
+        new_path.append(node_id)
 
         new_node = self._add_child(parent_node, node_id)
         # add children node
         for child_id in nx_graph.neighbors(node_id):
-            self._build_tree(nx_graph, child_id, current_hop - 1, new_node)
+            self._build_tree(nx_graph, child_id,
+                             current_hop - 1, new_node, new_path)
 
     def _get_path(self, start_node):
         if start_node is None:
             return []
-        return self._get_path(start_node.parent).append(start_node.data)
+        path = self._get_path(start_node.parent)
+        path.append(start_node.data)
+        return path
 
     def _add_child(self, node, child):
         '''

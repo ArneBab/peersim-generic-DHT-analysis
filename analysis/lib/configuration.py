@@ -12,6 +12,7 @@ from string import Template
 ROUTING_DATA_FILE_NAME = 'routing.json'
 GRAPH_DATA_PATH = 'graphs'
 
+
 class Configuration(object):
     '''
     Enumerates simulation parameters and generates corresponding Peersim simulation
@@ -29,8 +30,10 @@ class Configuration(object):
         size=[100],
         #size=[10, 100, 1000],
         repeat=[1],
-        #repeat=[1,2,3,4,5,6,7,8,9,10],
-        look_ahead=[1],
+        # repeat=[1,2,3,4,5,6,7,8,9,10],
+        look_ahead=[2],
+        # adversary_count=[1, 1%, 2%],
+        adversary_count=[1],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
@@ -149,7 +152,7 @@ class Configuration(object):
         path = config['output_base_directory']
         if output_base_directory is not None:
             path = output_base_directory
-        used_variables = ['look_ahead', 'size', 'repeat']
+        used_variables = ['look_ahead', 'adversary_count', 'size', 'repeat']
         for key in used_variables:
             path = os.path.join(path, str(key), str(config[key]))
         return path

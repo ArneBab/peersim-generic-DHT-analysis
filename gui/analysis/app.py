@@ -33,16 +33,16 @@ def register_resources(app):
     """Register Flask blueprints."""
     import analysis.resources.home as home
     import analysis.resources.api.experiments as exp
-    import analysis.resources.api.metrics.routingChoice as routing_choice
+    import analysis.resources.api.metrics as metrics
 
     # home handler
     app.add_url_rule('/', None, home.home_handler)
 
     api = Api(app)
     api.add_resource(exp.ExperimentList, '/api/v1/experiments')
-    api.add_resource(exp.Experiment, '/api/v1/experiments/<int:id>')
-    api.add_resource(routing_choice.RoutingChoice,
-                     '/api/v1/experiments/<int:id>/metrics/routing-choice')
+    api.add_resource(exp.Experiment, '/api/v1/experiments/<int:experiment_id>')
+    api.add_resource(metrics.Metrics,
+                     '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
 
 
 def load_experiment_data(app):

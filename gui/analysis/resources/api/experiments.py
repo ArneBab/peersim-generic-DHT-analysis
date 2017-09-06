@@ -26,9 +26,9 @@ class Experiment(Resource):
     Represents a list of experiments
     '''
 
-    def get(self, id):
+    def get(self, experiment_id):
         '''
         Only supports get operation
         '''
-        experiment_config = current_app.config['EXPERIMENT_LIST'][id]
+        experiment_config = current_app.config['EXPERIMENT_LIST'][experiment_id]
         return jsonify(experiment_config)

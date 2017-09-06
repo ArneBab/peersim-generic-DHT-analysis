@@ -1,14 +1,14 @@
 angular.module('challengerApp.controllers', [])
-  .controller('ExperimentController', function ($scope, $stateParams, ExperimentService, RoutingChoiceService) {
+  .controller('ExperimentController', function ($scope, $stateParams, ExperimentService, MetricService) {
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
     
-    // load the graph data
-    RoutingChoiceService.get({id: $stateParams.id}).$promise.then(function (result) {
-      $scope.labels = result.label
-      $scope.series = result.series
-      $scope.data = result.data
+    // load the routing choice graph data
+    MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {
+      $scope.labels_1 = result.labels
+      $scope.series_1 = result.series
+      $scope.data_1 = result.data
     })
-    $scope.options = {
+    $scope.options_1 = {
       title: {
         display: true,
         text: 'Routing Choices - Stacked'
@@ -22,6 +22,21 @@ angular.module('challengerApp.controllers', [])
         ]
       }
     }
+
+    // load the routing choice graph data
+    MetricService.get({id: $stateParams.id, metric: 'path_histo.json'}).$promise.then(function (result) {
+      $scope.labels_2 = result.labels
+      $scope.series_2 = result.series
+      $scope.data_2 = result.data
+    })
+    $scope.options_2 = {
+      title: {
+        display: true,
+        text: 'Path Lengths Histogram'
+      },
+      responsive: true
+    }
+
   }).controller('MenuController', function ($scope, $state, ExperimentService) {
   // Build the menu tree from the experiment data
   var builder = function (path_list, path_index, search_items, experiment) {
