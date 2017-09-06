@@ -10,6 +10,7 @@ import json
 import networkx as nx
 
 from .configuration import ROUTING_DATA_FILE_NAME, GRAPH_DATA_PATH
+from .routingMetrics import RoutingMetrics
 
 
 class Analyzer(object):
@@ -18,9 +19,7 @@ class Analyzer(object):
     '''
 
     _experiment_config_json = None
-    _routing_data_json = {}
     _graph_data_directory = ''
-    _graphs = []
     base_data_directory = ''
 
     def __init__(self, experiment_config_file):
@@ -30,20 +29,7 @@ class Analyzer(object):
         self._graph_data_directory = os.path.join(
             self.base_data_directory, GRAPH_DATA_PATH)
 
-    # def run(self):
-    #    '''
-    #    Run the analysis
-    #    '''
-    #    self._load_routing_data()
-    #    self._load_graphs()
-
-    def _load_routing_data(self):
-        with open(os.path.join(self.base_data_directory, ROUTING_DATA_FILE_NAME)) as r_file:
-            for data_line in r_file.readlines():
-                route_data = json.loads(data_line)
-                self._routing_data_json[route_data['id']] = route_data
-
-    def run_stats(self):
+    def run_routing_choice_metrics(self):
         '''
         Run analysis of global stats files
         :return: Graph friendly dict
@@ -94,10 +80,24 @@ class Analyzer(object):
             graph_data.append(data)
         return self._generate_graph_data(x_label_list[1:], graph_series, graph_data)
 
+    def run_routing_metrics(self):
+        '''
+        Calculate routing related metrics
+        :return: RoutingMetric object
+        '''
+        routing_metrics = RoutingMetrics(self._load_graphs())
+        with open(os.path.join(self.base_data_directory, ROUTING_DATA_FILE_NAME)) as r_file:
+            for data_line in r_file.readlines():
+                routing_metrics.add_route_data(json.loads(data_line))
+        return routing_metrics
+
     def _load_graphs(self):
+        graphs = {}
         for graph_name in self._get_files(self._graph_data_directory, '.gml'):
-            self._graphs.append(nx.read_gml(os.path.join(
-                self._graph_data_directory, graph_name)))
+            graph = nx.read_gml(os.path.join(
+                self._graph_data_directory, graph_name), 'id')
+            graphs[graph.graph['cycle']] = graph
+        return graphs
 
     def _get_files(self, directory, name_filter):
         return sorted([f for f in os.listdir(directory) if f.endswith(name_filter)])

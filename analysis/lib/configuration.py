@@ -30,7 +30,7 @@ class Configuration(object):
         #size=[10, 100, 1000],
         repeat=[1],
         #repeat=[1,2,3,4,5,6,7,8,9,10],
-        look_ahead=[1, 2],
+        look_ahead=[1],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(

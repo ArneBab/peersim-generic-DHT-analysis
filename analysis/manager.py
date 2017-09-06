@@ -103,10 +103,12 @@ class Manager(object):
                                                CONST_METRICS_DIR)):
                 os.makedirs(os.path.join(analyzer.base_data_directory,
                                          CONST_METRICS_DIR))
-            # global stats
+            # routing choice stats
             with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
                                    CONST_STAT_GRAPH_FILE_NAME), 'w') as s_file:
-                s_file.write(json.dumps(analyzer.run_stats()))
+                s_file.write(json.dumps(analyzer.run_routing_choice_metrics()))
+
+            routing_metrics = analyzer.run_routing_metrics()
 
 
 if __name__ == '__main__':
