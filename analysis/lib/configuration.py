@@ -34,6 +34,7 @@ class Configuration(object):
         look_ahead=[2],
         # adversary_count=[1, 1%, 2%],
         adversary_count=[1],
+        traffic_generator='RandomPingTraffic',
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(

@@ -31,12 +31,13 @@ def create_app(config_object=Config):
 
 def register_resources(app):
     """Register Flask blueprints."""
-    import analysis.resources.home as home
+    import analysis.resources.handlers as handlers
     import analysis.resources.api.experiments as exp
     import analysis.resources.api.metrics as metrics
 
     # home handler
-    app.add_url_rule('/', None, home.home_handler)
+    app.add_url_rule('/', None, handlers.home_handler)
+    app.add_url_rule('/reload', None, handlers.reload_experiments)
 
     api = Api(app)
     api.add_resource(exp.ExperimentList, '/api/v1/experiments')

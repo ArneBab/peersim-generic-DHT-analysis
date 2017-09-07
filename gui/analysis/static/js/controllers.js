@@ -1,42 +1,23 @@
 angular.module('challengerApp.controllers', [])
   .controller('ExperimentController', function ($scope, $stateParams, ExperimentService, MetricService) {
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
-    
+    $scope.graphs = []
+
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {
-      $scope.labels_1 = result.labels
-      $scope.series_1 = result.series
-      $scope.data_1 = result.data
+      result.options = stacked_graph_options('Routing Choices: Stacked')
+      result.title = 'Routing choice picked'
+      result.type = 'line'
+      $scope.graphs.push(result)
     })
-    $scope.options_1 = {
-      title: {
-        display: true,
-        text: 'Routing Choices - Stacked'
-      },
-      responsive: true,
-      scales: {
-        yAxes: [
-          {
-            stacked: true
-          }
-        ]
-      }
-    }
 
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'path_histo.json'}).$promise.then(function (result) {
-      $scope.labels_2 = result.labels
-      $scope.series_2 = result.series
-      $scope.data_2 = result.data
+      result.options = basic_graph_options('Path Lengths: Histogram')
+      result.title = 'Path lengths'
+      result.type = 'bar'
+      $scope.graphs.push(result)
     })
-    $scope.options_2 = {
-      title: {
-        display: true,
-        text: 'Path Lengths Histogram'
-      },
-      responsive: true
-    }
-
   }).controller('MenuController', function ($scope, $state, ExperimentService) {
   // Build the menu tree from the experiment data
   var builder = function (path_list, path_index, search_items, experiment) {
@@ -66,3 +47,30 @@ angular.module('challengerApp.controllers', [])
       $state.go('experiments_view', { id: branch.data.id })
   }
 })
+
+function basic_graph_options (title) {
+  return {
+    title: {
+      display: true,
+      text: title
+    },
+    responsive: true
+  }
+}
+
+function stacked_graph_options (title) {
+  return {
+    title: {
+      display: true,
+      text: title
+    },
+    responsive: true,
+    scales: {
+      yAxes: [
+        {
+          stacked: true
+        }
+      ]
+    }
+  }
+}

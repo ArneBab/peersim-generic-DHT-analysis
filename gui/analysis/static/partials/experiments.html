@@ -1,11 +1,18 @@
-<h3>Experiment</h3>
-Pick an experiemnt from the menu above
+<h2>Experiment {{experiment.id}} Data</h2>
+<div class="row" ng-repeat="(key, value) in experiment.metrics">
+    <div class="col-sm-4">
+        {{key | prettyName}}
+    </div>
+    <div class="col-sm-8">
+        {{value}}
+    </div>
+</div>
+<hr/>
+<h3>Graphs</h3>
 
-<hr/> 
-<h3>Routing Choices</h3>
-<canvas id="line" class="chart chart-line" chart-data="data_1" chart-labels="labels_1" chart-series="series_1" chart-options="options_1">
-</canvas>
-
-<h3>Path Length</h3>
-<canvas id="bar" class="chart chart-bar" chart-data="data_2" chart-labels="labels_2" chart-series="series_2" chart-options="options_2">
-</canvas>
+<div ng-repeat="graph in graphs">
+    <h4>{{graph.title}}</h4>
+    <canvas class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels" chart-series="graph.series"
+        chart-options="graph.options">
+    </canvas>
+</div>

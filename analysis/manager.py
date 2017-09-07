@@ -20,6 +20,9 @@ CONST_CONFIG = 'config'
 CONST_STAT_GRAPH_FILE_NAME = 'stats.json'
 CONST_PATH_HISTO_NAME = 'path_histo.json'
 CONST_METRICS_DIR = 'metrics'
+CONST_NEW_ROUTING_DATA_FILE_NAME = 'processed.routing.json'
+CONST_GRAPH_METRICS_GARPH = 'graphs.json'
+CONST_CONSOLIDATED_METRICS = 'consolidated.json'
 
 
 class Manager(object):
@@ -110,11 +113,31 @@ class Manager(object):
                                    CONST_STAT_GRAPH_FILE_NAME), 'w') as s_file:
                 s_file.write(json.dumps(analyzer.run_routing_choice_metrics()))
 
-            routing_metrics = analyzer.get_routing_metrics(os.path.join(
-                analyzer.base_data_directory, ROUTING_DATA_FILE_NAME))
+            # routing metrics
+            routing_data_name = os.path.join(
+                analyzer.base_data_directory, ROUTING_DATA_FILE_NAME)
+            routing_metrics = analyzer.get_routing_metrics(routing_data_name)
+            # update the routing data
+            new_routing_data = os.path.join(
+                analyzer.base_data_directory, CONST_NEW_ROUTING_DATA_FILE_NAME)
+            routing_metrics = routing_metrics.update_routing_data(
+                new_routing_data)
+
+            # path length
             with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
                                    CONST_PATH_HISTO_NAME), 'w') as g_file:
-                g_file.write(json.dumps(routing_metrics.get_path_length_graph_data()))
+                g_file.write(json.dumps(
+                    routing_metrics.get_path_length_graph_data()))
+            # graph metrics
+            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
+                                   CONST_GRAPH_METRICS_GARPH), 'w') as g_file:
+                g_file.write(json.dumps(
+                    routing_metrics.get_graph_stats_over_cycles()))
+            # consolidated metrics
+            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
+                                   CONST_CONSOLIDATED_METRICS), 'w') as g_file:
+                g_file.write(json.dumps(
+                    routing_metrics.get_consolidated_metrics()))
 
 
 if __name__ == '__main__':
