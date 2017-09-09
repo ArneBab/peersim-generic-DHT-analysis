@@ -6,9 +6,11 @@ Updated on September, 2017
 Unit test for routing metrics
 '''
 import unittest
+import tempfile
 
 from lib.routingMetrics import RoutingMetrics
-from .utils import get_nx_graph, get_route_json_path, list_equals
+from .utils import get_nx_graphs_100, get_nx_graphs, list_equals
+from .utils import get_route_json_path, get_route_json_path_100
 
 
 class TestRoutingMetrics(unittest.TestCase):
@@ -17,8 +19,11 @@ class TestRoutingMetrics(unittest.TestCase):
     '''
 
     def test_works(self):
-        r_metric = RoutingMetrics([get_nx_graph()], get_route_json_path())
-        r_data = r_metric.get_path_length_graph_data()
+        with tempfile.NamedTemporaryFile() as output_file:
+            r_metric = RoutingMetrics(
+                get_nx_graphs_100(), get_route_json_path_100(), output_file.name)
+            r_metric.calculate_metrics()
+            r_data = r_metric.graph_path_lengths()
         r_path_lengths = r_data['data'][0]
         c_path_lengths = r_data['data'][1]
         expected_r = [0 for i in range(1, 100)]
@@ -38,6 +43,19 @@ class TestRoutingMetrics(unittest.TestCase):
         self.assertTrue(list_equals(expected_r, r_path_lengths))
         self.assertTrue(list_equals(expected_c, c_path_lengths))
 
+    def test_metrics(self):
+        with tempfile.NamedTemporaryFile() as output_file:
+            r_metric = RoutingMetrics(
+                get_nx_graphs(), get_route_json_path(), output_file.name)
+            r_metric.calculate_metrics()
+            r_data = r_metric.graph_metrics()
+        degrees = r_data['data'][0]
+        diameters = r_data['data'][1]
+        self.assertTrue(len(degrees) == 1)
+        self.assertTrue(round(degrees[0], 2) == 3.57)
+        self.assertTrue(diameters[0] == 4)
+
     def test_missing_file(self):
         with self.assertRaises(Exception):
-            RoutingMetrics([get_nx_graph()], '/tmp/junk/dfa/dfadf.json')
+            RoutingMetrics(
+                get_nx_graphs(), '/tmp/junk/dfa/dfadf.json', '/tmp/junk/dfa/dfadf2.json')

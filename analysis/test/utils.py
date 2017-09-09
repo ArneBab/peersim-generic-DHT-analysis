@@ -8,21 +8,37 @@ Utility functions
 import os
 import networkx as nx
 
-def get_nx_graph():
+def get_nx_graphs():
     '''
     Get the test network graph
     '''
     current_dir = os.path.dirname(__file__)
     graph_file = os.path.join(current_dir, 'resources', 'size_14.gml')
     nx_graph = nx.read_gml(graph_file, 'id')
-    return nx_graph
+    return {0: nx_graph}
+
+def get_nx_graphs_100():
+    '''
+    Get the test network graph
+    '''
+    current_dir = os.path.dirname(__file__)
+    graph_file = os.path.join(current_dir, 'resources', 'size_100.gml')
+    nx_graph = nx.read_gml(graph_file, 'id')
+    return {0: nx_graph}
+
+def get_route_json_path_100():
+    '''
+    Get the test routing data file path
+    '''
+    current_dir = os.path.dirname(__file__)
+    return os.path.join(current_dir, 'resources', 'route_100.json')
 
 def get_route_json_path():
     '''
     Get the test routing data file path
     '''
     current_dir = os.path.dirname(__file__)
-    return os.path.join(current_dir, 'resources', 'route.json')
+    return os.path.join(current_dir, 'resources', 'route_14.json')
 
 def list_equals(list_1, list_2):
     '''

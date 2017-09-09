@@ -80,12 +80,13 @@ class Analyzer(object):
             graph_data.append(data)
         return self._generate_graph_data(x_label_list[1:], graph_series, graph_data)
 
-    def get_routing_metrics(self, routing_data_file_name):
+    def get_routing_metrics(self, routing_data_file_name, new_routing_data_file_name):
         '''
         Calculate routing related metrics
         :return: RoutingMetric object
         '''
-        return RoutingMetrics(self._load_graphs(), routing_data_file_name)
+        return RoutingMetrics(self._load_graphs(), routing_data_file_name, 
+                              new_routing_data_file_name)
 
     def _load_graphs(self):
         graphs = {}

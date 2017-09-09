@@ -11,18 +11,12 @@ import os
 import json
 
 from lib.configuration import Configuration
-from lib.configuration import ROUTING_DATA_FILE_NAME
+from lib.configuration import ROUTING_DATA_FILE_NAME as R_F_NAME
 from lib.executioner import Executioner
 from lib.analyzer import Analyzer
 
 CONST_EXPERIMENT = 'experiment'
 CONST_CONFIG = 'config'
-CONST_STAT_GRAPH_FILE_NAME = 'stats.json'
-CONST_PATH_HISTO_NAME = 'path_histo.json'
-CONST_METRICS_DIR = 'metrics'
-CONST_NEW_ROUTING_DATA_FILE_NAME = 'processed.routing.json'
-CONST_GRAPH_METRICS_GARPH = 'graphs.json'
-CONST_CONSOLIDATED_METRICS = 'consolidated.json'
 
 
 class Manager(object):
@@ -103,41 +97,51 @@ class Manager(object):
                          count, len(self._experiement_configurations))
             count = count + 1
 
+            # base directory
+            base_path = self._get_base(experiment_file[CONST_CONFIG])
+
             analyzer = Analyzer(experiment_file[CONST_CONFIG])
-            if not os.path.exists(os.path.join(analyzer.base_data_directory,
-                                               CONST_METRICS_DIR)):
-                os.makedirs(os.path.join(analyzer.base_data_directory,
-                                         CONST_METRICS_DIR))
+            if not os.path.exists(self._metrics(base_path)):
+                os.makedirs(self._metrics(base_path))
+
             # routing choice stats
-            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
-                                   CONST_STAT_GRAPH_FILE_NAME), 'w') as s_file:
+            with open(self._metrics(base_path, 'stats.json'), 'w') as s_file:
                 s_file.write(json.dumps(analyzer.run_routing_choice_metrics()))
 
             # routing metrics
-            routing_data_name = os.path.join(
-                analyzer.base_data_directory, ROUTING_DATA_FILE_NAME)
-            routing_metrics = analyzer.get_routing_metrics(routing_data_name)
-            # update the routing data
-            new_routing_data = os.path.join(
-                analyzer.base_data_directory, CONST_NEW_ROUTING_DATA_FILE_NAME)
-            routing_metrics = routing_metrics.update_routing_data(
-                new_routing_data)
+            routing_data_name = self._base(base_path, R_F_NAME)
+            new_routing_data = self._base(base_path, 'processed.' + R_F_NAME)
+
+            r_metrics = analyzer.get_routing_metrics(
+                routing_data_name, new_routing_data)
+            r_metrics.calculate_metrics()
 
             # path length
-            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
-                                   CONST_PATH_HISTO_NAME), 'w') as g_file:
-                g_file.write(json.dumps(
-                    routing_metrics.get_path_length_graph_data()))
+            with open(self._metrics(base_path, 'path_histo.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.graph_path_lengths()))
             # graph metrics
-            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
-                                   CONST_GRAPH_METRICS_GARPH), 'w') as g_file:
-                g_file.write(json.dumps(
-                    routing_metrics.get_graph_stats_over_cycles()))
+            with open(self._metrics(base_path, 'graphs.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.graph_metrics()))
             # consolidated metrics
-            with open(os.path.join(analyzer.base_data_directory, CONST_METRICS_DIR,
-                                   CONST_CONSOLIDATED_METRICS), 'w') as g_file:
-                g_file.write(json.dumps(
-                    routing_metrics.get_consolidated_metrics()))
+            with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.get_summary()))
+
+    def _get_base(self, path):
+        return os.path.dirname(path)
+
+    def _base(self, base_path, *args):
+        path = base_path
+        if args:
+            for a in args:
+                path = os.path.join(path, a)
+        return path
+
+    def _metrics(self, base_path, *args):
+        path = os.path.join(base_path, 'metrics')
+        if args:
+            for a in args:
+                path = os.path.join(path, a)
+        return path
 
 
 if __name__ == '__main__':

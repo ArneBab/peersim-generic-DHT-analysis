@@ -8,7 +8,7 @@ Unit test for routing tree
 import unittest
 
 from lib.tree import RoutingTree
-from .utils import get_nx_graph, list_equals
+from .utils import get_nx_graphs, list_equals
 
 
 class TestTree(unittest.TestCase):
@@ -18,13 +18,13 @@ class TestTree(unittest.TestCase):
 
     def test_too_much_work(self):
         tree = RoutingTree()
-        nx_graph = get_nx_graph()
+        nx_graph = get_nx_graphs()[0]
         self.assertFalse(tree.build(nx_graph, 6, 7, 5))
         self.assertTrue(tree.build(nx_graph, 6, 7, 5, False))
 
     def test_works(self):
         tree = RoutingTree()
-        nx_graph = get_nx_graph()
+        nx_graph = get_nx_graphs()[0]
         self.assertTrue(tree.build(nx_graph, 6, 7, 5, False))
         self.assertTrue(tree.get_height() == 6)
         level_0 = tree.get_data_at_level(0)
