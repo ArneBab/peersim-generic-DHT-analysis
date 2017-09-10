@@ -18,6 +18,14 @@ angular.module('challengerApp.controllers', [])
       result.type = 'bar'
       $scope.graphs.push(result)
     })
+
+    // load the anon graph data
+    MetricService.get({id: $stateParams.id, metric: 'anon_set.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Sender Set Size: Histogram')
+      result.title = 'Sender Set Size'
+      result.type = 'bar'
+      $scope.graphs.push(result)
+    })
   }).controller('MenuController', function ($scope, $state, ExperimentService) {
   // Build the menu tree from the experiment data
   var builder = function (path_list, path_index, search_items, experiment) {

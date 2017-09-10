@@ -16,6 +16,7 @@ class RoutingTree(object):
     '''
     _root = None
     _levels = {}
+    estimated_work = None
 
     def build(self, nx_graph, start_node_id, previous_node_id, max_hop, work_check=True):
         '''
@@ -32,11 +33,11 @@ class RoutingTree(object):
         previous_node = self._add_child(self._root, previous_node_id)
 
         # estimate work load
-        estimated_work = self._estimate_nodes_in_tree(nx_graph, max_hop)
-        logging.info('%d : Estimated work load for anonymity set',
-                     estimated_work)
-        if work_check and estimated_work > nx_graph.number_of_nodes() * 2:
-            logging.info('Not calculating anonymity set too large')
+        self.estimated_work = self._estimate_nodes_in_tree(nx_graph, max_hop)
+        logging.debug('%d : Estimated work load for anonymity set',
+                     self.estimated_work)
+        if work_check and self.estimated_work > nx_graph.number_of_nodes() * 2:
+            logging.debug('Not calculating anonymity set too large')
             return False
 
         # add the rest of the tree
@@ -44,7 +45,7 @@ class RoutingTree(object):
             self._build_tree(nx_graph, child_id, max_hop - 1,
                              previous_node, [start_node_id, previous_node_id])
 
-        logging.info('%d : Actual work anonymity set work', self.get_count())
+        logging.debug('%d : Actual work anonymity set work', self.get_count())
         return True
 
     def get_data_at_level(self, level):

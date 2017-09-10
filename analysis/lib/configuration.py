@@ -149,6 +149,14 @@ class Configuration(object):
         self._permutations[self._state_iterator][key] = value
 
     @staticmethod
+    def get_parameters():
+        '''
+        Get the used experiment parameters
+        :return: List of parameter names
+        '''
+        return ['router_type', 'look_ahead', 'adversary_count', 'size', 'repeat']
+
+    @staticmethod
     def file_path_for_config(config, output_base_directory=None):
         '''
         Generate a file path for storing data related to the given configuration
@@ -158,7 +166,6 @@ class Configuration(object):
         path = config['output_base_directory']
         if output_base_directory is not None:
             path = output_base_directory
-        used_variables = ['look_ahead', 'adversary_count', 'size', 'repeat']
-        for key in used_variables:
+        for key in Configuration.get_parameters():
             path = os.path.join(path, str(key), str(config[key]))
         return path

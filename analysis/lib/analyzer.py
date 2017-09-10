@@ -85,8 +85,8 @@ class Analyzer(object):
         Calculate routing related metrics
         :return: RoutingMetric object
         '''
-        return RoutingMetrics(self._load_graphs(), routing_data_file_name, 
-                              new_routing_data_file_name)
+        return RoutingMetrics(self._load_graphs(), routing_data_file_name,
+                              new_routing_data_file_name, self._experiment_config_json)
 
     def _load_graphs(self):
         graphs = {}

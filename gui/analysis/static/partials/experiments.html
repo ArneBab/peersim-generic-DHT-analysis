@@ -1,10 +1,10 @@
 <h2>Experiment {{experiment.id}} Data</h2>
 <div class="row" ng-repeat="(key, value) in experiment.metrics">
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         {{key | prettyName}}
     </div>
-    <div class="col-sm-8">
-        {{value}}
+    <div class="col-sm-9">
+        {{value.value}} {{value.description}}
     </div>
 </div>
 <hr/>

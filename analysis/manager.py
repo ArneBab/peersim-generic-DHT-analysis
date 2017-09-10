@@ -122,6 +122,9 @@ class Manager(object):
             # graph metrics
             with open(self._metrics(base_path, 'graphs.json'), 'w') as g_file:
                 g_file.write(json.dumps(r_metrics.graph_metrics()))
+            # anon metrics
+            with open(self._metrics(base_path, 'anon_set.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.graph_anonymity_set()))
             # consolidated metrics
             with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
                 g_file.write(json.dumps(r_metrics.get_summary()))
