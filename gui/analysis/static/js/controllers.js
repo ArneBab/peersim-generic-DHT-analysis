@@ -6,7 +6,6 @@ angular.module('challengerApp.controllers', [])
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {
       result.options = stacked_graph_options('Routing Choices: Stacked')
-      result.title = 'Routing choice picked'
       result.type = 'line'
       $scope.graphs.push(result)
     })
@@ -14,7 +13,6 @@ angular.module('challengerApp.controllers', [])
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'path_histo.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Path Lengths: Histogram')
-      result.title = 'Path lengths'
       result.type = 'bar'
       $scope.graphs.push(result)
     })
@@ -22,7 +20,6 @@ angular.module('challengerApp.controllers', [])
     // load the anon graph data
     MetricService.get({id: $stateParams.id, metric: 'anon_set.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size: Histogram')
-      result.title = 'Sender Set Size'
       result.type = 'bar'
       $scope.graphs.push(result)
     })
