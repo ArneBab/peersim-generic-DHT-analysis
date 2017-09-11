@@ -128,6 +128,9 @@ class Manager(object):
             # consolidated metrics
             with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
                 g_file.write(json.dumps(r_metrics.get_summary()))
+            # intercept hop
+            with open(self._metrics(base_path, 'intercept.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.graph_intercept_hop()))
 
     def _get_base(self, path):
         return os.path.dirname(path)

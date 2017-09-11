@@ -33,6 +33,7 @@ class RoutingMetrics(object):
     _message_count = 0
     _message_inter_count = 0
     _message_inter_pro_count = 0
+    _adversary_inter_hop = []
 
     def __init__(self, graphs, input_data_file_name, output_data_file_name, experiment_config):
         '''
@@ -68,6 +69,8 @@ class RoutingMetrics(object):
                 self._message_count = self._message_count + 1
                 if 'full_anonymity_set' in route:
                     self._message_inter_count = self._message_inter_count + 1
+                    self._adversary_inter_hop.append(route['full_anonymity_set']['hop'])
+
                     if route['full_anonymity_set']['calculated']:
                         self._message_inter_pro_count = self._message_inter_pro_count + 1
                         self._anon_set_size_full.append(
@@ -111,6 +114,8 @@ class RoutingMetrics(object):
             self._message_inter_count, '(%f%% of all messages)' %
             per(self._message_inter_count, self._message_count)
         )
+        self._metrics['adversary_messages_intercepted_percent'] = w(
+            per(self._message_inter_count, self._message_count))
 
         self._metrics['adversary_senders_calculable'] = w(
             self._message_inter_pro_count,
@@ -118,6 +123,10 @@ class RoutingMetrics(object):
             (per(self._message_inter_pro_count, self._message_inter_count),
              per(self._message_inter_pro_count, self._message_count))
         )
+        self._metrics['adversary_senders_calculable_percent_of_intercepted'] = w(
+            per(self._message_inter_pro_count, self._message_inter_count))
+        self._metrics['adversary_senders_calculable_percent_of_total'] = w(
+            per(self._message_inter_pro_count, self._message_count))
 
         self._metrics['message_count'] = w(self._message_count)
 
@@ -154,8 +163,22 @@ class RoutingMetrics(object):
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_anonymity_set(self):
+        '''
+        Generate a graph of the anonymity set sizes
+        :return: dict of graph data
+        '''
         series_list = ['Sender Set Size']
         data, start, stop = to_histogram_numbers(self._anon_set_size_full, 1)
+        labels = [str(i) for i in range(start, stop + 1)]
+        return {'labels': labels, 'data': data, 'series': series_list}
+
+    def graph_intercept_hop(self):
+        '''
+        Generate a graph of where adversaries intercepted a message
+        :return: dict of graph data
+        '''
+        series_list = ['Adversary Intercept Hop']
+        data, start, stop = to_histogram_numbers(self._adversary_inter_hop, 0)
         labels = [str(i) for i in range(start, stop + 1)]
         return {'labels': labels, 'data': data, 'series': series_list}
 
@@ -222,9 +245,10 @@ class RoutingMetrics(object):
         if r_tree.build(nx_graph, a_node['id'], p_node['id'], a_node['hop']):
             a_set = r_tree.get_data_at_level(r_tree.get_height() - 1)
             a_data = {'calculated': True, 'length': len(a_set),
-                      'nodes': a_set, 'estimated_work': r_tree.estimated_work}
+                      'nodes': a_set, 'estimated_work': r_tree.estimated_work,
+                      'hop': a_node['hop']}
         else:
-            a_data = {'calculated': False, 'length': 0,
+            a_data = {'calculated': False, 'length': 0, 'hop': a_node['hop'],
                       'nodes': [], 'estimated_work': r_tree.estimated_work}
         data['full_anonymity_set'] = a_data
 

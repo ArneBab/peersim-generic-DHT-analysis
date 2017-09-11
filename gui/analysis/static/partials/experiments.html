@@ -1,9 +1,23 @@
+<script type="text/ng-template" id="myModalContent.html">
+    <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Graph</h3>
+    </div>
+    <div class="modal-body" id="modal-body">
+        <canvas class="chart chart-base" chart-type="$ctrl.graph.type" chart-data="$ctrl.graph.data" chart-labels="$ctrl.graph.labels"
+            chart-series="$ctrl.graph.series" chart-options="$ctrl.graph.options">
+        </canvas>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
+    </div>
+</script>
+
 <h2>Experiment {{experiment.id}} Data</h2>
 <div class="row" ng-repeat="(key, value) in experiment.metrics">
-    <div class="col-sm-3">
+    <div class="col-sm-5">
         {{key | prettyName}}
     </div>
-    <div class="col-sm-9">
+    <div class="col-sm-7">
         {{value.value}} {{value.description}}
     </div>
 </div>
@@ -11,8 +25,9 @@
 <h3>Graphs</h3>
 
 <div ng-repeat="graph in graphs">
-    <h4>{{graph.title}}</h4>
-    <canvas class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels" chart-series="graph.series"
-        chart-options="graph.options">
-    </canvas>
+    <div class="col-sm-6">
+        <canvas ng-click="open($index)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
+            chart-series="graph.series" chart-options="graph.options">
+        </canvas>
+    </div>
 </div>
