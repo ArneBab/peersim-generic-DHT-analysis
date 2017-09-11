@@ -12,7 +12,7 @@ import networkx as nx
 import numpy
 
 from .tree import RoutingTree
-from .utils import average_degree, to_histogram_numbers
+from .utils import average_degree, to_histogram_numbers, distance
 from .configuration import Configuration
 
 
@@ -48,8 +48,9 @@ class RoutingMetrics(object):
         self._routing_data_file_name = output_data_file_name
         self._nx_graphs = graphs
         for param in Configuration.get_parameters():
-            self._metrics['X: ' +
-                          param] = self._wrapper(experiment_config[param])
+            if param in experiment_config:
+                self._metrics['X: ' +
+                              param] = self._wrapper(experiment_config[param])
 
         # process routing data and store in new file, use new file as data source then
         with open(self._routing_data_file_name, 'w') as r_file:
@@ -67,14 +68,15 @@ class RoutingMetrics(object):
 
                 # counters
                 self._message_count = self._message_count + 1
-                if 'full_anonymity_set' in route:
+                if 'anonymity_set' in route:
                     self._message_inter_count = self._message_inter_count + 1
-                    self._adversary_inter_hop.append(route['full_anonymity_set']['hop'])
+                    self._adversary_inter_hop.append(
+                        route['anonymity_set']['hop'])
 
-                    if route['full_anonymity_set']['calculated']:
+                    if route['anonymity_set']['calculated']:
                         self._message_inter_pro_count = self._message_inter_pro_count + 1
                         self._anon_set_size_full.append(
-                            route['full_anonymity_set']['length'])
+                            route['anonymity_set']['full_set']['length'])
 
     def calculate_metrics(self):
         '''
@@ -84,7 +86,10 @@ class RoutingMetrics(object):
         # helper function for iterating all graphs
         def all_graphs(op): return [op(g) for g in self._nx_graphs.values()]
 
-        def per(sel, tot): return (sel / float(tot)) * 100
+        def per(sel, tot):
+            if tot == 0:
+                return 0.0
+            return sel / float(tot)
 
         def w(v, d=None): return self._wrapper(v, d)
 
@@ -111,22 +116,22 @@ class RoutingMetrics(object):
         self._metrics['adversary_count_std'] = w(numpy.std(adv_count))
 
         self._metrics['adversary_messages_intercepted'] = w(
-            self._message_inter_count, '(%f%% of all messages)' %
-            per(self._message_inter_count, self._message_count)
-        )
-        self._metrics['adversary_messages_intercepted_percent'] = w(
-            per(self._message_inter_count, self._message_count))
+            self._message_inter_count)
+        if self._message_inter_count > 0:
+            percent = per(self._message_inter_count, self._message_count)
+            self._metrics['adversary_messages_intercepted_percent'] = w(
+                percent, '%f%%' % (percent * 100))
 
         self._metrics['adversary_senders_calculable'] = w(
-            self._message_inter_pro_count,
-            '(%f%% of intercepted messages) (%f%% of all messages)' %
-            (per(self._message_inter_pro_count, self._message_inter_count),
-             per(self._message_inter_pro_count, self._message_count))
-        )
-        self._metrics['adversary_senders_calculable_percent_of_intercepted'] = w(
-            per(self._message_inter_pro_count, self._message_inter_count))
-        self._metrics['adversary_senders_calculable_percent_of_total'] = w(
-            per(self._message_inter_pro_count, self._message_count))
+            self._message_inter_pro_count)
+        if self._message_inter_pro_count > 0:
+            percent = per(self._message_inter_pro_count,
+                          self._message_inter_count)
+            self._metrics['adversary_senders_calculable_percent_of_intercepted'] = w(
+                percent, '%f%%' % (percent * 100))
+            percent = per(self._message_inter_pro_count, self._message_count)
+            self._metrics['adversary_senders_calculable_percent_of_total'] = w(
+                percent, '%f%%' % (percent * 100))
 
         self._metrics['message_count'] = w(self._message_count)
 
@@ -140,10 +145,11 @@ class RoutingMetrics(object):
         self._metrics['path_length_circuit_std'] = w(numpy.std(
             self._circiut_path_lengths))
 
-        self._metrics['sender_anonymity_set_full_avg'] = w(
-            numpy.mean(self._anon_set_size_full))
-        self._metrics['sender_anonymity_set_full_std'] = w(
-            numpy.std(self._anon_set_size_full))
+        if len(self._anon_set_size_full) > 0:
+            self._metrics['sender_anonymity_set_size_avg'] = w(
+                numpy.mean(self._anon_set_size_full))
+            self._metrics['sender_anonymity_set_size_std'] = w(
+                numpy.std(self._anon_set_size_full))
 
     def get_summary(self):
         '''
@@ -228,8 +234,7 @@ class RoutingMetrics(object):
         destination_node = nx_graph.node[data['destination_node']]
         x_loc = source_node['location']
         y_loc = destination_node['location']
-        data['distance'] = min(
-            [abs(x_loc - y_loc), abs((x_loc + 1) - y_loc), abs(x_loc - (y_loc + 1))])
+        data['distance'] = distance(x_loc, x_loc)
 
         self._calculate_anonymity_set(data, nx_graph)
 
@@ -243,14 +248,20 @@ class RoutingMetrics(object):
 
         r_tree = RoutingTree()
         if r_tree.build(nx_graph, a_node['id'], p_node['id'], a_node['hop']):
-            a_set = r_tree.get_data_at_level(r_tree.get_height() - 1)
-            a_data = {'calculated': True, 'length': len(a_set),
-                      'nodes': a_set, 'estimated_work': r_tree.estimated_work,
+            a_data = {'calculated': True, 'estimated_work': r_tree.estimated_work,
                       'hop': a_node['hop']}
+            a_set = r_tree.get_sender_set()
+            a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
+
+            # add support for other routing types
+            a_data['ranked_set'] = r_tree.get_sender_set_rank(
+                r_tree.rank_greedy, data['target'])
+            a_data['probability_set'] = r_tree.get_sender_set_distribution(
+                r_tree.rank_greedy, r_tree.distro_rank_exponetial_backoff, data['target'])
         else:
-            a_data = {'calculated': False, 'length': 0, 'hop': a_node['hop'],
-                      'nodes': [], 'estimated_work': r_tree.estimated_work}
-        data['full_anonymity_set'] = a_data
+            a_data = {'calculated': False,
+                      'hop': a_node['hop'], 'estimated_work': r_tree.estimated_work}
+        data['anonymity_set'] = a_data
 
     def _get_adversaries(self, data):
         adversaries = []

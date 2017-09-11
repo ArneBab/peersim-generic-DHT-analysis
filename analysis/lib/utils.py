@@ -50,3 +50,12 @@ def to_histogram_numbers(values, start=None, stop=None):
         if i in holder:
             histo[i-start] = holder[i]
     return histo, start, stop
+
+def distance(x_l, y_l):
+    '''
+    Calculate the distance between x and y with a sircular address space
+    :param x: first address
+    :parame y: second address
+    :return: difference
+    '''
+    return min([abs(x_l - y_l), abs((x_l + 1) - y_l), abs(x_l - (y_l + 1))])

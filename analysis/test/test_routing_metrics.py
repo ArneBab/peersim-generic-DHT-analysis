@@ -21,7 +21,7 @@ class TestRoutingMetrics(unittest.TestCase):
     def test_works(self):
         with tempfile.NamedTemporaryFile() as output_file:
             r_metric = RoutingMetrics(
-                get_nx_graphs_100(), get_route_json_path_100(), output_file.name)
+                get_nx_graphs_100(), get_route_json_path_100(), output_file.name, {})
             r_metric.calculate_metrics()
             r_data = r_metric.graph_path_lengths()
         r_path_lengths = r_data['data'][0]
@@ -46,7 +46,7 @@ class TestRoutingMetrics(unittest.TestCase):
     def test_metrics(self):
         with tempfile.NamedTemporaryFile() as output_file:
             r_metric = RoutingMetrics(
-                get_nx_graphs(), get_route_json_path(), output_file.name)
+                get_nx_graphs(), get_route_json_path(), output_file.name, {})
             r_metric.calculate_metrics()
             r_data = r_metric.graph_metrics()
         degrees = r_data['data'][0]
@@ -58,4 +58,4 @@ class TestRoutingMetrics(unittest.TestCase):
     def test_missing_file(self):
         with self.assertRaises(Exception):
             RoutingMetrics(
-                get_nx_graphs(), '/tmp/junk/dfa/dfadf.json', '/tmp/junk/dfa/dfadf2.json')
+                get_nx_graphs(), '/tmp/junk/dfa/dfadf.json', '/tmp/junk/dfa/dfadf2.json', {})
