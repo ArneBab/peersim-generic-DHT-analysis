@@ -17,16 +17,23 @@ angular.module('challengerApp.controllers', [])
       $scope.graphs.push(result)
     })
 
-    // load the anon graph data
-    MetricService.get({id: $stateParams.id, metric: 'anon_set.json'}).$promise.then(function (result) {
-      result.options = basic_graph_options('Sender Set Size: Histogram')
-      result.type = 'bar'
-      $scope.graphs.push(result)
-    })
-    
     // load the intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'intercept.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Adversary Intercept Hop: Histogram')
+      result.type = 'bar'
+      $scope.graphs.push(result)
+    })
+
+    // load the intercept hop graph data
+    MetricService.get({id: $stateParams.id, metric: 'intercept_calculated.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Adversary Intercept Hop for Calculated: Histogram')
+      result.type = 'bar'
+      $scope.graphs.push(result)
+    })
+
+    // load the anon graph data
+    MetricService.get({id: $stateParams.id, metric: 'anon_set.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Sender Set Size: Histogram')
       result.type = 'bar'
       $scope.graphs.push(result)
     })

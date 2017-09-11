@@ -12,7 +12,7 @@ import networkx as nx
 import numpy
 
 from .tree import RoutingTree
-from .utils import average_degree, to_histogram_numbers, distance
+from .utils import average_degree, to_histogram_numbers, distance, entropy_normalized
 from .configuration import Configuration
 
 
@@ -34,6 +34,8 @@ class RoutingMetrics(object):
     _message_inter_count = 0
     _message_inter_pro_count = 0
     _adversary_inter_hop = []
+    _adversary_inter_hop_calced = []
+    _entropy = []
 
     def __init__(self, graphs, input_data_file_name, output_data_file_name, experiment_config):
         '''
@@ -77,6 +79,10 @@ class RoutingMetrics(object):
                         self._message_inter_pro_count = self._message_inter_pro_count + 1
                         self._anon_set_size_full.append(
                             route['anonymity_set']['full_set']['length'])
+                        self._adversary_inter_hop_calced.append(
+                            route['anonymity_set']['hop'])
+                        self._entropy.append(entropy_normalized(
+                            route['anonymity_set']['probability_set'].values()))
 
     def calculate_metrics(self):
         '''
@@ -150,6 +156,8 @@ class RoutingMetrics(object):
                 numpy.mean(self._anon_set_size_full))
             self._metrics['sender_anonymity_set_size_std'] = w(
                 numpy.std(self._anon_set_size_full))
+            self._metrics['entropy_avg'] = w(numpy.mean(self._entropy))
+            self._metrics['entropy_std'] = w(numpy.std(self._entropy))
 
     def get_summary(self):
         '''
@@ -185,6 +193,17 @@ class RoutingMetrics(object):
         '''
         series_list = ['Adversary Intercept Hop']
         data, start, stop = to_histogram_numbers(self._adversary_inter_hop, 0)
+        labels = [str(i) for i in range(start, stop + 1)]
+        return {'labels': labels, 'data': data, 'series': series_list}
+
+    def graph_intercept_hop_calculated(self):
+        '''
+        Generate a graph of where adversaries intercepted a message
+        :return: dict of graph data
+        '''
+        series_list = ['Adversary Intercept Hop for Calculated']
+        data, start, stop = to_histogram_numbers(
+            self._adversary_inter_hop_calced, 0)
         labels = [str(i) for i in range(start, stop + 1)]
         return {'labels': labels, 'data': data, 'series': series_list}
 

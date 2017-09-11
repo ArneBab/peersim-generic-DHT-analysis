@@ -5,6 +5,7 @@ Updated on September, 2017
 
 Utility functions
 '''
+import math
 
 
 def average_degree(nx_graph):
@@ -59,3 +60,26 @@ def distance(x_l, y_l):
     :return: difference
     '''
     return min([abs(x_l - y_l), abs((x_l + 1) - y_l), abs(x_l - (y_l + 1))])
+
+def entropy_normalized(distro):
+    '''
+    Normalized Shannon Enropy
+    :param distro: list of output probabilities
+    :return: entropy
+    '''
+    entropy = 0
+    for p in distro:
+        entropy = entropy + (p * math.log(p, 2))
+    entropy = entropy * -1
+    max_ent = max_entropy(distro)
+    if max_ent == 0.0:
+        return 0.0
+    return entropy / float(max_entropy(distro))
+
+def max_entropy(distro):
+    '''
+    Maximum Shannon entropy
+    :param distro: List of the output distribution
+    :return: Shannon maximum entropy
+    '''
+    return math.log(len(distro), 2)

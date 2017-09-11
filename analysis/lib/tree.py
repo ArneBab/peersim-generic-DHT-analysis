@@ -96,6 +96,8 @@ class RoutingTree(object):
         '''
         if self.get_height() < 2:
             return {}
+        if self.get_height() == 2:
+            return {1: self._root.children[0].data}
         # known its 100% for the level 1 node (previous), so we can skip
 
         def distro_function(x): return x
@@ -119,7 +121,9 @@ class RoutingTree(object):
         :return: dict of the probability distriution, sum(values) == 1
         '''
         if self.get_height() < 2:
-            return []
+            return {}
+        if self.get_height() == 2:
+            return {self._root.children[0].data: 1}
         # known its 100% for the level 1 node (previous), so we can skip
         distro = self._assign_sender_rank(
             rank_function, distro_function, self._root.children[0],
