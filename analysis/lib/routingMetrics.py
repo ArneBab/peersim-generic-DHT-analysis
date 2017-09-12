@@ -24,8 +24,7 @@ class RoutingMetrics(object):
     _nx_graphs = {}
     _routing_data_file_name = None
     _metrics = {
-        'topology_type': None, 'churn_rate': None,
-        'sender_anonymity_set_avg': None}
+        'topology_type': None, 'churn_rate': None}
     _avg_diameters = []
     _avg_degrees = []
     _routing_path_lengths = []
