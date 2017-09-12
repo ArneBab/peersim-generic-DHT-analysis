@@ -12,7 +12,7 @@ angular.module('challengerApp.controllers', [])
 
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'path_histo.json'}).$promise.then(function (result) {
-      result.options = basic_graph_options('Path Lengths: Histogram')
+      result.options = basic_graph_options('Path Lengths (Hops): Histogram')
       result.type = 'bar'
       $scope.graphs.push(result)
     })
