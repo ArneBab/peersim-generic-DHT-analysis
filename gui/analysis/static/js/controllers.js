@@ -1,5 +1,6 @@
 angular.module('challengerApp.controllers', [])
   .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, MetricService) {
+    $scope.id = $stateParams.id
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
     $scope.graphs = []
 
@@ -96,7 +97,17 @@ angular.module('challengerApp.controllers', [])
       if (branch.data)
         $state.go('experiments_view', { id: branch.data.id })
     }
-  })
+  }).controller('DataController', function ($scope, $state, $stateParams, DataService) {
+  $scope.id = $stateParams.id
+  $scope.filter_text = ''
+  $scope.filtered_data = []
+  $scope.on_filter = function () {
+    $scope.filtered_data = {'status': 'Loading....'}
+    DataService.query({id: $stateParams.id, filter: $scope.filter_text}).$promise.then(function (result) {
+      $scope.filtered_data = result.items
+    })
+  }
+})
 
 function basic_graph_options (title) {
   return {

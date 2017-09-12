@@ -1,7 +1,7 @@
 var challengerApp = angular.module('challengerApp',
   ['ui.router', 'ui.bootstrap', 'toastr', 'ngResource',
     'challengerApp.controllers', 'challengerApp.services',
-    'angularBootstrapNavTree', 'chart.js'
+    'angularBootstrapNavTree', 'chart.js', 'jsonFormatter'
   ])
 
 angular.module('challengerApp').config(function ($stateProvider, $httpProvider) {
@@ -20,6 +20,15 @@ angular.module('challengerApp').config(function ($stateProvider, $httpProvider) 
       'main-content@': {
         templateUrl: 'static/partials/experiments.html',
         controller: 'ExperimentController'
+      }
+    }
+  }).state('data_view', {
+    url: '/data/:id',
+    views: {
+      'main-menu@': main_menu(),
+      'main-content@': {
+        templateUrl: 'static/partials/data.html',
+        controller: 'DataController'
       }
     }
   })

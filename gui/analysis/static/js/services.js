@@ -28,6 +28,12 @@ angular.module('challengerApp.services', [])
   })
 }).factory('MetricService', function ($resource) {
   return $resource('/api/v1/experiments/:id/metrics/:metric', { id: '@id', metric: '@metric' })
+}).factory('DataService', function ($resource) {
+  return $resource('/api/v1/data/:id', { id: '@id'}, {
+    query: {
+      method: 'GET', isArray: false
+    }
+  })
 }).factory('ExperimentService', function ($resource, toastr) {
   return $resource('/api/v1/experiments/:id', {id: '@id'}, {
     query: {

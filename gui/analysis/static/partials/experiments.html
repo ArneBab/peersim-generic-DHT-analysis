@@ -12,6 +12,7 @@
     </div>
 </script>
 
+<button ui-sref="data_view({id: id})" class="btn btn-primary">Routing Data View</button>
 <h2>Experiment {{experiment.id}} Data</h2>
 <div class="row" ng-repeat="(key, value) in experiment.metrics">
     <div class="col-sm-5">
