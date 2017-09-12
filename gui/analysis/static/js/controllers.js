@@ -38,6 +38,13 @@ angular.module('challengerApp.controllers', [])
       $scope.graphs.push(result)
     })
 
+    // load the entropy graph data
+    MetricService.get({id: $stateParams.id, metric: 'entropy.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy: Histogram')
+      result.type = 'bar'
+      $scope.graphs.push(result)
+    })
+
     $scope.open = function (index) {
       var modalInstance = $uibModal.open({
         animation: true,

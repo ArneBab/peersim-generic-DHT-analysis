@@ -12,7 +12,8 @@ import networkx as nx
 import numpy
 
 from .tree import RoutingTree
-from .utils import average_degree, to_histogram_numbers, distance, entropy_normalized
+from .utils import average_degree, to_histogram_ints, to_histogram_floats
+from .utils import distance, entropy_normalized
 from .configuration import Configuration
 
 
@@ -182,8 +183,23 @@ class RoutingMetrics(object):
         :return: dict of graph data
         '''
         series_list = ['Sender Set Size']
-        data, start, stop = to_histogram_numbers(self._anon_set_size_full, 1)
-        labels = [str(i) for i in range(start, stop + 1)]
+        labels, data, start, stop = to_histogram_ints(
+            self._anon_set_size_full, 1)
+        return {'labels': labels, 'data': data, 'series': series_list}
+
+    def graph_entropy(self):
+        '''
+        Generate a graph histogram of the entropy values by .05
+        :return: dict of graph data
+        '''
+        series_list = ['Entropy']
+
+        def _bucket(x):
+            whole = int(x * 100)
+            whole_bin = (whole / 5) * 5
+            return whole_bin / 100.0
+        labels, data, start, stop = to_histogram_floats(
+            self._entropy, 0.05, 2, 0.0, 1.0, _bucket)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_intercept_hop(self):
@@ -192,8 +208,8 @@ class RoutingMetrics(object):
         :return: dict of graph data
         '''
         series_list = ['Adversary Intercept Hop']
-        data, start, stop = to_histogram_numbers(self._adversary_inter_hop, 0)
-        labels = [str(i) for i in range(start, stop + 1)]
+        labels, data, start, stop = to_histogram_ints(
+            self._adversary_inter_hop, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_intercept_hop_calculated(self):
@@ -202,9 +218,8 @@ class RoutingMetrics(object):
         :return: dict of graph data
         '''
         series_list = ['Adversary Intercept Hop for Calculated']
-        data, start, stop = to_histogram_numbers(
-            self._adversary_inter_hop_calced, 0)
-        labels = [str(i) for i in range(start, stop + 1)]
+        labels, data, start, stop = to_histogram_ints(
+            self._adversary_inter_hop_calced, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_path_lengths(self):
@@ -219,10 +234,10 @@ class RoutingMetrics(object):
             routing_path_lengths.append(route['routing_path']['length'])
             circuit_path_lengths.append(route['connection_path']['length'])
 
-        r_data, start, stop = to_histogram_numbers(routing_path_lengths, 1)
-        c_data, start, stop = to_histogram_numbers(
+        labels, r_data, start, stop = to_histogram_ints(
+            routing_path_lengths, 1)
+        labels, c_data, start, stop = to_histogram_ints(
             circuit_path_lengths, start, stop)
-        labels = [str(i) for i in range(1, stop + 1)]
 
         return {'labels': labels, 'data': [r_data, c_data], 'series': series_list}
 
@@ -253,7 +268,7 @@ class RoutingMetrics(object):
         destination_node = nx_graph.node[data['destination_node']]
         x_loc = source_node['location']
         y_loc = destination_node['location']
-        data['distance'] = distance(x_loc, x_loc)
+        data['distance'] = distance(x_loc, y_loc)
 
         self._calculate_anonymity_set(data, nx_graph)
 

@@ -100,7 +100,7 @@ class RoutingTree(object):
             return {1: self._root.children[0].data}
         # known its 100% for the level 1 node (previous), so we can skip
 
-        def distro_function(x): return x
+        def distro_function(rank): return rank
         rank = self._assign_sender_rank(
             rank_function, distro_function, self._root.children[0],
             target_location, self.get_height() - 3, 1)

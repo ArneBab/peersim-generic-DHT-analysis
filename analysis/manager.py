@@ -125,6 +125,9 @@ class Manager(object):
             # anon metrics
             with open(self._metrics(base_path, 'anon_set.json'), 'w') as g_file:
                 g_file.write(json.dumps(r_metrics.graph_anonymity_set()))
+            # entropy metrics
+            with open(self._metrics(base_path, 'entropy.json'), 'w') as g_file:
+                g_file.write(json.dumps(r_metrics.graph_entropy()))
             # consolidated metrics
             with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
                 g_file.write(json.dumps(r_metrics.get_summary()))
@@ -142,15 +145,15 @@ class Manager(object):
     def _base(self, base_path, *args):
         path = base_path
         if args:
-            for a in args:
-                path = os.path.join(path, a)
+            for sec in args:
+                path = os.path.join(path, sec)
         return path
 
     def _metrics(self, base_path, *args):
         path = os.path.join(base_path, 'metrics')
         if args:
-            for a in args:
-                path = os.path.join(path, a)
+            for sec in args:
+                path = os.path.join(path, sec)
         return path
 
 
