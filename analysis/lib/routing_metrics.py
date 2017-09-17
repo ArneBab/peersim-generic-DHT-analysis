@@ -39,7 +39,13 @@ class RoutingMetrics(object):
         message_inter_pro_count = 0
         adv_inter_hop = []
         adv_inter_hop_calced = []
-        entropy = []
+        anon_entropy = []
+        anon_top_rank_set_size = []
+        anon_top_rank = []
+        anon_top_rank_correct_count = 0
+        anon_rank_missing_count = 0
+        anon_rank_diff_actual = []
+        anon_entropy_missing_count = 0
 
         def to_dict(self):
             ''' Returns the classes variables and values in dict '''
@@ -77,7 +83,7 @@ class RoutingMetrics(object):
         # process routing data and store in new file, use new file as data source then
         with open(self._routing_data_file_name, 'w') as r_file:
             for route in self._read_routes(input_data_file_name):
-                self._post_process_route_data(route)
+                self._post_process_route_data(route, experiment_config)
 
                 r_file.write(json.dumps(route))
                 r_file.write('\n')
@@ -101,8 +107,28 @@ class RoutingMetrics(object):
                             route['anonymity_set']['full_set']['length'])
                         self._raw.adv_inter_hop_calced.append(
                             route['anonymity_set']['hop'])
-                        self._raw.entropy.append(entropy_normalized(
-                            route['anonymity_set']['probability_set'].values()))
+
+                        prob_dict = route['anonymity_set']['probability_set']
+                        self._raw.anon_entropy.append(entropy_normalized(
+                            prob_dict.values()))
+
+                        ranked_set = route['anonymity_set']['ranked_set']
+                        top_rank = sorted(ranked_set.keys())[0]
+                        self._raw.anon_top_rank_set_size.append(
+                            len(ranked_set[top_rank]))
+                        self._raw.anon_top_rank.append(top_rank)
+
+                        if route['source_node'] not in prob_dict.keys():
+                            self._raw.anon_entropy_missing_count += 1
+
+                        diff = self._ranked_nodes_diff(
+                            ranked_set, route['source_node'])
+                        if diff < 0:
+                            self._raw.anon_rank_missing_count += 1
+                        else:
+                            if diff == 0:
+                                self._raw.anon_top_rank_correct_count += 1
+                            self._raw.anon_rank_diff_actual.append(diff)
 
     def calculate_metrics(self):
         '''
@@ -191,9 +217,45 @@ class RoutingMetrics(object):
             self._metrics['anonymity']['sender_set_size_std'] = w(
                 numpy.std(self._raw.sender_set_size))
             self._metrics['anonymity']['entropy_avg'] = w(
-                numpy.mean(self._raw.entropy))
+                numpy.mean(self._raw.anon_entropy))
             self._metrics['anonymity']['entropy_std'] = w(
-                numpy.std(self._raw.entropy))
+                numpy.std(self._raw.anon_entropy))
+            self._metrics['anonymity']['top_rank_set_size_avg'] = w(
+                numpy.mean(self._raw.anon_top_rank_set_size))
+            self._metrics['anonymity']['top_rank_set_size_std'] = w(
+                numpy.std(self._raw.anon_top_rank_set_size))
+            self._metrics['anonymity']['top_rank_value_avg'] = w(
+                numpy.mean(self._raw.anon_top_rank))
+            self._metrics['anonymity']['top_rank_value_std'] = w(
+                numpy.std(self._raw.anon_top_rank))
+
+            ##############################################################
+            self._metrics['anonymity_accuracy'] = {}
+            self._metrics['anonymity_accuracy']['entropy_missed_actual_source'] = w(
+                self._raw.anon_entropy_missing_count)
+            percent = per(self._raw.anon_entropy_missing_count,
+                          self._raw.message_inter_pro_count)
+            self._metrics['anonymity_accuracy']['entropy_missed_actual_source_percent'] = w(
+                percent, '%f%%' % (percent * 100))
+
+            self._metrics['anonymity_accuracy']['ranked_missed_actual_source'] = w(
+                self._raw.anon_rank_missing_count)
+            percent = per(self._raw.anon_rank_missing_count,
+                          self._raw.message_inter_pro_count)
+            self._metrics['anonymity_accuracy']['ranked_missed_actual_source_percent'] = w(
+                percent, '%f%%' % (percent * 100))
+
+            self._metrics['anonymity_accuracy']['rank_diff_from_actual_avg'] = w(
+                numpy.mean(self._raw.anon_rank_diff_actual))
+            self._metrics['anonymity_accuracy']['rank_diff_from_actual_std'] = w(
+                numpy.std(self._raw.anon_rank_diff_actual))
+
+            self._metrics['anonymity_accuracy']['top_rank_correct'] = w(
+                self._raw.anon_top_rank_correct_count)
+            percent = per(self._raw.anon_top_rank_correct_count,
+                          self._raw.message_inter_pro_count)
+            self._metrics['anonymity_accuracy']['top_rank_correct_percent'] = w(
+                percent, '%f%%' % (percent * 100))
 
         ##################################################################
         self._metrics['_raw'] = self._raw.to_dict()
@@ -233,7 +295,7 @@ class RoutingMetrics(object):
         series_list = ['Sender Set Size Average',
                        'Sender Set Size Standard Deviation']
         return self._graph_by_hop(series_list,
-                                  self._raw.adv_inter_hop_calced, 
+                                  self._raw.adv_inter_hop_calced,
                                   self._raw.sender_set_size)
 
     def graph_entropy(self):
@@ -248,7 +310,7 @@ class RoutingMetrics(object):
             whole_bin = (whole / 5) * 5
             return whole_bin / 100.0
         labels, data, start, stop = to_histogram_floats(
-            self._raw.entropy, 0.05, 2, 0.0, 1.0, _bucket)
+            self._raw.anon_entropy, 0.05, 2, 0.0, 1.0, _bucket)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_entropy_by_hop(self):
@@ -260,8 +322,32 @@ class RoutingMetrics(object):
                        'Entropy Standard Deviation']
 
         return self._graph_by_hop(series_list,
-                                  self._raw.adv_inter_hop_calced, 
-                                  self._raw.entropy)
+                                  self._raw.adv_inter_hop_calced,
+                                  self._raw.anon_entropy)
+
+    def graph_top_rank_set_size_by_hop(self):
+        '''
+        Generate a graph avg top rank set size by intercepted at hop
+        :return: dict of graph data
+        '''
+        series_list = ['Top Rank Set Size Average',
+                       'Top Rank Set Size Standard Deviation']
+
+        return self._graph_by_hop(series_list,
+                                  self._raw.adv_inter_hop_calced,
+                                  self._raw.anon_top_rank_set_size)
+
+    def graph_top_rank_by_hop(self):
+        '''
+        Generate a graph avg top rank value by intercepted at hop
+        :return: dict of graph data
+        '''
+        series_list = ['Top Rank Average',
+                       'Top Rank Standard Deviation']
+
+        return self._graph_by_hop(series_list,
+                                  self._raw.adv_inter_hop_calced,
+                                  self._raw.anon_top_rank)
 
     def graph_intercept_hop(self):
         '''
@@ -348,7 +434,7 @@ class RoutingMetrics(object):
                 (count / float(graph.number_of_nodes()) * 100))
         return (adversaries_count, adversaries_percent)
 
-    def _post_process_route_data(self, data):
+    def _post_process_route_data(self, data, parameters):
         #'''
         # Add the routing data from a single route
         #:param data: dict that contains the experiment route data
@@ -363,9 +449,9 @@ class RoutingMetrics(object):
         y_loc = destination_node['location']
         data['distance'] = distance(x_loc, y_loc)
 
-        self._calculate_anonymity_set(data, nx_graph)
+        self._calculate_anonymity_set(data, nx_graph, parameters)
 
-    def _calculate_anonymity_set(self, data, nx_graph):
+    def _calculate_anonymity_set(self, data, nx_graph, parameters):
         if 'Ping' not in data['message_type']:
             return
         a_node, p_node = next(
@@ -380,15 +466,28 @@ class RoutingMetrics(object):
             a_set = r_tree.get_sender_set()
             a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
 
-            # add support for other routing types
+            # map routing type to ranking algorithm
+            if parameters['router_type'] == 'DHTRouterGreedy':
+                route_alg = r_tree.rank_greedy
+            else:
+                raise Exception('Unknown routing type')
+
             a_data['ranked_set'] = r_tree.get_sender_set_rank(
-                r_tree.rank_greedy, data['target'])
+                route_alg, data['target'])
             a_data['probability_set'] = r_tree.get_sender_set_distribution(
-                r_tree.rank_greedy, r_tree.distro_rank_exponetial_backoff, data['target'])
+                route_alg, r_tree.distro_rank_exponetial_backoff, data['target'])
         else:
             a_data = {'calculated': False,
                       'hop': a_node['hop'], 'estimated_work': r_tree.estimated_work}
         data['anonymity_set'] = a_data
+
+    def _ranked_nodes_diff(self, ranked_set, source_node_id):
+        sorted_rank = sorted(ranked_set.keys())
+        top_rank = sorted_rank[0]
+        for rank in sorted_rank:
+            if source_node_id in ranked_set[rank]:
+                return rank - top_rank
+        return -1
 
     def _get_adversaries(self, data):
         adversaries = []

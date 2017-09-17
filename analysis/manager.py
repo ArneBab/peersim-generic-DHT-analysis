@@ -134,6 +134,12 @@ class Manager(object):
 
         with open(self._metrics(base_path, 'entropy_by_hop.json'), 'w') as g_file:
             g_file.write(json.dumps(r_metrics.graph_entropy_by_hop()))
+
+        with open(self._metrics(base_path, 'top_rank_set_size_by_hop.json'), 'w') as g_file:
+            g_file.write(json.dumps(r_metrics.graph_top_rank_set_size_by_hop()))
+
+        with open(self._metrics(base_path, 'top_rank_by_hop.json'), 'w') as g_file:
+            g_file.write(json.dumps(r_metrics.graph_top_rank_by_hop()))
         # consolidated metrics
         with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
             g_file.write(json.dumps(r_metrics.get_summary()))

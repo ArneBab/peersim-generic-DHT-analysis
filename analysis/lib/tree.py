@@ -97,15 +97,15 @@ class RoutingTree(object):
         if self.get_height() < 2:
             return {}
         if self.get_height() == 2:
-            return {1: self._root.children[0].data}
+            return {1: [self._root.children[0].data]}
         # known its 100% for the level 1 node (previous), so we can skip
 
         def distro_function(rank): return rank
-        rank = self._assign_sender_rank(
+        ranks = self._assign_sender_rank(
             rank_function, distro_function, self._root.children[0],
             target_location, self.get_height() - 3, 1)
         rank_set = {}
-        for node, rank in rank:
+        for node, rank in ranks:
             if rank not in rank_set:
                 rank_set[rank] = []
             rank_set[rank].append(node)

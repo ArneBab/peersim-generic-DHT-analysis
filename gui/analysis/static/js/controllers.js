@@ -69,6 +69,18 @@ angular.module('challengerApp.controllers', [])
       $scope.graphs.push(result)
     })
 
+    MetricService.get({id: $stateParams.id, metric: 'top_rank_set_size_by_hop.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Top Ranked Sender Set Size by Intercepted at Hop: Average')
+      result.type = 'line'
+      $scope.graphs.push(result)
+    })
+
+    MetricService.get({id: $stateParams.id, metric: 'top_rank_by_hop.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Top Ranked Value by Intercepted at Hop: Average')
+      result.type = 'line'
+      $scope.graphs.push(result)
+    })
+
     $scope.open = function (index) {
       var modalInstance = $uibModal.open({
         animation: true,
