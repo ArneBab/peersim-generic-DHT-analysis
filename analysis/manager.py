@@ -123,11 +123,17 @@ class Manager(object):
         with open(self._metrics(base_path, 'graphs.json'), 'w') as g_file:
             g_file.write(json.dumps(r_metrics.graph_metrics()))
         # anon metrics
-        with open(self._metrics(base_path, 'anon_set.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_anonymity_set()))
+        with open(self._metrics(base_path, 'sender_set_size.json'), 'w') as g_file:
+            g_file.write(json.dumps(r_metrics.graph_sender_set()))
+
+        with open(self._metrics(base_path, 'sender_set_size_by_hop.json'), 'w') as g_file:
+            g_file.write(json.dumps(r_metrics.graph_sender_set_by_hop()))
         # entropy metrics
         with open(self._metrics(base_path, 'entropy.json'), 'w') as g_file:
             g_file.write(json.dumps(r_metrics.graph_entropy()))
+
+        with open(self._metrics(base_path, 'entropy_by_hop.json'), 'w') as g_file:
+            g_file.write(json.dumps(r_metrics.graph_entropy_by_hop()))
         # consolidated metrics
         with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
             g_file.write(json.dumps(r_metrics.get_summary()))

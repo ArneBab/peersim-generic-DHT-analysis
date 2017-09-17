@@ -33,12 +33,12 @@ class RoutingMetrics(object):
         avg_degrees = []
         routing_path_lengths = []
         circiut_path_lengths = []
-        anon_set_size_full = []
+        sender_set_size = []
         message_count = 0
         message_inter_count = 0
         message_inter_pro_count = 0
-        adversary_inter_hop = []
-        adversary_inter_hop_calced = []
+        adv_inter_hop = []
+        adv_inter_hop_calced = []
         entropy = []
 
         def to_dict(self):
@@ -92,14 +92,14 @@ class RoutingMetrics(object):
                 self._raw.message_count += 1
                 if 'anonymity_set' in route:
                     self._raw.message_inter_count += 1
-                    self._raw.adversary_inter_hop.append(
+                    self._raw.adv_inter_hop.append(
                         route['anonymity_set']['hop'])
 
                     if route['anonymity_set']['calculated']:
                         self._raw.message_inter_pro_count += + 1
-                        self._raw.anon_set_size_full.append(
+                        self._raw.sender_set_size.append(
                             route['anonymity_set']['full_set']['length'])
-                        self._raw.adversary_inter_hop_calced.append(
+                        self._raw.adv_inter_hop_calced.append(
                             route['anonymity_set']['hop'])
                         self._raw.entropy.append(entropy_normalized(
                             route['anonymity_set']['probability_set'].values()))
@@ -185,11 +185,11 @@ class RoutingMetrics(object):
 
         ##################################################################
         self._metrics['anonymity'] = {}
-        if len(self._raw.anon_set_size_full) > 0:
+        if len(self._raw.sender_set_size) > 0:
             self._metrics['anonymity']['sender_set_size_avg'] = w(
-                numpy.mean(self._raw.anon_set_size_full))
+                numpy.mean(self._raw.sender_set_size))
             self._metrics['anonymity']['sender_set_size_std'] = w(
-                numpy.std(self._raw.anon_set_size_full))
+                numpy.std(self._raw.sender_set_size))
             self._metrics['anonymity']['entropy_avg'] = w(
                 numpy.mean(self._raw.entropy))
             self._metrics['anonymity']['entropy_std'] = w(
@@ -215,15 +215,26 @@ class RoutingMetrics(object):
         data = [self._raw.avg_degrees, self._raw.avg_diameters]
         return {'labels': labels, 'data': data, 'series': series_list}
 
-    def graph_anonymity_set(self):
+    def graph_sender_set(self):
         '''
-        Generate a graph of the anonymity set sizes
+        Generate a graph of the sender set sizes
         :return: dict of graph data
         '''
         series_list = ['Sender Set Size']
         labels, data, start, stop = to_histogram_ints(
-            self._raw.anon_set_size_full, 1)
+            self._raw.sender_set_size, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
+
+    def graph_sender_set_by_hop(self):
+        '''
+        Generate a graph of the sender set sizes by intercepted at hop
+        :return: dict of graph data
+        '''
+        series_list = ['Sender Set Size Average',
+                       'Sender Set Size Standard Deviation']
+        return self._graph_by_hop(series_list,
+                                  self._raw.adv_inter_hop_calced, 
+                                  self._raw.sender_set_size)
 
     def graph_entropy(self):
         '''
@@ -240,6 +251,18 @@ class RoutingMetrics(object):
             self._raw.entropy, 0.05, 2, 0.0, 1.0, _bucket)
         return {'labels': labels, 'data': data, 'series': series_list}
 
+    def graph_entropy_by_hop(self):
+        '''
+        Generate a graph avg entropy by intercepted at hop
+        :return: dict of graph data
+        '''
+        series_list = ['Entropy Average',
+                       'Entropy Standard Deviation']
+
+        return self._graph_by_hop(series_list,
+                                  self._raw.adv_inter_hop_calced, 
+                                  self._raw.entropy)
+
     def graph_intercept_hop(self):
         '''
         Generate a graph of where adversaries intercepted a message
@@ -247,7 +270,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Adversary Intercept Hop']
         labels, data, start, stop = to_histogram_ints(
-            self._raw.adversary_inter_hop, 1)
+            self._raw.adv_inter_hop, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_intercept_hop_calculated(self):
@@ -257,7 +280,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Adversary Intercept Hop for Calculated']
         labels, data, start, stop = to_histogram_ints(
-            self._raw.adversary_inter_hop_calced, 1)
+            self._raw.adv_inter_hop_calced, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_path_lengths(self):
@@ -281,6 +304,38 @@ class RoutingMetrics(object):
 
     def _wrapper(self, value, description=None):
         return {'value': value, 'description': description}
+
+    def _graph_by_hop(self, series_list, hop_list, data_list):
+        # organize data into buckets
+        if len(hop_list) != len(data_list):
+            raise Exception('Something is very wrong, not the same length')
+
+        holder = {}
+        max_hop = 0
+        for i in range(0, len(data_list)):
+            data = data_list[i]
+            hop = hop_list[i]
+            if hop not in holder:
+                holder[hop] = []
+            holder[hop].append(data)
+            if hop > max_hop:
+                max_hop = hop
+
+        # write data into graph format
+        avg_data = []
+        std_data = []
+        labels = []
+        for i in range(0, max_hop):
+            hop = i + 1
+            labels.append(hop)
+            if hop in holder:
+                avg_data.append(numpy.mean(holder[hop]))
+                std_data.append(numpy.std(holder[hop]))
+            else:
+                avg_data.append(0)
+                std_data.append(0)
+
+        return {'labels': labels, 'data': [avg_data, std_data], 'series': series_list}
 
     def _get_number_of_adversaries(self):
         adversaries_count = []

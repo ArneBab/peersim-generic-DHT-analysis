@@ -15,7 +15,7 @@ angular.module('challengerApp.controllers', [])
 
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {
-      result.options = stacked_graph_options('Routing Choices: Stacked')
+      result.options = stacked_graph_options('Routing Preferences Taken: Stacked')
       result.type = 'line'
       $scope.graphs.push(result)
     })
@@ -29,22 +29,29 @@ angular.module('challengerApp.controllers', [])
 
     // load the intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'intercept.json'}).$promise.then(function (result) {
-      result.options = basic_graph_options('Adversary Intercept Hop: Histogram')
+      result.options = basic_graph_options('Adversary Intercept at Hop: Histogram')
       result.type = 'bar'
       $scope.graphs.push(result)
     })
 
     // load the intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'intercept_calculated.json'}).$promise.then(function (result) {
-      result.options = basic_graph_options('Adversary Intercept Hop for Calculated: Histogram')
+      result.options = basic_graph_options('Adversary Intercept at Hop for Calculated: Histogram')
       result.type = 'bar'
       $scope.graphs.push(result)
     })
 
-    // load the anon graph data
-    MetricService.get({id: $stateParams.id, metric: 'anon_set.json'}).$promise.then(function (result) {
+    // load the sender set graph data
+    MetricService.get({id: $stateParams.id, metric: 'sender_set_size.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size: Histogram')
       result.type = 'bar'
+      $scope.graphs.push(result)
+    })
+
+    // load the sender set by intercept hop graph data
+    MetricService.get({id: $stateParams.id, metric: 'sender_set_size_by_hop.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Sender Set Size by Intercepted at Hop: Average')
+      result.type = 'line'
       $scope.graphs.push(result)
     })
 
@@ -52,6 +59,13 @@ angular.module('challengerApp.controllers', [])
     MetricService.get({id: $stateParams.id, metric: 'entropy.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Entropy: Histogram')
       result.type = 'bar'
+      $scope.graphs.push(result)
+    })
+
+    // load the sender set by intercept hop graph data
+    MetricService.get({id: $stateParams.id, metric: 'entropy_by_hop.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy by Intercepted at Hop: Average')
+      result.type = 'line'
       $scope.graphs.push(result)
     })
 
