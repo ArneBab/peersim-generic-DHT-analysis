@@ -3,6 +3,15 @@ angular.module('challengerApp.controllers', [])
     $scope.id = $stateParams.id
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
     $scope.graphs = []
+    $scope.can_show = function (items) {
+      var result = {}
+      angular.forEach(items, function (value, key) {
+        if (!key.startsWith('_')) {
+          result[key] = value
+        }
+      })
+      return result
+    }
 
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {

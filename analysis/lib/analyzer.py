@@ -10,7 +10,7 @@ import json
 import networkx as nx
 
 from .configuration import GRAPH_DATA_PATH
-from .routingMetrics import RoutingMetrics
+from .routing_metrics import RoutingMetrics
 
 
 class Analyzer(object):

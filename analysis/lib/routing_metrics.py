@@ -24,18 +24,36 @@ class RoutingMetrics(object):
     _nx_graphs = {}
     _routing_data_file_name = None
     _metrics = {
-        'topology_type': None, 'churn_rate': None}
-    _avg_diameters = []
-    _avg_degrees = []
-    _routing_path_lengths = []
-    _circiut_path_lengths = []
-    _anon_set_size_full = []
-    _message_count = 0
-    _message_inter_count = 0
-    _message_inter_pro_count = 0
-    _adversary_inter_hop = []
-    _adversary_inter_hop_calced = []
-    _entropy = []
+        'missing': {'topology_type': None, 'churn_rate': None}}
+
+    ##########################################
+    class RawMetrics(object):
+        ''' Class stores Raw metric data '''
+        avg_diameters = []
+        avg_degrees = []
+        routing_path_lengths = []
+        circiut_path_lengths = []
+        anon_set_size_full = []
+        message_count = 0
+        message_inter_count = 0
+        message_inter_pro_count = 0
+        adversary_inter_hop = []
+        adversary_inter_hop_calced = []
+        entropy = []
+
+        def to_dict(self):
+            ''' Returns the classes variables and values in dict '''
+            myself = {}
+            for name in dir(self):
+                if name.startswith('_'):
+                    continue
+                value = getattr(self, name)
+                if callable(value):
+                    continue
+                myself[name] = value
+            return myself
+    _raw = RawMetrics()
+    ##########################################
 
     def __init__(self, graphs, input_data_file_name, output_data_file_name, experiment_config):
         '''
@@ -49,10 +67,12 @@ class RoutingMetrics(object):
             raise Exception('Could not find the given routing data file')
         self._routing_data_file_name = output_data_file_name
         self._nx_graphs = graphs
+        parameters = {}
         for param in Configuration.get_parameters():
             if param in experiment_config:
-                self._metrics['X: ' +
-                              param] = self._wrapper(experiment_config[param])
+                parameters[param] = self._wrapper(
+                    experiment_config[param])
+        self._metrics['variables'] = parameters
 
         # process routing data and store in new file, use new file as data source then
         with open(self._routing_data_file_name, 'w') as r_file:
@@ -63,25 +83,25 @@ class RoutingMetrics(object):
                 r_file.write('\n')
 
                 # lengths
-                self._routing_path_lengths.append(
+                self._raw.routing_path_lengths.append(
                     route['routing_path']['length'])
-                self._circiut_path_lengths.append(
+                self._raw.circiut_path_lengths.append(
                     route['connection_path']['length'])
 
                 # counters
-                self._message_count = self._message_count + 1
+                self._raw.message_count += 1
                 if 'anonymity_set' in route:
-                    self._message_inter_count = self._message_inter_count + 1
-                    self._adversary_inter_hop.append(
+                    self._raw.message_inter_count += 1
+                    self._raw.adversary_inter_hop.append(
                         route['anonymity_set']['hop'])
 
                     if route['anonymity_set']['calculated']:
-                        self._message_inter_pro_count = self._message_inter_pro_count + 1
-                        self._anon_set_size_full.append(
+                        self._raw.message_inter_pro_count += + 1
+                        self._raw.anon_set_size_full.append(
                             route['anonymity_set']['full_set']['length'])
-                        self._adversary_inter_hop_calced.append(
+                        self._raw.adversary_inter_hop_calced.append(
                             route['anonymity_set']['hop'])
-                        self._entropy.append(entropy_normalized(
+                        self._raw.entropy.append(entropy_normalized(
                             route['anonymity_set']['probability_set'].values()))
 
     def calculate_metrics(self):
@@ -99,65 +119,84 @@ class RoutingMetrics(object):
 
         def w(v, d=None): return self._wrapper(v, d)
 
-        self._avg_degrees = all_graphs(lambda g: average_degree(g))
-        self._avg_diameters = all_graphs(lambda g: nx.diameter(g))
+        self._raw.avg_degrees = all_graphs(lambda g: average_degree(g))
+        self._raw.avg_diameters = all_graphs(lambda g: nx.diameter(g))
 
-        self._metrics['degree_avg'] = w(numpy.mean(self._avg_degrees))
-        self._metrics['degree_std'] = w(numpy.std(self._avg_degrees))
+        ##################################################################
+        self._metrics['graph'] = {}
+        self._metrics['graph']['degree_avg'] = w(
+            numpy.mean(self._raw.avg_degrees))
+        self._metrics['graph']['degree_std'] = w(
+            numpy.std(self._raw.avg_degrees))
 
-        self._metrics['diameter_avg'] = w(numpy.mean(self._avg_diameters))
-        self._metrics['diameter_std'] = w(numpy.std(self._avg_diameters))
+        self._metrics['graph']['diameter_avg'] = w(
+            numpy.mean(self._raw.avg_diameters))
+        self._metrics['graph']['diameter_std'] = w(
+            numpy.std(self._raw.avg_diameters))
 
         node_counts = [g.number_of_nodes() for g in self._nx_graphs.values()]
-        self._metrics['node_count_avg'] = w(numpy.mean(node_counts))
-        self._metrics['node_count_std'] = w(numpy.std(node_counts))
+        self._metrics['graph']['node_count_avg'] = w(numpy.mean(node_counts))
+        self._metrics['graph']['node_count_std'] = w(numpy.std(node_counts))
 
         edge_counts = all_graphs(lambda g: g.number_of_edges())
-        self._metrics['edge_count_avg'] = w(numpy.mean(edge_counts))
-        self._metrics['edge_count_std'] = w(numpy.std(edge_counts))
+        self._metrics['graph']['edge_count_avg'] = w(numpy.mean(edge_counts))
+        self._metrics['graph']['edge_count_std'] = w(numpy.std(edge_counts))
 
+        ##################################################################
+        self._metrics['adversary'] = {}
         adv_count, adv_percent = self._get_number_of_adversaries()
-        self._metrics['adversary_count_avg'] = w(numpy.mean(
+        self._metrics['adversary']['count_avg'] = w(numpy.mean(
             adv_count), '(%f%% of all nodes)' % numpy.mean(adv_percent))
-        self._metrics['adversary_count_std'] = w(numpy.std(adv_count))
+        self._metrics['adversary']['count_std'] = w(numpy.std(adv_count))
 
-        self._metrics['adversary_messages_intercepted'] = w(
-            self._message_inter_count)
-        if self._message_inter_count > 0:
-            percent = per(self._message_inter_count, self._message_count)
-            self._metrics['adversary_messages_intercepted_percent'] = w(
+        self._metrics['adversary']['messages_intercepted'] = w(
+            self._raw.message_inter_count)
+        if self._raw.message_inter_count > 0:
+            percent = per(self._raw.message_inter_count,
+                          self._raw.message_count)
+            self._metrics['adversary']['messages_intercepted_percent'] = w(
                 percent, '%f%%' % (percent * 100))
 
-        self._metrics['adversary_senders_calculable'] = w(
-            self._message_inter_pro_count)
-        if self._message_inter_pro_count > 0:
-            percent = per(self._message_inter_pro_count,
-                          self._message_inter_count)
-            self._metrics['adversary_senders_calculable_percent_of_intercepted'] = w(
+        self._metrics['adversary']['sender_sets_calculable'] = w(
+            self._raw.message_inter_pro_count)
+        if self._raw.message_inter_pro_count > 0:
+            percent = per(self._raw.message_inter_pro_count,
+                          self._raw.message_inter_count)
+            self._metrics['adversary']['sender_sets_calculable_percent_of_intercepted'] = w(
                 percent, '%f%%' % (percent * 100))
-            percent = per(self._message_inter_pro_count, self._message_count)
-            self._metrics['adversary_senders_calculable_percent_of_total'] = w(
+            percent = per(self._raw.message_inter_pro_count,
+                          self._raw.message_count)
+            self._metrics['adversary']['sender_sets_calculable_percent_of_total'] = w(
                 percent, '%f%%' % (percent * 100))
 
-        self._metrics['message_count'] = w(self._message_count)
+        ##################################################################
+        self._metrics['routing'] = {}
+        self._metrics['routing']['message_count'] = w(self._raw.message_count)
 
-        self._metrics['path_length_routing_avg'] = w(numpy.mean(
-            self._routing_path_lengths))
-        self._metrics['path_length_routing_std'] = w(numpy.std(
-            self._routing_path_lengths))
+        self._metrics['routing']['path_length_routing_avg'] = w(numpy.mean(
+            self._raw.routing_path_lengths))
+        self._metrics['routing']['path_length_routing_std'] = w(numpy.std(
+            self._raw.routing_path_lengths))
 
-        self._metrics['path_length_circuit_avg'] = w(numpy.mean(
-            self._circiut_path_lengths))
-        self._metrics['path_length_circuit_std'] = w(numpy.std(
-            self._circiut_path_lengths))
+        self._metrics['routing']['path_length_circuit_avg'] = w(numpy.mean(
+            self._raw.circiut_path_lengths))
+        self._metrics['routing']['path_length_circuit_std'] = w(numpy.std(
+            self._raw.circiut_path_lengths))
 
-        if len(self._anon_set_size_full) > 0:
-            self._metrics['sender_anonymity_set_size_avg'] = w(
-                numpy.mean(self._anon_set_size_full))
-            self._metrics['sender_anonymity_set_size_std'] = w(
-                numpy.std(self._anon_set_size_full))
-            self._metrics['entropy_avg'] = w(numpy.mean(self._entropy))
-            self._metrics['entropy_std'] = w(numpy.std(self._entropy))
+        ##################################################################
+        self._metrics['anonymity'] = {}
+        if len(self._raw.anon_set_size_full) > 0:
+            self._metrics['anonymity']['sender_set_size_avg'] = w(
+                numpy.mean(self._raw.anon_set_size_full))
+            self._metrics['anonymity']['sender_set_size_std'] = w(
+                numpy.std(self._raw.anon_set_size_full))
+            self._metrics['anonymity']['entropy_avg'] = w(
+                numpy.mean(self._raw.entropy))
+            self._metrics['anonymity']['entropy_std'] = w(
+                numpy.std(self._raw.entropy))
+
+        ##################################################################
+        self._metrics['_raw'] = self._raw.to_dict()
 
     def get_summary(self):
         '''
@@ -173,7 +212,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Average Degree', 'Graph Diameter']
         labels = [g.graph['cycle'] for g in self._nx_graphs.values()]
-        data = [self._avg_degrees, self._avg_diameters]
+        data = [self._raw.avg_degrees, self._raw.avg_diameters]
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_anonymity_set(self):
@@ -183,7 +222,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Sender Set Size']
         labels, data, start, stop = to_histogram_ints(
-            self._anon_set_size_full, 1)
+            self._raw.anon_set_size_full, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_entropy(self):
@@ -198,7 +237,7 @@ class RoutingMetrics(object):
             whole_bin = (whole / 5) * 5
             return whole_bin / 100.0
         labels, data, start, stop = to_histogram_floats(
-            self._entropy, 0.05, 2, 0.0, 1.0, _bucket)
+            self._raw.entropy, 0.05, 2, 0.0, 1.0, _bucket)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_intercept_hop(self):
@@ -208,7 +247,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Adversary Intercept Hop']
         labels, data, start, stop = to_histogram_ints(
-            self._adversary_inter_hop, 1)
+            self._raw.adversary_inter_hop, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_intercept_hop_calculated(self):
@@ -218,7 +257,7 @@ class RoutingMetrics(object):
         '''
         series_list = ['Adversary Intercept Hop for Calculated']
         labels, data, start, stop = to_histogram_ints(
-            self._adversary_inter_hop_calced, 1)
+            self._raw.adversary_inter_hop_calced, 1)
         return {'labels': labels, 'data': data, 'series': series_list}
 
     def graph_path_lengths(self):
