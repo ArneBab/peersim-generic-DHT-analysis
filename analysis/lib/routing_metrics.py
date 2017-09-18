@@ -24,7 +24,7 @@ class RoutingMetrics(object):
     _nx_graphs = {}
     _routing_data_file_name = None
     _metrics = {
-        'missing': {'topology_type': None, 'churn_rate': None}}
+        'missing': {'churn_rate': None}}
 
     ##########################################
     class RawMetrics(object):

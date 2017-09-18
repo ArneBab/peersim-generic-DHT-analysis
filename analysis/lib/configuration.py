@@ -8,6 +8,7 @@ Generate configuration files for Peersim simulator
 import os
 from random import randint
 from string import Template
+from topology_generator import TopologyGenerator
 
 ROUTING_DATA_FILE_NAME = 'routing.json'
 GRAPH_DATA_PATH = 'graphs'
@@ -29,12 +30,14 @@ class Configuration(object):
         experiment_count='1',
         size=[100],
         #size=[10, 100, 1000],
+        degree=[4],
         repeat=[1],
         # repeat=[1,2,3,4,5,6,7,8,9,10],
         look_ahead=[2],
         # adversary_count=[1, 1%, 2%],
         adversary_count=[1],
         traffic_generator='RandomPingTraffic',
+        topology_type=['random'],
         router_type=['DHTRouterGreedy'],
         router_can_backtrack=['true'],
         router_drop_rate=[0.0],
@@ -126,7 +129,34 @@ class Configuration(object):
                 config[key] = value(config)
             else:
                 config[key] = str(value)
+
+        # special check for topology type
+        self._eval_topology_type(config)
+
         return config
+
+    def _eval_topology_type(self, config):
+
+        path = os.path.join(Configuration.file_path_for_config(
+            config), 'input-graph.gml')
+        size = int(config['size'])
+        degree = int(config['degree'])
+
+        if config['topology_type'] == 'random':
+            graph_data = TopologyGenerator.generate_random_topology(
+                size, degree)
+        else:
+            raise Exception('Unknown topology type')
+
+        # check if directory exists
+        dir_name = os.path.dirname(path)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+
+        with open(path, 'w') as g_file:
+            g_file.write(graph_data)
+
+        config['topology_file'] = path
 
     def __getitem__(self, key):
         '''
@@ -154,7 +184,7 @@ class Configuration(object):
         Get the used experiment parameters
         :return: List of parameter names
         '''
-        return ['router_type', 'look_ahead', 'adversary_count', 'size', 'repeat']
+        return ['topology_type', 'router_type', 'look_ahead', 'adversary_count', 'size', 'degree', 'repeat']
 
     @staticmethod
     def file_path_for_config(config, output_base_directory=None):
