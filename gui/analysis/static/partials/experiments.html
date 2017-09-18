@@ -28,10 +28,14 @@
 <hr ng-repeat-end="" />
 <h3>Graphs</h3>
 
-<div ng-repeat="graph in graphs">
-    <div class="col-sm-6">
-        <canvas ng-click="open($index)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
-            chart-series="graph.series" chart-options="graph.options">
-        </canvas>
-    </div>
+<div class="row" ng-repeat-start="(group, values) in graphs">
+    <h4 class="capitalize">{{group | prettyName}}</h4>
+</div>
+<div class="col-sm-6" ng-repeat="graph in values">
+    <canvas ng-click="open(graph.id)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
+        chart-series="graph.series" chart-options="graph.options">
+    </canvas>
+</div>
+<div class="row" ng-repeat-end="">
+    <hr />
 </div>

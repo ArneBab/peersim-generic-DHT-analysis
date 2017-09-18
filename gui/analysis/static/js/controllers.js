@@ -2,7 +2,7 @@ angular.module('challengerApp.controllers', [])
   .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, MetricService) {
     $scope.id = $stateParams.id
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
-    $scope.graphs = []
+    $scope.graphs = {'routing':[],'adversary':[], 'sender_set':[], 'anonymity':[]}
     $scope.can_show = function (items) {
       var result = {}
       angular.forEach(items, function (value, key) {
@@ -17,68 +17,78 @@ angular.module('challengerApp.controllers', [])
     MetricService.get({id: $stateParams.id, metric: 'stats.json'}).$promise.then(function (result) {
       result.options = stacked_graph_options('Routing Preferences Taken: Stacked')
       result.type = 'line'
-      $scope.graphs.push(result)
+      result.id =0
+      $scope.graphs['routing'].push(result)
     })
 
     // load the routing choice graph data
     MetricService.get({id: $stateParams.id, metric: 'path_histo.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Path Lengths (Hops): Histogram')
       result.type = 'bar'
-      $scope.graphs.push(result)
+      result.id =1
+      $scope.graphs['routing'].push(result)
     })
 
     // load the intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'intercept.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Adversary Intercept at Hop: Histogram')
       result.type = 'bar'
-      $scope.graphs.push(result)
+      result.id =2
+      $scope.graphs['adversary'].push(result)
     })
 
     // load the intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'intercept_calculated.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Adversary Intercept at Hop for Calculated: Histogram')
       result.type = 'bar'
-      $scope.graphs.push(result)
+      result.id =3
+      $scope.graphs['adversary'].push(result)
     })
 
     // load the sender set graph data
     MetricService.get({id: $stateParams.id, metric: 'sender_set_size.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size: Histogram')
       result.type = 'bar'
-      $scope.graphs.push(result)
+      result.id =4
+      $scope.graphs['sender_set'].push(result)
     })
 
     // load the sender set by intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'sender_set_size_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size by Intercepted at Hop: Average')
       result.type = 'line'
-      $scope.graphs.push(result)
+      result.id =5
+      $scope.graphs['sender_set'].push(result)
     })
 
     // load the entropy graph data
     MetricService.get({id: $stateParams.id, metric: 'entropy.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Entropy: Histogram')
       result.type = 'bar'
-      $scope.graphs.push(result)
+      result.id =06
+      $scope.graphs['anonymity'].push(result)
     })
 
     // load the sender set by intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'entropy_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Entropy by Intercepted at Hop: Average')
       result.type = 'line'
-      $scope.graphs.push(result)
+      result.id =7
+      $scope.graphs['anonymity'].push(result)
     })
 
     MetricService.get({id: $stateParams.id, metric: 'top_rank_set_size_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Top Ranked Sender Set Size by Intercepted at Hop: Average')
       result.type = 'line'
-      $scope.graphs.push(result)
+      result.id =8
+      $scope.graphs['anonymity'].push(result)
     })
 
     MetricService.get({id: $stateParams.id, metric: 'top_rank_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Top Ranked Value by Intercepted at Hop: Average')
       result.type = 'line'
-      $scope.graphs.push(result)
+      result.id =9
+      $scope.graphs['anonymity'].push(result)
     })
 
     $scope.open = function (index) {
@@ -92,7 +102,14 @@ angular.module('challengerApp.controllers', [])
         size: 'lg',
         resolve: {
           graph: function () {
-            return $scope.graphs[index]
+            for (key in $scope.graphs){
+              for (g in $scope.graphs[key]){
+                if ($scope.graphs[key][g].id === index){
+                  return $scope.graphs[key][g]
+                }
+              }
+            }
+            return null
           }
         }
       })

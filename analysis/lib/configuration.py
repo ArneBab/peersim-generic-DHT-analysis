@@ -31,7 +31,7 @@ class Configuration(object):
         size=[100],
         #size=[10, 100, 1000],
         degree=[4],
-        repeat=[1],
+        repeat=[1,2,3],
         # repeat=[1,2,3,4,5,6,7,8,9,10],
         look_ahead=[2],
         # adversary_count=[1, 1%, 2%],
