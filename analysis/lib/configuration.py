@@ -30,8 +30,8 @@ class Configuration(object):
         experiment_count='1',
         size=[100],
         #size=[10, 100, 1000],
-        degree=[4],
-        repeat=[1,2,3],
+        degree=[4, 5],
+        repeat=[1, 2],
         # repeat=[1,2,3,4,5,6,7,8,9,10],
         look_ahead=[2],
         # adversary_count=[1, 1%, 2%],
@@ -199,3 +199,26 @@ class Configuration(object):
         for key in Configuration.get_parameters():
             path = os.path.join(path, str(key), str(config[key]))
         return path
+
+    @staticmethod
+    def get_hash(config):
+        '''
+        Get a hash of the used variables
+        '''
+        identity = ''
+        for param in Configuration.get_parameters():
+            identity += ':' + str(config[param])
+        return hash(identity)
+
+    @staticmethod
+    def get_group_hash(config):
+        '''
+        Get a hash value for the config group
+        i.e. all experimenents that have the same variables execpt the repeat components
+        '''
+        identity = ''
+        for param in Configuration.get_parameters():
+            if param == 'repeat':
+                continue
+            identity += ':' + str(config[param])
+        return hash(identity)

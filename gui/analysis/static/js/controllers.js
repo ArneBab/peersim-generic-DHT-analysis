@@ -2,7 +2,7 @@ angular.module('challengerApp.controllers', [])
   .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, MetricService) {
     $scope.id = $stateParams.id
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
-    $scope.graphs = {'routing':[],'adversary':[], 'sender_set':[], 'anonymity':[]}
+    $scope.graphs = {'routing':[],'graph':[],'adversary':[], 'sender_set':[], 'anonymity_exponential_backoff':[], 'anonymity_actual_backoff': []}
     $scope.can_show = function (items) {
       var result = {}
       angular.forEach(items, function (value, key) {
@@ -45,11 +45,18 @@ angular.module('challengerApp.controllers', [])
       $scope.graphs['adversary'].push(result)
     })
 
+    MetricService.get({id: $stateParams.id, metric: 'intercept_percent.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Adversary Intercept Percent at Hop: Sumation')
+      result.type = 'line'
+      result.id =4
+      $scope.graphs['adversary'].push(result)
+    })
+
     // load the sender set graph data
     MetricService.get({id: $stateParams.id, metric: 'sender_set_size.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size: Histogram')
       result.type = 'bar'
-      result.id =4
+      result.id =5
       $scope.graphs['sender_set'].push(result)
     })
 
@@ -57,7 +64,7 @@ angular.module('challengerApp.controllers', [])
     MetricService.get({id: $stateParams.id, metric: 'sender_set_size_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Sender Set Size by Intercepted at Hop: Average')
       result.type = 'line'
-      result.id =5
+      result.id =6
       $scope.graphs['sender_set'].push(result)
     })
 
@@ -65,31 +72,77 @@ angular.module('challengerApp.controllers', [])
     MetricService.get({id: $stateParams.id, metric: 'entropy.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Entropy: Histogram')
       result.type = 'bar'
-      result.id =06
-      $scope.graphs['anonymity'].push(result)
+      result.id =7
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
+    })
+
+    MetricService.get({id: $stateParams.id, metric: 'entropy_normalized.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy Normalized: Histogram')
+      result.type = 'bar'
+      result.id =8
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
     })
 
     // load the sender set by intercept hop graph data
     MetricService.get({id: $stateParams.id, metric: 'entropy_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Entropy by Intercepted at Hop: Average')
       result.type = 'line'
-      result.id =7
-      $scope.graphs['anonymity'].push(result)
+      result.id =9
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
+    })
+    MetricService.get({id: $stateParams.id, metric: 'entropy_normalized_by_hop.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy Normalized by Intercepted at Hop: Average')
+      result.type = 'line'
+      result.id =10
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
     })
 
     MetricService.get({id: $stateParams.id, metric: 'top_rank_set_size_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Top Ranked Sender Set Size by Intercepted at Hop: Average')
       result.type = 'line'
-      result.id =8
-      $scope.graphs['anonymity'].push(result)
+      result.id =11
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
     })
 
     MetricService.get({id: $stateParams.id, metric: 'top_rank_by_hop.json'}).$promise.then(function (result) {
       result.options = basic_graph_options('Top Ranked Value by Intercepted at Hop: Average')
       result.type = 'line'
-      result.id =9
-      $scope.graphs['anonymity'].push(result)
+      result.id =12
+      $scope.graphs['anonymity_exponential_backoff'].push(result)
     })
+
+    
+
+    // load the entropy graph data
+    MetricService.get({id: $stateParams.id, metric: 'entropy_actual.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy: Histogram')
+      result.type = 'bar'
+      result.id =13
+      $scope.graphs['anonymity_actual_backoff'].push(result)
+    })
+
+    MetricService.get({id: $stateParams.id, metric: 'entropy_normalized_actual.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy Normalized: Histogram')
+      result.type = 'bar'
+      result.id =14
+      $scope.graphs['anonymity_actual_backoff'].push(result)
+    })
+
+    // load the sender set by intercept hop graph data
+    MetricService.get({id: $stateParams.id, metric: 'entropy_by_hop_actual.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy by Intercepted at Hop: Average')
+      result.type = 'line'
+      result.id =15
+      $scope.graphs['anonymity_actual_backoff'].push(result)
+    })
+
+    MetricService.get({id: $stateParams.id, metric: 'entropy_normalized_by_hop_actual.json'}).$promise.then(function (result) {
+      result.options = basic_graph_options('Entropy Normalized by Intercepted at Hop: Average')
+      result.type = 'line'
+      result.id =16
+      $scope.graphs['anonymity_actual_backoff'].push(result)
+    })
+
 
     $scope.open = function (index) {
       var modalInstance = $uibModal.open({
@@ -132,10 +185,10 @@ angular.module('challengerApp.controllers', [])
       })
       if (!item) {
         item = {label: path, children: []}
-        if (path_index === path_list.length - 1) {
-          item.data = experiment
-        }
         search_items.push(item)
+      }
+      if (path_index === path_list.length - 1) {
+        item.data = experiment
       }
       return builder(path_list, path_index + 1, item.children, experiment)
     }

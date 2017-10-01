@@ -91,6 +91,16 @@ class TestTree(unittest.TestCase):
         self.assertTrue(round(distro[6], 3) == 0.267)
         self.assertTrue(round(distro[10], 3) == 0.267)
 
+        distro = tree.get_sender_set_distribution(
+            tree.rank_greedy_2_hop, tree.distro_rank_exponetial_backoff,
+            0.55)
+
+        self.assertTrue(round(distro[0], 3) == 0.048)
+        self.assertTrue(round(distro[5], 3) == 0.19)
+        self.assertTrue(round(distro[2], 3) == 0.19)
+        self.assertTrue(round(distro[6], 3) == 0.19)
+        self.assertTrue(round(distro[10], 3) == 0.38)
+
     def test_out_of_bounds(self):
         tree = RoutingTree()
         with self.assertRaises(Exception):

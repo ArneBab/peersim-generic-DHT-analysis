@@ -59,14 +59,28 @@ def load_experiment_data(app):
 
     # read in each experiment config file
     configs = []
+    config_groups = {}
     exp_id = 0
     for exp in experiments_config:
         with open(exp['config'], 'r') as c_file:
             config = json.loads(c_file.read())
             config['id'] = exp_id
-            exp_id = exp_id + 1
+            exp_id += 1
             config['self'] = exp['config']
             configs.append(config)
+
+            if exp['repeat_group'] not in config_groups:
+                config_copy = config.copy()
+                config_copy.pop('repeat')
+                config_copy['self'] = os.path.dirname(config_copy['self'])
+                config_copy['path'] = os.path.dirname(config_copy['path'])
+                config_groups[exp['repeat_group']] = config_copy
+
+    for config in config_groups.values():
+        config['id'] = exp_id
+        exp_id += 1
+        configs.append(config)
+
     logging.info(
         'Loading the experiment data: Loaded %d experiments', len(configs))
 

@@ -160,6 +160,30 @@ class RoutingTree(object):
                 return i + 1
         raise Exception('SOmething went very very wrong')
 
+    def rank_greedy_2_hop(self, node, target_location, nx_graph):
+        '''
+        Calculate the parent node routing rank when greedy routing used with 2 hop look ahead.
+        :param node: node to caluclate the rank for
+        :param target_location: the message target location
+        :param nx_graph: The networkx graph assoicated with this routing tree
+        :return: int rank of parent getting routed to
+        '''
+        peers = {}
+        for child_id in nx_graph.neighbors(node.data):
+            peers[child_id] = distance(
+                nx_graph.node[child_id]['location'], target_location)
+            # peer of peers
+            for child_child_id in nx_graph.neighbors(child_id):
+                dist = distance(nx_graph.node[child_child_id]['location'], target_location)
+                if dist < peers[child_id]:
+                    peers[child_id] = dist
+
+        ordered = sorted(peers.items(), key=lambda x: x[1])
+        for i in range(0, len(ordered)):
+            if ordered[i][0] == node.parent.data:
+                return i + 1
+        raise Exception('SOmething went very very wrong')
+
     def distro_rank_exponetial_backoff(self, rank):
         '''
         Meant to be used as parameter to get_sender_set_distribution.

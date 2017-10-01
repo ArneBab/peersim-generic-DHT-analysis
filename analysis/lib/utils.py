@@ -37,21 +37,20 @@ def to_histogram_ints(values, start=None, stop=None, bin_funct=None):
             histo.append(0)
     return labels, histo, start, stop
 
-def to_histogram_floats(values, step, places, start=None, stop=None, bin_funct=None):
+def to_histogram_floats(values, start=None, stop=None, bin_funct=None, labels_funct=None):
     '''
     Convert a list of numbers into a histogram
     :param values: List of numbers
-    :param step: step size to use
-    :param places: decimal places of percision
     :param start: The start value for the histogram
     :param stop: The stop value for the histogram
     :param bin_funct: When there are not natural bin sizes, they can be defined with this function
+    :param label_funct: Define the label values (same as the bin_funct)
     :return: Labels list, data list, start value, stop value
     '''
     holder, start, stop = _to_histogram_(values, start, stop, bin_funct)
     histo = []
     labels = []
-    for i in frange(start, stop + step, step, places):
+    for i in labels_funct():
         labels.append(i)
         if i in holder:
             histo.append(holder[i])
@@ -89,14 +88,27 @@ def entropy_normalized(distro):
     :param distro: list of output probabilities
     :return: entropy
     '''
-    entropy = 0
+    entropy_value = 0
     for prob in distro:
-        entropy = entropy + (prob * math.log(prob, 2))
-    entropy = entropy * -1
+        entropy_value = entropy_value + (prob * math.log(prob, 2))
+    entropy_value = entropy_value * -1
     max_ent = max_entropy(distro)
     if max_ent == 0.0:
         return 0.0
-    return entropy / float(max_entropy(distro))
+    return entropy_value / float(max_entropy(distro))
+
+
+def entropy(distro):
+    '''
+    Shannon Enropy
+    :param distro: list of output probabilities
+    :return: entropy
+    '''
+    entropy_value = 0
+    for prob in distro:
+        entropy_value = entropy_value + (prob * math.log(prob, 2))
+    entropy_value = entropy_value * -1
+    return entropy_value
 
 
 def max_entropy(distro):
