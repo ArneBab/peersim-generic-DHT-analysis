@@ -21,7 +21,4 @@ class TopologyGenerator(object):
             loc = random.random()
             graph.node[node_id]['label'] = str(loc)
             graph.node[node_id]['location'] = loc
-        graph_string = ''
-        for line in nx.generate_gml(graph):
-            graph_string = '%s\n%s' % (graph_string, line)
-        return graph_string
+        return graph

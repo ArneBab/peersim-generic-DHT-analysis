@@ -13,7 +13,7 @@ import numpy
 
 from .tree import RoutingTree
 from .utils import average_degree, to_histogram_ints, to_histogram_floats
-from .utils import distance, entropy_normalized, entropy, max_entropy
+from .utils import distance, entropy_normalized, entropy, max_entropy, timeit
 from .configuration import Configuration
 
 
@@ -26,6 +26,7 @@ class RoutingMetrics(object):
         ''' Class stores Raw metric data '''
 
         def __init__(self):
+            self.parameters = {}
             self.avg_diameters = []
             self.avg_degrees = []
             self.routing_path_lengths = []
@@ -83,6 +84,7 @@ class RoutingMetrics(object):
 
     ##########################################
 
+    @timeit
     def __init__(self, graphs, experiment_config_list, routing_choice_avg=None,
                  input_data_file_name=None, output_data_file_name=None):
         '''
@@ -121,6 +123,8 @@ class RoutingMetrics(object):
             for name, metric in raw_metrics.items():
                 if isinstance(metric, list):
                     self._raw.get(name).extend(metric)
+                elif isinstance(metric, dict):
+                    self._raw.set(name, metric)
                 else:
                     self._raw.set(name, self._raw.get(name) + metric)
 
@@ -137,6 +141,7 @@ class RoutingMetrics(object):
                 parameters[param] = self._wrapper(
                     experiment_config[param])
         self._metrics['variables'] = parameters
+        self._raw.parameters = experiment_config.copy()
 
         # process routing data and store in new file, use new file as data source then
         with open(output_data_file_name, 'w') as r_file:
@@ -219,6 +224,7 @@ class RoutingMetrics(object):
     def all_graphs(self, op):
         return [op(g) for config in self._nx_graphs.values() for g in config.values()]
 
+    @timeit
     def calculate_metrics(self):
         '''
         Calculate the experiment wide metrics
@@ -233,7 +239,9 @@ class RoutingMetrics(object):
         def w(v, d=None): return self._wrapper(v, d)
 
         self._raw.avg_degrees = self.all_graphs(lambda g: average_degree(g))
-        self._raw.avg_diameters = self.all_graphs(lambda g: nx.diameter(g))
+
+        # Tooooo slow, only do the first graph
+        self._raw.avg_diameters = [nx.diameter(self._nx_graphs.values()[0].values()[0])]
 
         ##################################################################
         self._metrics['graph'] = {}
@@ -242,10 +250,10 @@ class RoutingMetrics(object):
         self._metrics['graph']['degree_std'] = w(
             numpy.std(self._raw.avg_degrees))
 
-        self._metrics['graph']['diameter_avg'] = w(
-            numpy.mean(self._raw.avg_diameters))
-        self._metrics['graph']['diameter_std'] = w(
-            numpy.std(self._raw.avg_diameters))
+        #self._metrics['graph']['diameter_avg'] = w(
+        #    numpy.mean(self._raw.avg_diameters))
+        #self._metrics['graph']['diameter_std'] = w(
+        #    numpy.std(self._raw.avg_diameters))
 
         node_counts = self.all_graphs(lambda g: g.number_of_nodes())
         self._metrics['graph']['node_count_avg'] = w(numpy.mean(node_counts))

@@ -1,2 +1,18 @@
-<h3>Welcome</h3>
-Pick an experiemnt from the menu above
+<h2>Summary</h2>
+
+<div ng-repeat="(variable, metrics) in summary">
+    <h3>{{ variable | prettyName}}</h3>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th ng-repeat="header in metrics.header">{{ header }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="row in metrics.data">
+                <td ng-repeat="data in row">{{ data | prettyName }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

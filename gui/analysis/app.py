@@ -35,6 +35,7 @@ def register_resources(app):
     import analysis.resources.api.experiments as exp
     import analysis.resources.api.metrics as metrics
     import analysis.resources.api.data as data
+    import analysis.resources.api.summary as summary
 
     # home handler
     app.add_url_rule('/', None, handlers.home_handler)
@@ -46,6 +47,7 @@ def register_resources(app):
     api.add_resource(metrics.Metrics,
                      '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
     api.add_resource(data.Data,'/api/v1/data/<int:experiment_id>')
+    api.add_resource(summary.Summary,'/api/v1/summary')
 
 def load_experiment_data(app):
     '''

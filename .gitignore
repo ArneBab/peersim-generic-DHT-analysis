@@ -1,4 +1,4 @@
 env
 test_output
 *.pyc
-.rope*
+.*

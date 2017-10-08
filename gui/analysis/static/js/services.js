@@ -34,8 +34,14 @@ angular.module('challengerApp.services', [])
       method: 'GET', isArray: false
     }
   })
-}).factory('ExperimentService', function ($resource, toastr) {
+}).factory('ExperimentService', function ($resource) {
   return $resource('/api/v1/experiments/:id', {id: '@id'}, {
+    query: {
+      method: 'GET', isArray: false
+    }
+  })
+}).factory('SummaryService', function ($resource) {
+  return $resource('/api/v1/summary', null, {
     query: {
       method: 'GET', isArray: false
     }

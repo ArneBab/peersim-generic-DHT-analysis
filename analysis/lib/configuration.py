@@ -5,9 +5,12 @@ Updated on August, 2017
 
 Generate configuration files for Peersim simulator
 '''
+import logging
 import os
 from random import randint
 from string import Template
+
+import networkx as nx
 from topology_generator import TopologyGenerator
 
 ROUTING_DATA_FILE_NAME = 'routing.json'
@@ -25,18 +28,23 @@ class Configuration(object):
     _state_iterator = None
     _output_directory = ''
 
+    #'topology_type', 'router_type', 'look_ahead', 'adversary_count', 'size', 'degree', 'repeat'
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
-        experiment_count='1',
-        size=[100],
-        #size=[10, 100, 1000],
-        degree=[4, 5],
+        experiment_count=['1'],
+        size=[500],
+        degree=[6, 8, 10, 12],
         repeat=[1, 2],
-        # repeat=[1,2,3,4,5,6,7,8,9,10],
         look_ahead=[2],
-        # adversary_count=[1, 1%, 2%],
-        adversary_count=[1],
-        traffic_generator='RandomPingTraffic',
+        adversary_count=['1%'],
+        traffic_step=[1000],
+        #size=[500, 1000, 2000, 3000, 4000, 5000],
+        #degree=[6, 8, 10, 12, 14],
+        #repeat=[1, 2, 3, 4],
+        #look_ahead=[1, 2],
+        #adversary_count=['1', '1%', '2%', '3%'],
+        #traffic_step=[50],
+        traffic_generator=['RandomPingTraffic'],
         topology_type=['random'],
         router_type=['DHTRouterGreedy'],
         router_can_backtrack=['true'],
@@ -59,6 +67,17 @@ class Configuration(object):
 
         with open(template_file_name, 'r') as template_file:
             self._template_string = template_file.read()
+
+    def build_configs(self):
+        '''
+        Build the topologies for each permutation
+        '''
+        self.reset()
+        total = len(self._permutations)
+        for perm_index in range(0, total):
+            logging.info('Generating topology %d of %d' % (perm_index+1, total))
+            config = self._permutations[perm_index]
+            self._eval_topology_type(config)
 
     def get_file_path(self):
         '''
@@ -83,10 +102,11 @@ class Configuration(object):
         '''
         Moves the configuration iterator to the next configuration
         '''
-        if self._state_iterator is None:
-            self.reset()
         self._state_iterator = self._state_iterator + 1
         return self._state_iterator < len(self._permutations)
+
+    def get_total_count(self):
+        return len(self._permutations)
 
     def reset(self):
         '''
@@ -131,7 +151,7 @@ class Configuration(object):
                 config[key] = str(value)
 
         # special check for topology type
-        self._eval_topology_type(config)
+        #self._eval_topology_type(config)
 
         return config
 
@@ -143,7 +163,7 @@ class Configuration(object):
         degree = int(config['degree'])
 
         if config['topology_type'] == 'random':
-            graph_data = TopologyGenerator.generate_random_topology(
+            graph = TopologyGenerator.generate_random_topology(
                 size, degree)
         else:
             raise Exception('Unknown topology type')
@@ -153,8 +173,26 @@ class Configuration(object):
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
-        with open(path, 'w') as g_file:
-            g_file.write(graph_data)
+        def is_float(s):
+            try:
+                return float(s)
+            except ValueError:
+                return None
+
+        if os.path.exists(path):
+            logging.info('Topology already exists ... skipping')
+        else:
+            with open(path, 'w') as g_file:
+                for line in nx.generate_gml(graph):
+                    # hack to fix mantissa on floats
+                    if 'E-' in line:
+                        components = line.split(' ')
+                        for i in range(0, len(components)):
+                            value = is_float(components[i])
+                            if value:
+                                components[i] = '{:.18f}'.format(value)
+                        line = ' '.join(components)
+                    g_file.write((line + '\n').encode('ascii'))
 
         config['topology_file'] = path
 
@@ -201,12 +239,14 @@ class Configuration(object):
         return path
 
     @staticmethod
-    def get_hash(config):
+    def get_hash(config, excluded=[]):
         '''
         Get a hash of the used variables
         '''
         identity = ''
         for param in Configuration.get_parameters():
+            if param in excluded:
+                continue
             identity += ':' + str(config[param])
         return hash(identity)
 
@@ -216,9 +256,4 @@ class Configuration(object):
         Get a hash value for the config group
         i.e. all experimenents that have the same variables execpt the repeat components
         '''
-        identity = ''
-        for param in Configuration.get_parameters():
-            if param == 'repeat':
-                continue
-            identity += ':' + str(config[param])
-        return hash(identity)
+        return Configuration.get_hash(config, ['repeat'])

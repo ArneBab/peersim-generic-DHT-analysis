@@ -12,6 +12,7 @@ import numpy
 
 from .configuration import GRAPH_DATA_PATH, Configuration
 from .routing_metrics import RoutingMetrics
+from .utils import timeit
 
 
 class Analyzer(object):
@@ -35,6 +36,7 @@ class Analyzer(object):
             self._graph_data_directories[config_hash] = os.path.join(
                 base_data_directory, GRAPH_DATA_PATH)
 
+    @timeit
     def run_routing_choice_metrics(self):
         '''
         Run analysis of global stats files

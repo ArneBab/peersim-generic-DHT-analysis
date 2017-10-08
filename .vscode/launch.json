@@ -23,18 +23,47 @@
             ]
         },
         {
-            "name": "Analysis",
+            "name": "Experiments",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/analysis/manager.py",
+            "program": "${workspaceRoot}/analysis/experiments.py",
             "args": [
                 "-d", "${workspaceRoot}/test_output",
                 "-p", "../../peersim-generic-DHT"
             ],
             "cwd": "${workspaceRoot}/analysis",
-            "env": {},
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        },
+        {
+            "name": "Analysis",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/analysis/analysis.py",
+            "args": [
+                "-d", "${workspaceRoot}/test_output"
+            ],
+            "cwd": "${workspaceRoot}/analysis",
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        },
+        {
+            "name": "Analysis Real",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/analysis/analysis.py",
+            "args": [
+                "-d", "/mnt/hgfs/anp2p_data/experiments_1"
+            ],
+            "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
                 "RedirectOutput"
             ]

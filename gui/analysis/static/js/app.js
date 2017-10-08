@@ -10,7 +10,8 @@ angular.module('challengerApp').config(function ($stateProvider, $httpProvider) 
     views: {
       'main-menu@': main_menu(),
       'main-content@': {
-        templateUrl: 'static/partials/home.html'
+        templateUrl: 'static/partials/home.html',
+        controller: 'SummaryController'
       }
     }
   }).state('experiments_view', {

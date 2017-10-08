@@ -4,6 +4,8 @@ challengerApp.filter('toLocale', function () {
   }
 }).filter('prettyName', function () {
   return function (item) {
-    return item.replace(/_/g, ' ')
+    if (item.replace)
+      return item.replace(/_/g, ' ')
+    return item
   }
 })

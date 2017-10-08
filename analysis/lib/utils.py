@@ -6,6 +6,9 @@ Updated on September, 2017
 Utility functions
 '''
 import math
+import logging
+import functools
+from time import time
 
 
 def average_degree(nx_graph):
@@ -150,3 +153,14 @@ def _to_histogram_(values, start=None, stop=None, bin_funct=None):
     if stop is None:
         stop = largest
     return holder, start, stop
+
+def timeit(method):
+    ''' Logs a method call time '''
+    @functools.wraps(method)
+    def wrapper(*args, **kwargs):
+        ts = time()
+        value = method(*args, **kwargs)
+        te = time()
+        logging.info('%r ran in %2.2f sec', method.__name__, te-ts)
+        return value
+    return wrapper
