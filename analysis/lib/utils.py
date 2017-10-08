@@ -91,10 +91,7 @@ def entropy_normalized(distro):
     :param distro: list of output probabilities
     :return: entropy
     '''
-    entropy_value = 0
-    for prob in distro:
-        entropy_value = entropy_value + (prob * math.log(prob, 2))
-    entropy_value = entropy_value * -1
+    entropy_value = entropy(distro)
     max_ent = max_entropy(distro)
     if max_ent == 0.0:
         return 0.0
@@ -109,7 +106,10 @@ def entropy(distro):
     '''
     entropy_value = 0
     for prob in distro:
-        entropy_value = entropy_value + (prob * math.log(prob, 2))
+        # log of 0.0 is not defined
+        if prob <= 0.0:
+            continue
+        entropy_value += (prob * math.log(prob, 2))
     entropy_value = entropy_value * -1
     return entropy_value
 
