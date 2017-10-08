@@ -96,8 +96,7 @@ class RoutingMetrics(object):
         '''
         self._raw = RoutingMetrics.RawMetrics()
         self._nx_graphs = graphs
-        self._metrics = {
-            'missing': {'churn_rate': None}}
+        self._metrics = {}
 
         if input_data_file_name:
             self._init_full(experiment_config_list, routing_choice_avg,

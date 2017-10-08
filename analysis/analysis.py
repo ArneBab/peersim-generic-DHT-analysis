@@ -9,6 +9,7 @@ import logging
 import argparse
 import os
 import json
+import multiprocessing
 
 from lib.configuration import ROUTING_DATA_FILE_NAME as R_F_NAME
 from lib.analyzer import Analyzer
@@ -57,36 +58,21 @@ class Manager(object):
         '''
         Run the post run analysis on a experiement
         '''
+
+        # multi thread this
+        nb_cores = multiprocessing.cpu_count()
+        nb_cores = max(nb_cores / 2, 1)
+        logging.info('Running analysis on %d threads', nb_cores)
+        pool = multiprocessing.Pool(processes=nb_cores)
+
         count = 1
         for exp_files in self._experiement_configurations:
-            logging.info('Running analysis %d of %d', count, total)
+            pool.apply_async(self._run_analysis, args=(
+                exp_files, count, total, must_run), callback=None)
+            self._run_analysis(exp_files, count, total, must_run)
             count += 1
-
-            # base directory
-            base_path = self._get_base(exp_files[CONST_CONFIG])
-
-            # skip analysis if it alreay done
-            if not must_run and os.path.exists(self._metrics(base_path, 'intercept_calculated.json')):
-                logging.info('Already analyzed ... skipping')
-                continue
-
-            analyzer = Analyzer([exp_files[CONST_CONFIG]])
-            if not os.path.exists(self._metrics(base_path)):
-                os.makedirs(self._metrics(base_path))
-
-            # routing choice stats
-            with open(self._metrics(base_path, 'stats.json'), 'w') as s_file:
-                routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
-                s_file.write(json.dumps(graph_data))
-
-            # routing metrics
-            routing_data_name = self._base(base_path, R_F_NAME)
-            new_routing_data = self._base(base_path, 'processed.' + R_F_NAME)
-
-            r_metrics = analyzer.get_routing_metrics(
-                routing_data_name, new_routing_data, routing_choice_avg)
-            r_metrics.calculate_metrics()
-            self._write_analysis_data(base_path, r_metrics)
+        pool.close()
+        pool.join()
 
     @timeit
     def run_summations(self, output_directory, must_run):
@@ -133,6 +119,36 @@ class Manager(object):
         summary = SummaryMetrics()
         with open(os.path.join(output_directory, 'summary.json'), 'w') as s_file:
             s_file.write(json.dumps(summary.calculate(groups)))
+
+    def _run_analysis(self, exp_files, count, total, must_run):
+        logging.info('Running analysis %d of %d', count, total)
+
+        # base directory
+        base_path = self._get_base(exp_files[CONST_CONFIG])
+
+        # skip analysis if it alreay done
+        if not must_run and os.path.exists(self._metrics(base_path, 'intercept_calculated.json')):
+            logging.info('Already analyzed ... skipping')
+            return
+
+        analyzer = Analyzer([exp_files[CONST_CONFIG]])
+        if not os.path.exists(self._metrics(base_path)):
+            os.makedirs(self._metrics(base_path))
+
+        # routing choice stats
+        with open(self._metrics(base_path, 'stats.json'), 'w') as s_file:
+            routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
+            s_file.write(json.dumps(graph_data))
+
+        # routing metrics
+        routing_data_name = self._base(base_path, R_F_NAME)
+        new_routing_data = self._base(base_path, 'processed.' + R_F_NAME)
+
+        r_metrics = analyzer.get_routing_metrics(
+            routing_data_name, new_routing_data, routing_choice_avg)
+        r_metrics.calculate_metrics()
+        self._write_analysis_data(base_path, r_metrics)
+
 
     def _get_experiments_by_group(self, experiments):
         by_groups = {}

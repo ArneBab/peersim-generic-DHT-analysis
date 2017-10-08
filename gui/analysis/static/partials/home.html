@@ -1,17 +1,16 @@
 <h2>Summary</h2>
 
-<div ng-repeat="(variable, metrics) in summary">
-    <h3>{{ variable | prettyName}}</h3>
-
+<h3>Summary Table</h3>
+<div class="row pre-scrollable">
     <table class="table table-striped">
         <thead>
             <tr>
-                <th ng-repeat="header in metrics.header">{{ header }}</th>
+                <th ng-repeat="(short_name, path) in summary.headers">{{ short_name }}</th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="row in metrics.data">
-                <td ng-repeat="data in row">{{ data | prettyName }}</td>
+            <tr ng-repeat="row in summary.data">
+                <td ng-repeat="(short_name, path) in summary.headers">{{ row[path.group][path.name].value }}</td>
             </tr>
         </tbody>
     </table>
