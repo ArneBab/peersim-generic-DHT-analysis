@@ -36,7 +36,7 @@ class Analyzer(object):
             self._graph_data_directories[config_hash] = os.path.join(
                 base_data_directory, GRAPH_DATA_PATH)
 
-    @timeit
+    #@timeit
     def run_routing_choice_metrics(self):
         '''
         Run analysis of global stats files

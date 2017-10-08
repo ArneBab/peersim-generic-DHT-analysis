@@ -61,15 +61,15 @@ class Manager(object):
 
         # multi thread this
         nb_cores = multiprocessing.cpu_count()
-        nb_cores = max(nb_cores / 2, 1)
+        #nb_cores = max(nb_cores / 2, 1)
         logging.info('Running analysis on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
         count = 1
         for exp_files in self._experiement_configurations:
-            pool.apply_async(self._run_analysis, args=(
-                exp_files, count, total, must_run), callback=None)
-            self._run_analysis(exp_files, count, total, must_run)
+            pool.apply_async(_run_analysis, args=(
+                exp_files, count, total, must_run))
+            #_run_analysis(exp_files, count, total, must_run)
             count += 1
         pool.close()
         pool.join()
@@ -92,63 +92,33 @@ class Manager(object):
             count += 1
 
             first_exp = exp_files[0]
-            base_path = self._get_base(self._get_base(first_exp[CONST_CONFIG]))
-            groups.append(self._metrics(base_path, 'consolidated.json'))
+            base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
+            groups.append(_metrics(base_path, 'consolidated.json'))
 
             # check if we can skip running the summation
-            if not must_run and os.path.exists(self._metrics(base_path, 'consolidated.json')):
+            if not must_run and os.path.exists(_metrics(base_path, 'consolidated.json')):
                 logging.info('Already analyzed group ... skipping')
                 continue
 
             conf_files = [exp[CONST_CONFIG] for exp in exp_files]
 
             analyzer = Analyzer(conf_files)
-            if not os.path.exists(self._metrics(base_path)):
-                os.makedirs(self._metrics(base_path))
+            if not os.path.exists(_metrics(base_path)):
+                os.makedirs(_metrics(base_path))
 
             # routing choice stats
-            with open(self._metrics(base_path, 'stats.json'), 'w') as s_file:
+            with open(_metrics(base_path, 'stats.json'), 'w') as s_file:
                 routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
                 s_file.write(json.dumps(graph_data))
 
             r_metrics = analyzer.get_routing_metrics(None, None, None)
             r_metrics.calculate_metrics()
-            self._write_analysis_data(base_path, r_metrics)
+            _write_analysis_data(base_path, r_metrics)
 
         # caluclate the summary comparision of the experiment runs
         summary = SummaryMetrics()
         with open(os.path.join(output_directory, 'summary.json'), 'w') as s_file:
             s_file.write(json.dumps(summary.calculate(groups)))
-
-    def _run_analysis(self, exp_files, count, total, must_run):
-        logging.info('Running analysis %d of %d', count, total)
-
-        # base directory
-        base_path = self._get_base(exp_files[CONST_CONFIG])
-
-        # skip analysis if it alreay done
-        if not must_run and os.path.exists(self._metrics(base_path, 'intercept_calculated.json')):
-            logging.info('Already analyzed ... skipping')
-            return
-
-        analyzer = Analyzer([exp_files[CONST_CONFIG]])
-        if not os.path.exists(self._metrics(base_path)):
-            os.makedirs(self._metrics(base_path))
-
-        # routing choice stats
-        with open(self._metrics(base_path, 'stats.json'), 'w') as s_file:
-            routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
-            s_file.write(json.dumps(graph_data))
-
-        # routing metrics
-        routing_data_name = self._base(base_path, R_F_NAME)
-        new_routing_data = self._base(base_path, 'processed.' + R_F_NAME)
-
-        r_metrics = analyzer.get_routing_metrics(
-            routing_data_name, new_routing_data, routing_choice_avg)
-        r_metrics.calculate_metrics()
-        self._write_analysis_data(base_path, r_metrics)
-
 
     def _get_experiments_by_group(self, experiments):
         by_groups = {}
@@ -158,76 +128,110 @@ class Manager(object):
             by_groups[exp[CONST_GROUP]].append(exp)
         return by_groups
 
-    def _write_analysis_data(self, base_path, r_metrics):
-        # path length
-        with open(self._metrics(base_path, 'path_histo.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_path_lengths()))
-        # anon metrics
-        with open(self._metrics(base_path, 'sender_set_size.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_sender_set()))
 
-        with open(self._metrics(base_path, 'sender_set_size_by_hop.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_sender_set_by_hop()))
-        # entropy metrics
-        with open(self._metrics(base_path, 'entropy.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_entropy()))
-        with open(self._metrics(base_path, 'entropy_normalized.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_entropy_normalized()))
+def _get_base(path):
+    return os.path.dirname(path)
 
-        with open(self._metrics(base_path, 'entropy_by_hop.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_entropy_by_hop()))
-        with open(self._metrics(base_path, 'entropy_normalized_by_hop.json'), 'w') as g_file:
-            g_file.write(json.dumps(
-                r_metrics.graph_entropy_normalized_by_hop()))
 
-        with open(self._metrics(base_path, 'top_rank_set_size_by_hop.json'), 'w') as g_file:
-            g_file.write(json.dumps(
-                r_metrics.graph_top_rank_set_size_by_hop()))
+def _base(base_path, *args):
+    path = base_path
+    if args:
+        for sec in args:
+            path = os.path.join(path, sec)
+    return path
 
-        with open(self._metrics(base_path, 'top_rank_by_hop.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_top_rank_by_hop()))
-        # entropy metric using actual backoff
-        with open(self._metrics(base_path, 'entropy_actual.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_entropy_actual()))
-        with open(self._metrics(base_path, 'entropy_normalized_actual.json'), 'w') as g_file:
-            g_file.write(json.dumps(
-                r_metrics.graph_entropy_normalized_actual()))
 
-        with open(self._metrics(base_path, 'entropy_by_hop_actual.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_entropy_by_hop_actual()))
-        with open(self._metrics(base_path, 'entropy_normalized_by_hop_actual.json'), 'w') as g_file:
-            g_file.write(json.dumps(
-                r_metrics.graph_entropy_normalized_by_hop_actual()))
+def _metrics(base_path, *args):
+    path = os.path.join(base_path, 'metrics')
+    if args:
+        for sec in args:
+            path = os.path.join(path, sec)
+    return path
 
-        # consolidated metrics
-        with open(self._metrics(base_path, 'consolidated.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.get_summary()))
-        # intercept hop
-        with open(self._metrics(base_path, 'intercept.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_intercept_hop()))
-        with open(self._metrics(base_path, 'intercept_percent.json'), 'w') as g_file:
-            g_file.write(json.dumps(r_metrics.graph_intercept_percent_hop()))
-        # intercept hop
-        with open(self._metrics(base_path, 'intercept_calculated.json'), 'w') as g_file:
-            g_file.write(json.dumps(
-                r_metrics.graph_intercept_hop_calculated()))
 
-    def _get_base(self, path):
-        return os.path.dirname(path)
+def _run_analysis(exp_files, count, total, must_run):
+    logging.info('Running analysis %d of %d', count, total)
 
-    def _base(self, base_path, *args):
-        path = base_path
-        if args:
-            for sec in args:
-                path = os.path.join(path, sec)
-        return path
+    # base directory
+    base_path = _get_base(exp_files[CONST_CONFIG])
 
-    def _metrics(self, base_path, *args):
-        path = os.path.join(base_path, 'metrics')
-        if args:
-            for sec in args:
-                path = os.path.join(path, sec)
-        return path
+    # skip analysis if it alreay done
+    if not must_run and os.path.exists(_metrics(base_path, 'intercept_calculated.json')):
+        logging.info('Already analyzed ... skipping')
+        return
+
+    analyzer = Analyzer([exp_files[CONST_CONFIG]])
+    if not os.path.exists(_metrics(base_path)):
+        os.makedirs(_metrics(base_path))
+
+    # routing choice stats
+    with open(_metrics(base_path, 'stats.json'), 'w') as s_file:
+        routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
+        s_file.write(json.dumps(graph_data))
+
+    # routing metrics
+    routing_data_name = _base(base_path, R_F_NAME)
+    new_routing_data = _base(base_path, 'processed.' + R_F_NAME)
+
+    r_metrics = analyzer.get_routing_metrics(
+        routing_data_name, new_routing_data, routing_choice_avg)
+    r_metrics.calculate_metrics()
+    _write_analysis_data(base_path, r_metrics)
+
+
+def _write_analysis_data(base_path, r_metrics):
+    # path length
+    with open(_metrics(base_path, 'path_histo.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_path_lengths()))
+    # anon metrics
+    with open(_metrics(base_path, 'sender_set_size.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_sender_set()))
+
+    with open(_metrics(base_path, 'sender_set_size_by_hop.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_sender_set_by_hop()))
+    # entropy metrics
+    with open(_metrics(base_path, 'entropy.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_entropy()))
+    with open(_metrics(base_path, 'entropy_normalized.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_entropy_normalized()))
+
+    with open(_metrics(base_path, 'entropy_by_hop.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_entropy_by_hop()))
+    with open(_metrics(base_path, 'entropy_normalized_by_hop.json'), 'w') as g_file:
+        g_file.write(json.dumps(
+            r_metrics.graph_entropy_normalized_by_hop()))
+
+    with open(_metrics(base_path, 'top_rank_set_size_by_hop.json'), 'w') as g_file:
+        g_file.write(json.dumps(
+            r_metrics.graph_top_rank_set_size_by_hop()))
+
+    with open(_metrics(base_path, 'top_rank_by_hop.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_top_rank_by_hop()))
+    # entropy metric using actual backoff
+    with open(_metrics(base_path, 'entropy_actual.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_entropy_actual()))
+    with open(_metrics(base_path, 'entropy_normalized_actual.json'), 'w') as g_file:
+        g_file.write(json.dumps(
+            r_metrics.graph_entropy_normalized_actual()))
+
+    with open(_metrics(base_path, 'entropy_by_hop_actual.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_entropy_by_hop_actual()))
+    with open(_metrics(base_path, 'entropy_normalized_by_hop_actual.json'), 'w') as g_file:
+        g_file.write(json.dumps(
+            r_metrics.graph_entropy_normalized_by_hop_actual()))
+
+    # consolidated metrics
+    with open(_metrics(base_path, 'consolidated.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.get_summary()))
+    # intercept hop
+    with open(_metrics(base_path, 'intercept.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_intercept_hop()))
+    with open(_metrics(base_path, 'intercept_percent.json'), 'w') as g_file:
+        g_file.write(json.dumps(r_metrics.graph_intercept_percent_hop()))
+    # intercept hop
+    with open(_metrics(base_path, 'intercept_calculated.json'), 'w') as g_file:
+        g_file.write(json.dumps(
+            r_metrics.graph_intercept_hop_calculated()))
 
 
 if __name__ == '__main__':

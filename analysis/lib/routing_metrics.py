@@ -84,7 +84,7 @@ class RoutingMetrics(object):
 
     ##########################################
 
-    @timeit
+    #@timeit
     def __init__(self, graphs, experiment_config_list, routing_choice_avg=None,
                  input_data_file_name=None, output_data_file_name=None):
         '''
@@ -223,7 +223,7 @@ class RoutingMetrics(object):
     def all_graphs(self, op):
         return [op(g) for config in self._nx_graphs.values() for g in config.values()]
 
-    @timeit
+    #@timeit
     def calculate_metrics(self):
         '''
         Calculate the experiment wide metrics
