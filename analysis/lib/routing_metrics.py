@@ -112,7 +112,7 @@ class RoutingMetrics(object):
                 continue
             if param in experiment_config_list[0]:
                 parameters[param] = self._wrapper(
-                    experiment_config_list[0][param])
+                    experiment_config_list[0][param], param)
         self._metrics['variables'] = parameters
 
         for exp_config in experiment_config_list:
@@ -139,7 +139,7 @@ class RoutingMetrics(object):
         for param in Configuration.get_parameters():
             if param in experiment_config:
                 parameters[param] = self._wrapper(
-                    experiment_config[param])
+                    experiment_config[param], param)
         self._metrics['variables'] = parameters
         self._raw.parameters = experiment_config.copy()
 
@@ -236,7 +236,7 @@ class RoutingMetrics(object):
                 return 0.0
             return sel / float(tot)
 
-        def w(v, d=None): return self._wrapper(v, d)
+        def w(v, s, d=None): return self._wrapper(v, s, d)
 
         self._raw.avg_degrees = self.all_graphs(lambda g: average_degree(g))
 
@@ -246,150 +246,150 @@ class RoutingMetrics(object):
         ##################################################################
         self._metrics['graph'] = {}
         self._metrics['graph']['degree_avg'] = w(
-            numpy.mean(self._raw.avg_degrees))
+            numpy.mean(self._raw.avg_degrees), 'DEG_a')
         self._metrics['graph']['degree_std'] = w(
-            numpy.std(self._raw.avg_degrees))
+            numpy.std(self._raw.avg_degrees), 'DEG_s')
 
-        #self._metrics['graph']['diameter_avg'] = w(
-        #    numpy.mean(self._raw.avg_diameters))
+        self._metrics['graph']['diameter_avg'] = w(
+            numpy.mean(self._raw.avg_diameters), 'DIA_a')
         #self._metrics['graph']['diameter_std'] = w(
-        #    numpy.std(self._raw.avg_diameters))
+        #    numpy.std(self._raw.avg_diameters), 'DIA_s')
 
         node_counts = self.all_graphs(lambda g: g.number_of_nodes())
-        self._metrics['graph']['node_count_avg'] = w(numpy.mean(node_counts))
-        self._metrics['graph']['node_count_std'] = w(numpy.std(node_counts))
+        self._metrics['graph']['node_count_avg'] = w(numpy.mean(node_counts), 'N_a')
+        self._metrics['graph']['node_count_std'] = w(numpy.std(node_counts), 'N_s')
 
         edge_counts = self.all_graphs(lambda g: g.number_of_edges())
-        self._metrics['graph']['edge_count_avg'] = w(numpy.mean(edge_counts))
-        self._metrics['graph']['edge_count_std'] = w(numpy.std(edge_counts))
+        self._metrics['graph']['edge_count_avg'] = w(numpy.mean(edge_counts), 'ED_a')
+        self._metrics['graph']['edge_count_std'] = w(numpy.std(edge_counts), 'ED_s')
 
         ##################################################################
         self._metrics['adversary'] = {}
         adv_count, adv_percent = self._get_number_of_adversaries()
         self._metrics['adversary']['count_avg'] = w(numpy.mean(
-            adv_count), '(%f%% of all nodes)' % numpy.mean(adv_percent))
-        self._metrics['adversary']['count_std'] = w(numpy.std(adv_count))
+            adv_count), 'A_a', '(%f%% of all nodes)' % numpy.mean(adv_percent))
+        self._metrics['adversary']['count_std'] = w(numpy.std(adv_count), 'A_s')
 
         self._metrics['adversary']['messages_intercepted'] = w(
-            self._raw.message_inter_count)
+            self._raw.message_inter_count, 'MI_c')
         if self._raw.message_inter_count > 0:
             percent = per(self._raw.message_inter_count,
                           self._raw.message_count)
             self._metrics['adversary']['messages_intercepted_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'MI_p', '%f%%' % (percent * 100))
 
         self._metrics['adversary']['sender_sets_calculable'] = w(
-            self._raw.message_inter_pro_count)
+            self._raw.message_inter_pro_count, 'MIC_c')
         if self._raw.message_inter_pro_count > 0:
             percent = per(self._raw.message_inter_pro_count,
                           self._raw.message_inter_count)
             self._metrics['adversary']['sender_sets_calculable_percent_of_intercepted'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'MIC_p', '%f%%' % (percent * 100))
             percent = per(self._raw.message_inter_pro_count,
                           self._raw.message_count)
             self._metrics['adversary']['sender_sets_calculable_percent_of_total'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'MIC_T_p', '%f%%' % (percent * 100))
 
         ##################################################################
         self._metrics['routing'] = {}
-        self._metrics['routing']['message_count'] = w(self._raw.message_count)
+        self._metrics['routing']['message_count'] = w(self._raw.message_count, 'M_c')
 
         self._metrics['routing']['path_length_routing_avg'] = w(numpy.mean(
-            self._raw.routing_path_lengths))
+            self._raw.routing_path_lengths), 'PR_a')
         self._metrics['routing']['path_length_routing_std'] = w(numpy.std(
-            self._raw.routing_path_lengths))
+            self._raw.routing_path_lengths), 'PR_s')
 
         self._metrics['routing']['path_length_circuit_avg'] = w(numpy.mean(
-            self._raw.circiut_path_lengths))
+            self._raw.circiut_path_lengths), 'PC_a')
         self._metrics['routing']['path_length_circuit_std'] = w(numpy.std(
-            self._raw.circiut_path_lengths))
+            self._raw.circiut_path_lengths), 'PC_s')
 
         ##################################################################
         self._metrics['anonymity'] = {}
         if len(self._raw.sender_set_size) > 0:
             self._metrics['anonymity']['sender_set_size_avg'] = w(
-                numpy.mean(self._raw.sender_set_size))
+                numpy.mean(self._raw.sender_set_size), 'SS_a')
             self._metrics['anonymity']['sender_set_size_std'] = w(
-                numpy.std(self._raw.sender_set_size))
+                numpy.std(self._raw.sender_set_size), 'SS_s')
             self._metrics['anonymity']['entropy_avg'] = w(
-                numpy.mean(self._raw.anon_entropy))
+                numpy.mean(self._raw.anon_entropy), 'EN_a')
             self._metrics['anonymity']['entropy_std'] = w(
-                numpy.std(self._raw.anon_entropy))
+                numpy.std(self._raw.anon_entropy), 'EN_s')
             self._metrics['anonymity']['normalized_entropy_avg'] = w(
-                numpy.mean(self._raw.anon_entropy_norm))
+                numpy.mean(self._raw.anon_entropy_norm), 'EN_N_s')
             self._metrics['anonymity']['normalized_entropy_std'] = w(
-                numpy.std(self._raw.anon_entropy_norm))
+                numpy.std(self._raw.anon_entropy_norm), 'EN_N_s')
             self._metrics['anonymity']['entropy_acutal_dist_avg'] = w(
-                numpy.mean(self._raw.anon_entropy_actual))
+                numpy.mean(self._raw.anon_entropy_actual), 'EN_A_a')
             self._metrics['anonymity']['entropy_acutal_dist_std'] = w(
-                numpy.std(self._raw.anon_entropy_actual))
+                numpy.std(self._raw.anon_entropy_actual), 'EN_A_s')
             self._metrics['anonymity']['normailzed_entropy_acutal_dist_avg'] = w(
-                numpy.mean(self._raw.anon_entropy_norm_actual))
+                numpy.mean(self._raw.anon_entropy_norm_actual), 'EN_A_N_a')
             self._metrics['anonymity']['normailzed_entropy_acutal_dist_std'] = w(
-                numpy.std(self._raw.anon_entropy_norm_actual))
+                numpy.std(self._raw.anon_entropy_norm_actual), 'EN_A_N_s')
             self._metrics['anonymity']['top_rank_set_size_avg'] = w(
-                numpy.mean(self._raw.anon_top_rank_set_size))
+                numpy.mean(self._raw.anon_top_rank_set_size), 'TR_S_a')
             self._metrics['anonymity']['top_rank_set_size_std'] = w(
-                numpy.std(self._raw.anon_top_rank_set_size))
+                numpy.std(self._raw.anon_top_rank_set_size), 'TR_S_s')
             self._metrics['anonymity']['top_rank_value_avg'] = w(
-                numpy.mean(self._raw.anon_top_rank))
+                numpy.mean(self._raw.anon_top_rank), 'TR_V_a')
             self._metrics['anonymity']['top_rank_value_std'] = w(
-                numpy.std(self._raw.anon_top_rank))
+                numpy.std(self._raw.anon_top_rank), 'TR_V_s')
 
             ##############################################################
             self._metrics['anonymity_accuracy'] = {}
             self._metrics['anonymity_accuracy']['entropy_missed_actual_source'] = w(
-                self._raw.anon_entropy_missing_count)
+                self._raw.anon_entropy_missing_count, 'EN_M_c')
             percent = per(self._raw.anon_entropy_missing_count,
                           self._raw.message_inter_pro_count)
             self._metrics['anonymity_accuracy']['entropy_missed_actual_source_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'EN_M_p', '%f%%' % (percent * 100))
 
             # entropy
             self._metrics['anonymity_accuracy']['entropy_most_likely_hit'] = w(
-                self._raw.anon_entropy_best_hit)
+                self._raw.anon_entropy_best_hit, 'EN_BH_c')
             percent = per(self._raw.anon_entropy_best_hit,
                           self._raw.message_inter_pro_count)
             self._metrics['anonymity_accuracy']['entropy_most_likely_hit_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'EN_BH_p', '%f%%' % (percent * 100))
 
             self._metrics['anonymity_accuracy']['entropy_most_likely_diff_hit_avg'] = w(
-                numpy.average(self._raw.anon_entropy_best_diff))
+                numpy.average(self._raw.anon_entropy_best_diff), 'EN_D_a')
             self._metrics['anonymity_accuracy']['entropy_most_likely_diff_hit_std'] = w(
-                numpy.std(self._raw.anon_entropy_best_diff))
+                numpy.std(self._raw.anon_entropy_best_diff), 'EN_D_s')
 
             # actual entropy
             self._metrics['anonymity_accuracy']['entropy_actual_most_likely_hit'] = w(
-                self._raw.anon_entropy_actual_best_hit)
+                self._raw.anon_entropy_actual_best_hit, 'EN_A_BH_c')
             percent = per(self._raw.anon_entropy_actual_best_hit,
                           self._raw.message_inter_pro_count)
             self._metrics['anonymity_accuracy']['entropy_actual_most_likely_hit_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'EN_A_BH_p', '%f%%' % (percent * 100))
 
             self._metrics['anonymity_accuracy']['entropy_actual_most_likely_diff_hit_avg'] = w(
-                numpy.average(self._raw.anon_entropy_actual_best_diff))
+                numpy.average(self._raw.anon_entropy_actual_best_diff), 'EN_A_D_a')
             self._metrics['anonymity_accuracy']['entropy_actual_most_likely_diff_hit_std'] = w(
-                numpy.std(self._raw.anon_entropy_actual_best_diff))
+                numpy.std(self._raw.anon_entropy_actual_best_diff), 'EN_A_D_s')
 
             # ranked
             self._metrics['anonymity_accuracy']['ranked_missed_actual_source'] = w(
-                self._raw.anon_rank_missing_count)
+                self._raw.anon_rank_missing_count, 'R_M_c')
             percent = per(self._raw.anon_rank_missing_count,
                           self._raw.message_inter_pro_count)
             self._metrics['anonymity_accuracy']['ranked_missed_actual_source_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'R_M_p', '%f%%' % (percent * 100))
 
             self._metrics['anonymity_accuracy']['rank_diff_from_actual_avg'] = w(
-                numpy.mean(self._raw.anon_rank_diff_actual))
+                numpy.mean(self._raw.anon_rank_diff_actual), 'R_D_a')
             self._metrics['anonymity_accuracy']['rank_diff_from_actual_std'] = w(
-                numpy.std(self._raw.anon_rank_diff_actual))
+                numpy.std(self._raw.anon_rank_diff_actual), 'R_D_s')
 
             self._metrics['anonymity_accuracy']['top_rank_correct'] = w(
-                self._raw.anon_top_rank_correct_count)
+                self._raw.anon_top_rank_correct_count, 'TR_H_c')
             percent = per(self._raw.anon_top_rank_correct_count,
                           self._raw.message_inter_pro_count)
             self._metrics['anonymity_accuracy']['top_rank_correct_percent'] = w(
-                percent, '%f%%' % (percent * 100))
+                percent, 'TR_H_p', '%f%%' % (percent * 100))
 
         ##################################################################
         self._metrics['_raw'] = self._raw.to_dict()
@@ -655,8 +655,8 @@ class RoutingMetrics(object):
 
         return {'labels': labels, 'data': [r_data, c_data], 'series': series_list}
 
-    def _wrapper(self, value, description=None):
-        return {'value': value, 'description': description}
+    def _wrapper(self, value, short_name, description=None):
+        return {'value': value, 'description': description, 'short_name': short_name}
 
     def _graph_by_hop(self, series_list, hop_list, data_list):
         # organize data into buckets
