@@ -1,2 +1,2 @@
-networkx=1.11
-NumPy=1.13.1
+networkx==1.11
+NumPy==1.13.1
