@@ -37,7 +37,15 @@ class Summary(Resource):
                 for var_name, var_obj in grouping_vars.items():
                     headers[var_obj['short_name']] = {'group': grouping_name, 'name': var_name}
 
-        return jsonify({'headers': headers, 'data' : summary})
+        # get the experiment variables
+        variables = []
+        for experiment in summary:
+            for grouping_name, grouping_vars in experiment.items():
+                if grouping_name == 'variables':
+                    variables = sorted(grouping_vars.keys())
+                    break
+
+        return jsonify({'headers': headers, 'variables': variables, 'data' : summary})
 
 class SummaryVariable(Resource):
     '''

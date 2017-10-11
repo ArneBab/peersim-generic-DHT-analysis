@@ -40,6 +40,18 @@ angular.module('challengerApp.services', [])
       method: 'GET', isArray: false
     }
   })
+}).factory('ExperimentCsvService', function ($resource) {
+  return $resource('/api/v1/experiments/:id/csv/:csv', {id: '@id', csv: '@csv'}, {
+    get: {
+      method: 'GET', isArray: false
+    }
+  })
+}).factory('ExperimentStaticService', function ($resource) {
+  return $resource('/api/v1/experiments/:id/static/:static', {id: '@id', static: '@static'}, {
+    get: {
+      method: 'GET', isArray: false
+    }
+  })
 }).factory('SummaryService', function ($resource) {
   return $resource('/api/v1/summary', null, {
     query: {

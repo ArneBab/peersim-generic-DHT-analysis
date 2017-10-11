@@ -32,10 +32,10 @@ class Configuration(object):
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count=['1'],
-        size=[500],
-        degree=[6, 8, 10, 12],
+        size=[100, 200, 300, 400],
+        degree=[4, 5, 6, 7, 8, 9],
         repeat=[1, 2],
-        look_ahead=[2],
+        look_ahead=[1, 2],
         adversary_count=['1%'],
         traffic_step=[1000],
         #size=[500, 1000, 2000, 3000, 4000, 5000],

@@ -13,6 +13,7 @@ import multiprocessing
 
 from lib.configuration import ROUTING_DATA_FILE_NAME as R_F_NAME
 from lib.analyzer import Analyzer
+from lib.post_analysis import PostAnalysis
 from lib.utils import timeit
 from lib.summary_metrics import SummaryMetrics
 
@@ -36,7 +37,7 @@ class Manager(object):
         logging.info('Starting ...')
 
         total = self.load_experiments(args.d)
-        self.run_analysis(total, args.f)
+        self.run_analysis(total, args.f, args.t)
         self.run_summations(args.d, args.f)
         logging.info('Finished!!!')
 
@@ -54,22 +55,24 @@ class Manager(object):
         return total
 
     @timeit
-    def run_analysis(self, total, must_run):
+    def run_analysis(self, total, must_run, threaded):
         '''
         Run the post run analysis on a experiement
         '''
 
         # multi thread this
         nb_cores = multiprocessing.cpu_count()
-        #nb_cores = max(nb_cores / 2, 1)
-        logging.info('Running analysis on %d threads', nb_cores)
+        if threaded:
+            logging.info('Running analysis on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
         count = 1
         for exp_files in self._experiement_configurations:
-            pool.apply_async(_run_analysis, args=(
-                exp_files, count, total, must_run))
-            #_run_analysis(exp_files, count, total, must_run)
+            if threaded:
+                pool.apply_async(_run_analysis, args=(
+                    exp_files, count, total, must_run))
+            else:
+                _run_analysis(exp_files, count, total, must_run)
             count += 1
         pool.close()
         pool.join()
@@ -148,16 +151,19 @@ def _metrics(base_path, *args):
             path = os.path.join(path, sec)
     return path
 
-
 def _run_analysis(exp_files, count, total, must_run):
-    logging.info('Running analysis %d of %d', count, total)
+    _run_pre_analysis(exp_files, count, total, must_run)
+    _run_post_analysis(exp_files, count, total, must_run)
+
+def _run_pre_analysis(exp_files, count, total, must_run):
+    logging.info('Running pre analysis %d of %d', count, total)
 
     # base directory
     base_path = _get_base(exp_files[CONST_CONFIG])
 
     # skip analysis if it alreay done
     if not must_run and os.path.exists(_metrics(base_path, 'intercept_calculated.json')):
-        logging.info('Already analyzed ... skipping')
+        logging.info('Already pre analyzed ... skipping')
         return
 
     analyzer = Analyzer([exp_files[CONST_CONFIG]])
@@ -177,6 +183,36 @@ def _run_analysis(exp_files, count, total, must_run):
         routing_data_name, new_routing_data, routing_choice_avg)
     r_metrics.calculate_metrics()
     _write_analysis_data(base_path, r_metrics)
+
+def _run_post_analysis(exp_files, count, total, must_run):
+    logging.info('Running post analysis %d of %d', count, total)
+
+    # base directory
+    base_path = _get_base(exp_files[CONST_CONFIG])
+
+    # skip analysis if it alreay done
+    if not must_run and os.path.exists(_metrics(base_path, 'anonymity_scatter_3.png')):
+        logging.info('Already post analyzed ... skipping')
+        return
+
+    analyzer = PostAnalysis(base_path)
+    if not os.path.exists(_metrics(base_path)):
+        os.makedirs(_metrics(base_path))
+
+    # write performance data
+    with(open(_metrics(base_path, 'performance.csv'), 'w')) as p_file:
+        for row in analyzer.convert_csv_performance():
+            p_file.write(','.join(row))
+            p_file.write('\n')
+
+    # write anonymity data to csv
+    with(open(_metrics(base_path, 'anonymity.csv'), 'w')) as p_file:
+        for row in analyzer.convert_csv_anonymity():
+            p_file.write(','.join(row))
+            p_file.write('\n')
+
+    analyzer.process_performance(_metrics(base_path, 'performance.csv'))
+    analyzer.process_anonymity(_metrics(base_path, 'anonymity.csv'))
 
 
 def _write_analysis_data(base_path, r_metrics):
@@ -242,4 +278,6 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-f', default=False, action='store_true',
                         help='Force the experiments to rerun')
+    PARSER.add_argument('-t', default=True, action='store_false',
+                        help='Run experiments in seperate threads')
     Manager().main(PARSER.parse_args())

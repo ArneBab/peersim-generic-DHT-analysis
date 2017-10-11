@@ -39,3 +39,69 @@
 <div class="row" ng-repeat-end="">
     <hr />
 </div>
+<h3>Correlation</h3>
+
+<div class="row">
+    <h4 class="capitalize">Performance</h4>
+</div>
+<div class="row">
+    Variable correlations (p values &lt; 0.05 are in green)
+    <div class="pre-scrollable">
+        <table class="table table-striped pre-scrollable">
+            <thead>
+                <tr>
+                    <th ng-repeat="header in perf_correlation.headers">{{header | prettyName}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="row in perf_correlation.data">
+                    <td ng-class="{green: value && anon_pvalue.data[$parent.$index][$index] && perf_pvalue.data[$parent.$index][$index] <= 0.05}"
+                        ng-repeat="value in row">{{value}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <img src="/api/v1/experiments/{{experiment.id}}/static/performance_scatter_0.png" />
+</div>
+<div class="row">
+    <hr />
+</div>
+
+<div class="row">
+    <h4 class="capitalize">Anonymity</h4>
+</div>
+<div class="row">
+    Variable correlations (p values &lt; 0.05 are in green)
+    <div class="pre-scrollable">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th ng-repeat="header in anon_correlation.headers">{{header | prettyName}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="row in anon_correlation.data">
+                    <td ng-class="{green: value && anon_pvalue.data[$parent.$index][$index] && anon_pvalue.data[$parent.$index][$index] <= 0.05}"
+                        ng-repeat="value in row">{{value}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <img src="/api/v1/experiments/{{experiment.id}}/static/anonymity_scatter_0.png" />
+</div>
+<div class="row">
+    <img src="/api/v1/experiments/{{experiment.id}}/static/anonymity_scatter_1.png" />
+</div>
+<div class="row">
+    <img src="/api/v1/experiments/{{experiment.id}}/static/anonymity_scatter_2.png" />
+</div>
+<div class="row">
+    <img src="/api/v1/experiments/{{experiment.id}}/static/anonymity_scatter_3.png" />
+</div>
+<div class="row">
+    <hr />
+</div>

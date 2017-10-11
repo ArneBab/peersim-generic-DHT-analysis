@@ -1,7 +1,11 @@
 angular.module('challengerApp.controllers', [])
-  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, MetricService) {
+  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, ExperimentCsvService, ExperimentStaticService, MetricService) {
     $scope.id = $stateParams.id
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
+    $scope.perf_correlation = ExperimentCsvService.get({id: $stateParams.id, csv: 'performance_corr.csv'})
+    $scope.perf_pvalue = ExperimentCsvService.get({id: $stateParams.id, csv: 'performance_p_values.csv'})
+    $scope.anon_correlation = ExperimentCsvService.get({id: $stateParams.id, csv: 'anonymity_corr.csv'})
+    $scope.anon_pvalue = ExperimentCsvService.get({id: $stateParams.id, csv: 'anonymity_p_values.csv'})
     $scope.graphs = {'routing': [],'graph': [],'adversary': [], 'sender_set': [], 'anonymity_exponential_backoff': [], 'anonymity_actual_backoff': []}
     $scope.can_show = function (items) {
       var result = {}

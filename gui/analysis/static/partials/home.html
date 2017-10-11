@@ -1,16 +1,40 @@
 <h2>Summary</h2>
 
+<h3 ng-repeat-start="variable in summary.variables">{{ variable | prettyName }}</h3>
+Hi
+<hr ng-repeat-end="" />
+
 <h3>Summary Table</h3>
-<div class="row pre-scrollable">
+<div class="row">
+    <a target="_blank" href="/api/v1/summary/csv">CSV</a>
+    <div class="pre-scrollable">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th ng-repeat="(short_name, path) in summary.headers">{{ short_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="row in summary.data">
+                    <td ng-repeat="(short_name, path) in summary.headers">{{ row[path.group][path.name].value }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<h3>Legend</h3>
+<div class="row well">
     <table class="table table-striped">
         <thead>
             <tr>
-                <th ng-repeat="(short_name, path) in summary.headers">{{ short_name }}</th>
+                <th>Short Name</th>
+                <th>Full Name</th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="row in summary.data">
-                <td ng-repeat="(short_name, path) in summary.headers">{{ row[path.group][path.name].value }}</td>
+            <tr ng-repeat="(short_name, path) in summary.headers">
+                <td>{{ short_name }}</td>
+                <td>{{ path.group + ' : ' + path.name | prettyName }}</td>
             </tr>
         </tbody>
     </table>

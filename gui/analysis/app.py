@@ -35,7 +35,8 @@ def register_resources(app):
     import analysis.resources.api.experiments as exp
     import analysis.resources.api.metrics as metrics
     import analysis.resources.api.data as data
-    import analysis.resources.api.summary as summary
+    import analysis.resources.api.summary.summary as summary
+    import analysis.resources.api.summary.csv as csv
 
     # home handler
     app.add_url_rule('/', None, handlers.home_handler)
@@ -46,9 +47,14 @@ def register_resources(app):
     api.add_resource(exp.Experiment, '/api/v1/experiments/<int:experiment_id>')
     api.add_resource(metrics.Metrics,
                      '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
+    api.add_resource(exp.ExperimentCSV,
+                     '/api/v1/experiments/<int:experiment_id>/csv/<path:csv_file>')
+    api.add_resource(exp.ExperimentStatic,
+                     '/api/v1/experiments/<int:experiment_id>/static/<path:static_file>')
     api.add_resource(data.Data,'/api/v1/data/<int:experiment_id>')
 
     api.add_resource(summary.Summary,'/api/v1/summary')
+    api.add_resource(csv.Csv,'/api/v1/summary/csv')
     api.add_resource(summary.SummaryVariable,'/api/v1/summary/<variable>')
 
 def load_experiment_data(app):
