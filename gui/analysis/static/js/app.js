@@ -23,6 +23,15 @@ angular.module('challengerApp').config(function ($stateProvider, $httpProvider) 
         controller: 'ExperimentController'
       }
     }
+  }).state('variables_view', {
+    url: '/variables/:id',
+    views: {
+      'main-menu@': main_menu(),
+      'main-content@': {
+        templateUrl: 'static/partials/variables.html',
+        controller: 'VariableController'
+      }
+    }
   }).state('data_view', {
     url: '/data/:id',
     views: {

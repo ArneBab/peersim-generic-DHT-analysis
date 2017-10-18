@@ -243,12 +243,24 @@ class Configuration(object):
         '''
         Get a hash of the used variables
         '''
+        return hash(Configuration.get_hash_name(config, excluded))
+
+    @staticmethod
+    def get_hash_name(config, excluded=[]):
+        '''
+        Get a hash of the used variables as a string
+        '''
         identity = ''
         for param in Configuration.get_parameters():
             if param in excluded:
                 continue
-            identity += ':' + str(config[param])
-        return hash(identity)
+            if param not in config:
+                continue
+            if 'value' in config[param]:
+                identity += ':' + str(config[param]['value'])
+            else:
+                identity += ':' + str(config[param])
+        return identity
 
     @staticmethod
     def get_group_hash(config):

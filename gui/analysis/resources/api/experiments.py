@@ -21,7 +21,19 @@ class ExperimentList(Resource):
         '''
         Only supports get operation
         '''
-        return jsonify({'items': current_app.config['EXPERIMENT_LIST']})
+        experiment_config = current_app.config['EXPERIMENT_LIST'][0]
+        metrics_path = os.path.join(os.path.dirname(
+            experiment_config['self']), 'metrics', 'consolidated.json')
+        with open(metrics_path, 'r') as m_file:
+            experiment_metrics = json.loads(m_file.read())
+
+        variables = sorted(experiment_metrics['variables'].keys())
+
+        var_list = []
+        for var in variables:
+            var_list.append({'label': str(var), 'children':[], 'data':'/#/variables/' + str(var)})
+
+        return jsonify({'experiments': current_app.config['EXPERIMENT_HIERARCHY'], 'variables': var_list})
 
 
 class Experiment(Resource):

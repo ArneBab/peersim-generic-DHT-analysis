@@ -58,4 +58,10 @@ angular.module('challengerApp.services', [])
       method: 'GET', isArray: false
     }
   })
+}).factory('SummaryGraphService', function ($resource) {
+  return $resource('/api/v1/summary/graphs/:variable', {variable: '@variable'}, {
+    get: {
+      method: 'GET', isArray: false
+    }
+  })
 })

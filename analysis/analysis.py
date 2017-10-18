@@ -120,8 +120,12 @@ class Manager(object):
 
         # caluclate the summary comparision of the experiment runs
         summary = SummaryMetrics()
+        experiment_data = summary.calculate(groups)
         with open(os.path.join(output_directory, 'summary.json'), 'w') as s_file:
-            s_file.write(json.dumps(summary.calculate(groups)))
+            s_file.write(json.dumps(experiment_data))
+
+        with open(os.path.join(output_directory, 'summary_display.json'), 'w') as s_file:
+            s_file.write(json.dumps(summary.process(experiment_data)))
 
     def _get_experiments_by_group(self, experiments):
         by_groups = {}

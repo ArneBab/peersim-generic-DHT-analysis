@@ -47,7 +47,8 @@ class Summary(Resource):
 
         return jsonify({'headers': headers, 'variables': variables, 'data' : summary})
 
-class SummaryVariable(Resource):
+
+class SummaryGraphs(Resource):
     '''
     Graph metrics
     '''
@@ -57,10 +58,11 @@ class SummaryVariable(Resource):
         Only supports get operation
         '''
         experiment_config_file = os.path.join(
-            current_app.config['DATA_DIRECTORY'], 'summary.json')
+            current_app.config['DATA_DIRECTORY'], 'summary_display.json')
 
-        summary = {}
+        summary_data = {}
         if os.path.exists(experiment_config_file):
             with open(experiment_config_file, 'r') as c_file:
-                summary = json.loads(c_file.read())
-        return jsonify(summary)
+                summary_data = json.loads(c_file.read())
+        variable_data = summary_data['graphs'][variable]
+        return jsonify(variable_data)
