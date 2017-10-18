@@ -38,7 +38,7 @@ class Manager(object):
 
         total = self.load_experiments(args.d)
         self.run_analysis(total, args.f, args.t)
-        self.run_summations(args.d, args.f)
+        self.run_summations(args.d, args.f, args.t)
         logging.info('Finished!!!')
 
     @timeit
@@ -78,7 +78,7 @@ class Manager(object):
         pool.join()
 
     @timeit
-    def run_summations(self, output_directory, must_run):
+    def run_summations(self, output_directory, must_run, threaded):
         '''
         Run after all experiments are complete. Compare the variables
         '''
@@ -89,34 +89,27 @@ class Manager(object):
         exp_group_count = len(exp_grouped.keys())
         count = 1
         groups = []
+
+        # multi thread this
+        nb_cores = multiprocessing.cpu_count()
+        if threaded:
+            logging.info('Running summations on %d threads', nb_cores)
+        pool = multiprocessing.Pool(processes=nb_cores)
+
         for exp_files in exp_grouped.values():
-            # base directory
-            logging.info('Averaging group %d of %d', count, exp_group_count)
+            if threaded:
+                groups.append(pool.apply_async(_run_summations, args=(
+                    exp_files, count, exp_group_count, must_run)))
+            else:
+                groups.append(_run_summations(exp_files, count, exp_group_count, must_run))
             count += 1
+        pool.close()
+        pool.join()
 
-            first_exp = exp_files[0]
-            base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
-            groups.append(_metrics(base_path, 'consolidated.json'))
-
-            # check if we can skip running the summation
-            if not must_run and os.path.exists(_metrics(base_path, 'consolidated.json')):
-                logging.info('Already analyzed group ... skipping')
-                continue
-
-            conf_files = [exp[CONST_CONFIG] for exp in exp_files]
-
-            analyzer = Analyzer(conf_files)
-            if not os.path.exists(_metrics(base_path)):
-                os.makedirs(_metrics(base_path))
-
-            # routing choice stats
-            with open(_metrics(base_path, 'stats.json'), 'w') as s_file:
-                routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
-                s_file.write(json.dumps(graph_data))
-
-            r_metrics = analyzer.get_routing_metrics(None, None, None)
-            r_metrics.calculate_metrics()
-            _write_analysis_data(base_path, r_metrics)
+        # get the async results
+        if threaded:
+            holder = [result.get() for result in groups]
+            groups = holder
 
         # caluclate the summary comparision of the experiment runs
         summary = SummaryMetrics()
@@ -155,9 +148,42 @@ def _metrics(base_path, *args):
             path = os.path.join(path, sec)
     return path
 
+
+def _run_summations(exp_files, count, total, must_run):
+    # base directory
+    logging.info('Averaging group %d of %d', count, total)
+    count += 1
+
+    first_exp = exp_files[0]
+    base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
+    output_file = _metrics(base_path, 'consolidated.json')
+
+    # check if we can skip running the summation
+    if not must_run and os.path.exists(output_file):
+        logging.info('Already analyzed group ... skipping')
+        return output_file
+
+    conf_files = [exp[CONST_CONFIG] for exp in exp_files]
+
+    analyzer = Analyzer(conf_files)
+    if not os.path.exists(_metrics(base_path)):
+        os.makedirs(_metrics(base_path))
+
+    # routing choice stats
+    with open(_metrics(base_path, 'stats.json'), 'w') as s_file:
+        routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
+        s_file.write(json.dumps(graph_data))
+
+    r_metrics = analyzer.get_routing_metrics(None, None, None)
+    r_metrics.calculate_metrics()
+    _write_analysis_data(base_path, r_metrics)
+    return output_file
+
+
 def _run_analysis(exp_files, count, total, must_run):
     _run_pre_analysis(exp_files, count, total, must_run)
     _run_post_analysis(exp_files, count, total, must_run)
+
 
 def _run_pre_analysis(exp_files, count, total, must_run):
     logging.info('Running pre analysis %d of %d', count, total)
@@ -187,6 +213,7 @@ def _run_pre_analysis(exp_files, count, total, must_run):
         routing_data_name, new_routing_data, routing_choice_avg)
     r_metrics.calculate_metrics()
     _write_analysis_data(base_path, r_metrics)
+
 
 def _run_post_analysis(exp_files, count, total, must_run):
     logging.info('Running post analysis %d of %d', count, total)
