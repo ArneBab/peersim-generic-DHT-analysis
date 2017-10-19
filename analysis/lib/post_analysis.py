@@ -9,7 +9,7 @@ import os
 import json
 import pandas
 import logging
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy
 from scipy import stats
 from lib.utils import entropy, entropy_normalized, max_entropy
