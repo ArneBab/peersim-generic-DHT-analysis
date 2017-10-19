@@ -70,7 +70,7 @@ class ExperimentCSV(Resource):
         csv = []
         if os.path.exists(csv_path):
             with open(csv_path, 'r') as c_file:
-                for line in c_file.readlines():
+                for line in c_file:
                     parsed = line.split(',')
                     if header is None:
                         header = parsed

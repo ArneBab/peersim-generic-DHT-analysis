@@ -33,7 +33,7 @@ class Data(Resource):
         if os.path.exists(routes_path):
             count = 0
             with open(routes_path, 'r') as c_file:
-                for line in c_file.readlines():
+                for line in c_file:
                     r_json = json.loads(line)
                     if expression.search(r_json):
                         routes.append(r_json)

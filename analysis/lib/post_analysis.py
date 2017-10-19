@@ -116,7 +116,7 @@ class PostAnalysis(object):
         yield ['id', 'distance', 'routing_path_length', 'circuit_path_length',
                'diameter', 'node_count', 'edge_count', 'degree']
         with(open(self._routing_data_file, 'r')) as r_file:
-            for route in r_file.readlines():
+            for route in r_file:
                 yield self._convert_csv_performance(json.loads(route))
 
     def convert_csv_anonymity(self):
@@ -132,7 +132,7 @@ class PostAnalysis(object):
                'diameter', 'node_count', 'edge_count', 'degree']
         with(open(self._routing_data_file, 'r')) as r_file:
             count = 0
-            for route in r_file.readlines():
+            for route in r_file:
                 route_json = json.loads(route)
                 if 'anonymity_set' not in route_json or not route_json['anonymity_set']['calculated']:
                     continue

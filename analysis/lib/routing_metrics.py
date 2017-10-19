@@ -800,5 +800,5 @@ class RoutingMetrics(object):
 
     def _read_routes(self, routing_data_file_name):
         with open(routing_data_file_name) as r_file:
-            for data_line in r_file.readlines():
+            for data_line in r_file:
                 yield json.loads(data_line)
