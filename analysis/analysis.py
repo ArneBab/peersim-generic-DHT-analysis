@@ -222,7 +222,7 @@ def _run_post_analysis(exp_files, count, total, must_run):
     base_path = _get_base(exp_files[CONST_CONFIG])
 
     # skip analysis if it alreay done
-    if not must_run and os.path.exists(_metrics(base_path, 'performance_scatter_0.png')):
+    if not must_run and os.path.exists(_metrics(base_path, 'anonymity.csv')):
         logging.info('Already post analyzed ... skipping')
         return
 
@@ -242,7 +242,7 @@ def _run_post_analysis(exp_files, count, total, must_run):
             p_file.write(','.join(row))
             p_file.write('\n')
 
-    analyzer.process_performance(_metrics(base_path, 'performance.csv'))
+    #analyzer.process_performance(_metrics(base_path, 'performance.csv'))
     # not needed at this point
     #analyzer.process_anonymity(_metrics(base_path, 'anonymity.csv'))
 
