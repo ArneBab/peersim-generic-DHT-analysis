@@ -8,6 +8,20 @@ Run the final experiment comparisions
 import json
 from lib.configuration import Configuration
 
+def _compare(first, second):
+    try:
+        f_first = float(first)
+        f_second = float(second)
+
+        first = f_first
+        second = f_second
+    except TypeError:
+        pass
+    if first < second:
+        return -1
+    if first > second:
+        return 1
+    return 0
 
 class SummaryMetrics(object):
     '''
@@ -78,7 +92,7 @@ class SummaryMetrics(object):
                     for hash_grouping, var_values in metric_objs.items():
                         series_list.append(hash_grouping)
                         hash_data = []
-                        for var_value in sorted(var_values.keys()):
+                        for var_value in sorted(var_values.keys(), cmp=_compare):
                             metric_values = var_values[var_value]
                             if var_value not in labels:
                                 labels.append(var_value)
