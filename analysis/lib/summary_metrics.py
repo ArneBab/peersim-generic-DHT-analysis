@@ -15,7 +15,7 @@ def _compare(first, second):
 
         first = f_first
         second = f_second
-    except TypeError:
+    except Exception:
         pass
     if first < second:
         return -1
