@@ -15,34 +15,29 @@
 <h2>Variable : {{id}}</h2>
 
 <div class="row" ng-repeat="(group_name, group_data) in correlations">
-    <h3>{{group_name | prettyName}}</h3>
-    Variable correlations (p values &lt; 0.05 are in green)
-    <div class="pre-scrollable">
-        <table class="table table-striped pre-scrollable">
-            <thead>
-                <tr>
-                    <th>Series</th>
-                    <th ng-repeat="header in group_data.headers">{{header | prettyName}}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="(row_name, row) in group_data.data">
-                    <td>{{row_name | prettyName}}</td>
-                    <td ng-repeat="row_values in row" ng-class="{green: row_values[1] && row_values[1] <= 0.05}">co : {{ row_values[0] | number : 3 }} - p : {{row_values[1] | number : 3 }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="row" ng-repeat-start="(group_name, metrics) in graphs">
-    <h3 class="capitalize">{{group_name | prettyName}}</h3>
-</div>
-<div class="col-sm-6" ng-repeat="(metric, graph_data) in metrics">
-    <canvas class="chart chart-base" chart-type="graph_data.type" chart-data="graph_data.data" chart-labels="graph_data.labels"
-        chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open(graph_data)">
-    </canvas>
-</div>
-<div class="row" ng-repeat-end="">
-    <hr />
+    <details>
+        <summary><span class="h3 capitalize">{{group_name | prettyName}}</span></summary>
+        Variable correlations (p values &lt; 0.05 are in green)
+        <div class="pre-scrollable">
+            <table class="table table-striped pre-scrollable">
+                <thead>
+                    <tr>
+                        <th>Series</th>
+                        <th ng-repeat="header in group_data.headers">{{header | prettyName}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="(row_name, row) in group_data.data">
+                        <td>{{row_name | prettyName}}</td>
+                        <td ng-repeat="row_values in row" ng-class="{green: row_values[1] && row_values[1] <= 0.05}">co : {{ row_values[0] | number : 3 }} - p : {{row_values[1] | number : 3 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-6" ng-repeat="(metric, graph_data) in graphs[group_name]">
+            <canvas class="chart chart-base" chart-type="graph_data.type" chart-data="graph_data.data" chart-labels="graph_data.labels"
+                chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open(graph_data)">
+            </canvas>
+        </div>
+    </details>
 </div>

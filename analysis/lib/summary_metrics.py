@@ -91,7 +91,8 @@ class SummaryMetrics(object):
             for group_name, group_objs in exp_datas.items():
                 corr_headers = []
                 corr_data = {}
-                for metric_name, metric_objs in group_objs.items():
+                for metric_name in sorted(group_objs.keys()):
+                    metric_objs = group_objs[metric_name]
                     series_list = []
                     data = []
                     labels = []
