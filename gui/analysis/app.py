@@ -56,6 +56,7 @@ def register_resources(app):
     api.add_resource(summary.Summary,'/api/v1/summary')
     api.add_resource(csv.Csv,'/api/v1/summary/csv')
     api.add_resource(summary.SummaryGraphs,'/api/v1/summary/graphs/<path:variable>')
+    api.add_resource(summary.SummaryCorrelations,'/api/v1/summary/correlations/<path:variable>')
 
 def load_experiment_data(app):
     '''

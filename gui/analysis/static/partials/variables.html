@@ -4,7 +4,7 @@
     </div>
     <div class="modal-body" id="modal-body">
         <canvas class="chart chart-base" chart-type="$ctrl.graph.type" chart-data="$ctrl.graph.data" chart-labels="$ctrl.graph.labels"
-            chart-series="$ctrl.graph.series" chart-options="$ctrl.graph.options_big">
+            chart-series="$ctrl.graph.series" chart-options="$ctrl.graph.options">
         </canvas>
     </div>
     <div class="modal-footer">
@@ -13,6 +13,27 @@
 </script>
 
 <h2>Variable : {{id}}</h2>
+
+<div class="row" ng-repeat="(group_name, group_data) in correlations">
+    <h3>{{group_name | prettyName}}</h3>
+    Variable correlations (p values &lt; 0.05 are in green)
+    <div class="pre-scrollable">
+        <table class="table table-striped pre-scrollable">
+            <thead>
+                <tr>
+                    <th>Series</th>
+                    <th ng-repeat="header in group_data.headers">{{header | prettyName}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="(row_name, row) in group_data.data">
+                    <td>{{row_name | prettyName}}</td>
+                    <td ng-repeat="row_values in row" ng-class="{green: row_values[1] && row_values[1] <= 0.05}">co : {{ row_values[0] | number : 3 }} - p : {{row_values[1] | number : 3 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <div class="row" ng-repeat-start="(group_name, metrics) in graphs">
     <h3 class="capitalize">{{group_name | prettyName}}</h3>

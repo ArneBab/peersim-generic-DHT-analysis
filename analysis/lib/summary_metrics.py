@@ -6,6 +6,9 @@ Updated on October, 2017
 Run the final experiment comparisions
 '''
 import json
+import pandas
+import numpy
+from scipy import stats
 from lib.configuration import Configuration
 
 def _compare(first, second):
@@ -51,7 +54,7 @@ class SummaryMetrics(object):
                     break
 
         # group data by variable hash
-        # variable -> group -> metric -> config hash -> variable value -> metric value obj
+        # variable -> {group} -> {metric} -> {config hash} -> {variable value} -> metric value obj
         new_data = {}
         for var_group in sorted(group_names):
             new_data[var_group] = {}
@@ -82,22 +85,63 @@ class SummaryMetrics(object):
                         metric_data[var_hash][var_value] = metric_obj
 
         # generate graphs
+        correlations = {}
         graphs = {}
         for variable, exp_datas in new_data.items():
             for group_name, group_objs in exp_datas.items():
+                corr_headers = []
+                corr_data = {}
                 for metric_name, metric_objs in group_objs.items():
                     series_list = []
                     data = []
                     labels = []
+                    corr_headers.append(metric_name)
+                    overall_corr_data = {variable:[], metric_name:[]}
                     for hash_grouping, var_values in metric_objs.items():
                         series_list.append(hash_grouping)
+                        series_corr_data = {variable:[], metric_name:[]}
                         hash_data = []
                         for var_value in sorted(var_values.keys(), cmp=_compare):
                             metric_values = var_values[var_value]
                             if var_value not in labels:
                                 labels.append(var_value)
                             hash_data.append(metric_values['value'])
+                            try:
+                                series_corr_data[variable].append(float(var_value))
+                            except Exception:
+                                series_corr_data[variable].append(var_value)
+                            series_corr_data[metric_name].append(metric_values['value'])
                         data.append(hash_data)
+
+                        # calculate correclation coefficent for the series
+                        series_df = pandas.DataFrame(data=series_corr_data)
+                        try:
+                            series_corr, series_p = stats.pearsonr(series_df[variable], series_df[metric_name])
+                            
+                            if hash_grouping not in corr_data:
+                                corr_data[hash_grouping] = []
+                            if not numpy.isnan(series_corr):
+                                corr_data[hash_grouping].append((series_corr, series_p))
+                            else:
+                                corr_data[hash_grouping].append((0, 1.0))
+                        except Exception:
+                            pass
+
+                        overall_corr_data[variable].extend(series_corr_data[variable])
+                        overall_corr_data[metric_name].extend(series_corr_data[metric_name])
+
+                    # calculate overal correlation for entire series
+                    overall_df = pandas.DataFrame(data=overall_corr_data)
+                    try:
+                        overall_corr, overall_p = stats.pearsonr(overall_df[variable], overall_df[metric_name])
+                        if 'Overall' not in corr_data:
+                            corr_data['Overall'] = []
+                        if not numpy.isnan(overall_corr):
+                            corr_data['Overall'].append((overall_corr, overall_p))
+                        else:
+                            corr_data['Overall'].append((0.0, 1.0))
+                    except Exception:
+                        pass
 
                     if variable not in graphs:
                         graphs[variable] = {}
@@ -130,4 +174,11 @@ class SummaryMetrics(object):
                                     }
                     }
 
-        return {'graphs': graphs, 'data': new_data}
+                if variable not in correlations:
+                    correlations[variable] = {}
+                if group_name not in correlations[variable]:
+                    correlations[variable][group_name] = {}
+                correlations[variable][group_name]['headers'] = corr_headers
+                correlations[variable][group_name]['data'] = corr_data
+
+        return {'graphs': graphs, 'data': new_data, 'correlations': correlations}

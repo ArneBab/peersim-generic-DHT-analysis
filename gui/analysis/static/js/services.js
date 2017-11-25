@@ -64,4 +64,10 @@ angular.module('challengerApp.services', [])
       method: 'GET', isArray: false
     }
   })
+}).factory('SummaryCorrelationService', function ($resource) {
+  return $resource('/api/v1/summary/correlations/:variable', {variable: '@variable'}, {
+    get: {
+      method: 'GET', isArray: false
+    }
+  })
 })

@@ -171,9 +171,10 @@ angular.module('challengerApp.controllers', [])
       })
     }
   })
-  .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService) {
+  .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService, SummaryCorrelationService) {
     $scope.id = $stateParams.id
     $scope.graphs = SummaryGraphService.get({variable: $stateParams.id})
+    $scope.correlations = SummaryCorrelationService.get({variable: $stateParams.id})
     $scope.open = function (graph_data) {
       var modalInstance = $uibModal.open({
         animation: true,
