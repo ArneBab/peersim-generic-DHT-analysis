@@ -33,7 +33,7 @@ class Configuration(object):
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count=['1'],
         size=[100, 200, 300, 400],
-        degree=[4, 5, 6, 7, 8, 9],
+        degree=[4, 5, 6],
         repeat=[1, 2],
         look_ahead=[1, 2],
         adversary_count=['1%'],
@@ -45,7 +45,7 @@ class Configuration(object):
         #adversary_count=['1', '1%', '2%', '3%'],
         #traffic_step=[50],
         traffic_generator=['RandomPingTraffic'],
-        topology_type=['random'],
+        topology_type=['random', 'random_erdos_renyi', 'random_power_law', 'small_world', 'structured'],
         router_type=['DHTRouterGreedy'],
         router_can_backtrack=['true'],
         router_drop_rate=[0.0],
@@ -159,14 +159,6 @@ class Configuration(object):
 
         path = os.path.join(Configuration.file_path_for_config(
             config), 'input-graph.gml')
-        size = int(config['size'])
-        degree = int(config['degree'])
-
-        if config['topology_type'] == 'random':
-            graph = TopologyGenerator.generate_random_topology(
-                size, degree)
-        else:
-            raise Exception('Unknown topology type')
 
         # check if directory exists
         dir_name = os.path.dirname(path)
@@ -182,6 +174,23 @@ class Configuration(object):
         if os.path.exists(path):
             logging.info('Topology already exists ... skipping')
         else:
+            size = int(config['size'])
+            degree = int(config['degree'])
+
+            if config['topology_type'] == 'random':
+                graph = TopologyGenerator.generate_random_topology(
+                    size, degree)
+            elif config['topology_type'] == 'random_erdos_renyi':
+                graph = TopologyGenerator.generate_random_topology_erdos_renyi(size, degree)
+            elif config['topology_type'] == 'random_power_law':
+                graph = TopologyGenerator.generate_random_power_law_topology(size, degree)
+            elif config['topology_type'] == 'small_world':
+                graph = TopologyGenerator.generate_small_world_topology(size, degree)
+            elif config['topology_type'] == 'structured':
+                graph = TopologyGenerator.generate_structured_topology(size, degree)
+            else:
+                raise Exception('Unknown topology type')
+                
             with open(path, 'w') as g_file:
                 for line in nx.generate_gml(graph):
                     # hack to fix mantissa on floats
