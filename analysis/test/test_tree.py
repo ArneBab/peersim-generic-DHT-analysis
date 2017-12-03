@@ -99,7 +99,7 @@ class TestTree(unittest.TestCase):
         self.assertTrue(round(distro[5], 3) == 0.19)
         self.assertTrue(round(distro[2], 3) == 0.19)
         self.assertTrue(round(distro[6], 3) == 0.19)
-        self.assertTrue(round(distro[10], 3) == 0.38)
+        self.assertTrue(round(distro[10], 3) == 0.381)
 
     def test_out_of_bounds(self):
         tree = RoutingTree()
