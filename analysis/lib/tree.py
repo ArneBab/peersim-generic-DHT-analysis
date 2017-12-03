@@ -47,6 +47,12 @@ class RoutingTree(object):
             self._build_tree(nx_graph, child_id, max_hop,
                              previous_node, [start_node_id, previous_node_id])
 
+        # check for case when all the neighbors only have a single connection 
+        # to the adversary node
+        if self.get_height() == 1:
+            # add an empty level after
+            self._levels[2] = []
+
         logging.debug('%d : Actual work anonymity set work', self.get_count())
         return True
 
@@ -129,6 +135,7 @@ class RoutingTree(object):
             rank_function, distro_function, self._root.children[0],
             target_location, self.get_height() - 3, 1)
         # combine entries for the same nodes
+        assert(len(distro) > 0)
         distro_set = {}
         total = 0.0
         for node, prob in distro:
@@ -139,6 +146,7 @@ class RoutingTree(object):
         # normalize the distributions (e.g. their sum == 1)
         for node, prob in distro_set.items():
             distro_set[node] = prob / total
+        assert(len(distro_set) > 0)
         return distro_set
 
     def rank_greedy(self, node, target_location, nx_graph):
