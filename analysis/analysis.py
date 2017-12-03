@@ -61,7 +61,7 @@ class Manager(object):
         '''
 
         # multi thread this
-        nb_cores = multiprocessing.cpu_count()
+        nb_cores = multiprocessing.cpu_count() / 2
         if threaded:
             logging.info('Running analysis on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
@@ -91,7 +91,7 @@ class Manager(object):
         groups = []
 
         # multi thread this
-        nb_cores = multiprocessing.cpu_count()
+        nb_cores = multiprocessing.cpu_count() / 2
         if threaded:
             logging.info('Running summations on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)

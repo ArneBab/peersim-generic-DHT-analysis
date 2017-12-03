@@ -9,6 +9,7 @@ import logging
 import argparse
 import os
 import json
+import multiprocessing
 
 from lib.configuration import Configuration
 from lib.configuration import ROUTING_DATA_FILE_NAME as R_F_NAME
@@ -38,7 +39,7 @@ class Experiments(object):
         logging.info('Starting ...')
 
         total = self.setup_experiments(args.d)
-        self.run_experiments(total, args.p)
+        self.run_experiments(total, args.p, args.t)
         logging.info('Finished!!!')
 
     @timeit
@@ -93,30 +94,29 @@ class Experiments(object):
         logging.info('Generated %s experiment configurations', total)
         return total
 
-    def run_experiments(self, total, simulator_path):
+    def run_experiments(self, total, simulator_path, threaded):
         '''
         Run the simulation for each experiment configuration
         '''
+
+        # multi thread this
+        nb_cores = multiprocessing.cpu_count() / 2
+        if threaded:
+            logging.info('Running experiments on %d threads', nb_cores)
+        pool = multiprocessing.Pool(processes=nb_cores)
+
         experiment_count = 0
         for experiment_file in self._experiement_configurations:
             experiment_count += 1
+            if threaded:
+                pool.apply_async(_run_experiment, args=(
+                    simulator_path, experiment_file[CONST_EXPERIMENT]))
+            else:
+                _run_experiment(simulator_path, experiment_file[CONST_EXPERIMENT])
             logging.info('Running command %d of %d',
                          experiment_count, total)
-
-            self._run_experiment(simulator_path, experiment_file[CONST_EXPERIMENT])
-
-    @timeit
-    def _run_experiment(self, simulator_path, experiment_file):
-        directory = os.path.dirname(experiment_file)
-        if os.path.exists(os.path.join(directory, 'routing.json')):
-            logging.info('Experiment already run ... skipping')
-            return
-        
-        exp = Executioner(simulator_path)
-        exit_code = exp.run(experiment_file)
-        if exit_code > 0:
-            logging.error('Returned exit code %d', exit_code)
-            raise Exception('Simulator failed to run')
+        pool.close()
+        pool.join()
 
     def _get_base(self, path):
         return os.path.dirname(path)
@@ -135,6 +135,18 @@ class Experiments(object):
                 path = os.path.join(path, sec)
         return path
 
+@timeit
+def _run_experiment(simulator_path, experiment_file):
+    directory = os.path.dirname(experiment_file)
+    if os.path.exists(os.path.join(directory, 'routing.json')):
+        logging.info('Experiment already run ... skipping')
+        return
+    
+    exp = Executioner(simulator_path)
+    exit_code = exp.run(experiment_file)
+    if exit_code > 0:
+        logging.error('Returned exit code %d', exit_code)
+        raise Exception('Simulator failed to run: %s', experiment_file)
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
@@ -144,4 +156,6 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-p', default='.', type=str,
                         help='Directory to find the PeerSim binaries in')
+    PARSER.add_argument('-t', default=True, action='store_false',
+                        help='Run experiments in seperate threads')
     Experiments().main(PARSER.parse_args())
