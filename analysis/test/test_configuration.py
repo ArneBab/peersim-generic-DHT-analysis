@@ -6,6 +6,8 @@ Updated on August, 2017
 Unit test for configuration file generator
 '''
 import unittest
+import tempfile
+import shutil
 
 from lib.configuration import Configuration
 
@@ -13,14 +15,17 @@ from lib.configuration import Configuration
 class TestConfiguration(unittest.TestCase):
 
     def test_works(self):
-        config = Configuration()
+        output_file = tempfile.mkdtemp()
+        config = Configuration(output_file)
+        config.build_configs()
         config.next()
         config['random_seed'] = '234524'
         self.assertTrue(config['random_seed'] == '234524')
         content = config.generate_experiement_config()
         self.assertTrue('234524' in content)
-        while(config.next()):
+        while config.next():
             content = config.generate_experiement_config()
+        shutil.rmtree(output_file)
 
     def test_invalid_template_file_name(self):
         with self.assertRaises(IOError):
