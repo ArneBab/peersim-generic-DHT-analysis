@@ -31,7 +31,8 @@
             "program": "${workspaceRoot}/analysis/experiments.py",
             "args": [
                 "-d", "${workspaceRoot}/test_output",
-                "-p", "../../peersim-generic-DHT"
+                "-p", "../../peersim-generic-DHT",
+                "-t"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
@@ -61,7 +62,7 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/analysis/analysis.py",
             "args": [
-                "-d", "/mnt/hgfs/anp2p_data/experiments_1"
+                "-d", "/mnt/hgfs/anp2p_data/experiments_1", "-t"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
