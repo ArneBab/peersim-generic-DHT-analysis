@@ -17,6 +17,8 @@ from lib.post_analysis import PostAnalysis
 from lib.utils import timeit
 from lib.summary_metrics import SummaryMetrics
 
+from lib.metric_manager import MetricManager
+
 CONST_EXPERIMENT = 'experiment'
 CONST_CONFIG = 'config'
 CONST_GROUP = 'repeat_group'
@@ -190,6 +192,12 @@ def _run_pre_analysis(exp_files, count, total, must_run):
 
     # base directory
     base_path = _get_base(exp_files[CONST_CONFIG])
+
+    # calculate analysis metrics
+    metric_manager = MetricManager(base_path, must_run)
+    metric_manager.analyze()
+    metric_manager.save_data()
+    metric_manager.archive_data()
 
     # skip analysis if it alreay done
     if not must_run and os.path.exists(_metrics(base_path, 'intercept_calculated.json')):
