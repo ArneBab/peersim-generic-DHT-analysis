@@ -6,7 +6,7 @@ Updated on Nov, 2017
 Find file bases on pattern and process them
 '''
 import os
-import glob
+import fnmatch
 
 class FileFinder(object):
     '''
@@ -28,8 +28,10 @@ class FileFinder(object):
         if not os.path.exists(base_directory):
             raise Exception('The directory %s does not exists' % base_directory)
 
-        search_pattern = os.path.abspath(base_directory) + file_pattern
-        found_files = sorted(glob.glob(search_pattern))
+        found_files = []
+        for root, dirnames, filenames in os.walk(base_directory):
+            for filename in fnmatch.filter(sorted(filenames), file_pattern):
+                found_files.append(os.path.abspath(os.path.join(root, filename)))
 
         for file_path in found_files:
             for reader in self.file_reader_list:

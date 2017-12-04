@@ -160,6 +160,16 @@ def _run_summations(exp_files, count, total, must_run):
     base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
     output_file = _metrics(base_path, 'consolidated.json')
 
+
+    # START NEW CODE
+
+    metric_manager = MetricManager(base_path, must_run)
+    metric_manager.summarize()
+    metric_manager.save_data()
+
+    # END NEW CODE
+
+
     # check if we can skip running the summation
     if not must_run and os.path.exists(output_file):
         logging.info('Already analyzed group ... skipping')
@@ -193,11 +203,18 @@ def _run_pre_analysis(exp_files, count, total, must_run):
     # base directory
     base_path = _get_base(exp_files[CONST_CONFIG])
 
+    # START NEW CODE
+
     # calculate analysis metrics
     metric_manager = MetricManager(base_path, must_run)
     metric_manager.analyze()
     metric_manager.save_data()
     metric_manager.archive_data()
+
+    # END NEW CODE
+
+
+
 
     # skip analysis if it alreay done
     if not must_run and os.path.exists(_metrics(base_path, 'intercept_calculated.json')):

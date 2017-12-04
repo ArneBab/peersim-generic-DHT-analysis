@@ -6,19 +6,20 @@ Updated on Nov, 2017
 Framework for processing a files contents one line at a time
 '''
 import os
-import json
+from lib.file.json_file_reader import FileReader
 
 
-class FileReader(object):
+class ClassLoader(FileReader):
     '''
     Process a file one line at a time
     '''
-
-    def __init__(self, json_actions):
+    def __init__(self, class_type):
         '''
-        :param json_actions: JSONAction object list
+        :param class_type: Class to be constructed. Constructor will be passed
+        a single parameter with the file path
         '''
-        self.json_actions = json_actions
+        self.class_type = class_type
+        self.class_instance = []
 
     def process(self, file_path):
         '''
@@ -27,10 +28,6 @@ class FileReader(object):
         '''
         # Does the file exist
         if not os.path.exists(file_path):
-            raise Exception('Unable to find the file %s' % file_path)
+            raise Exception('Unable to find the directory %s' % file_path)
 
-        with open(file_path, 'r') as open_file:
-            for line in open_file:
-                json_object = json.loads(line)
-                for action in self.json_actions:
-                    action.process(json_object)
+        self.class_instance.append(self.class_type(file_path))

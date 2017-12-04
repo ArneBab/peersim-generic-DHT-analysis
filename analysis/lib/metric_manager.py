@@ -11,7 +11,11 @@ import json
 
 from lib.jsons.routing_choice_reader import RoutingChoiceReader
 from lib.file.file_finder import FileFinder
-from lib.file.file_reader import FileReader
+from lib.file.json_file_reader import JSONFileReader
+from lib.file.class_loader import ClassLoader
+
+
+METRIC_FILE_NAME = 'metrics.json'
 
 
 class MetricManager(object):
@@ -20,17 +24,29 @@ class MetricManager(object):
     '''
 
     def __init__(self, base_directory, force_run=False):
+        base_directory = os.path.abspath(base_directory)
         if not os.path.exists(base_directory):
-            raise Exception('Unable to find the directory %s' % base_directory)
+            raise Exception('Unable to find the directory: %s' %
+                            base_directory)
 
         self.is_dirty = False
         self.force_run = force_run
-        self.base_directory = base_directory
-        self.metric_file_path = os.path.join(os.path.abspath(base_directory), 'metrics.json')
+
+        if os.path.isdir(base_directory):
+            # only directory was passed in
+            self.base_directory = base_directory
+            self.metric_file_path = os.path.join(
+                base_directory, METRIC_FILE_NAME)
+        else:
+            # full path to the data file passed in
+            self.base_directory = os.path.dirname(base_directory)
+            self.metric_file_path = base_directory
+
         logging.debug('Metric file path: %s', self.metric_file_path)
+        logging.debug('Metric file directory: %s', self.base_directory)
 
         # load the metrics file if it exists
-        self.metrics = {'graphs':{}, 'data':{}}
+        self.metrics = {'graphs': {}, 'data': {}}
         if os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             with open(self.metric_file_path, 'r') as metric_file:
@@ -61,6 +77,18 @@ class MetricManager(object):
         '''
         routing_choice = self._routing_choice()
 
+    def summarize(self):
+        '''
+        Run the summation metrics over a set of experiment repeats
+        '''
+        # check if the summation needs to run
+
+        # load the metric data for each experiment repeat
+        metric_managers = ClassLoader(MetricManager)
+        finder = FileFinder([metric_managers])
+        finder.process(self.base_directory, METRIC_FILE_NAME)
+        # merge the repeat data into this metric instance
+
     def _routing_choice(self):
         metric_name = 'routing_choice'
         # check if we already have the data
@@ -69,17 +97,17 @@ class MetricManager(object):
             return RoutingChoiceReader.load(self._get_data(metric_name))
 
         routing_choice_reader = RoutingChoiceReader()
-        file_reader = FileReader([routing_choice_reader])
-        file_finder = FileFinder([file_reader])
-        file_finder.process(self.base_directory, '/graphs/*.stats')
+        file_reader = JSONFileReader([routing_choice_reader])
+        finder = FileFinder([file_reader])
+        finder.process(os.path.join(self.base_directory, 'graphs'), '*.stats')
         self._set_data(metric_name, routing_choice_reader.to_csv())
         self._set_graph(metric_name, routing_choice_reader.create_graph())
         return routing_choice_reader
 
     def _have_metric_data(self, metric_name):
         return self._get_data(metric_name) is not None and \
-               self._get_graph(metric_name) is not None and \
-               not self.force_run
+            self._get_graph(metric_name) is not None and \
+            not self.force_run
 
     def _get_data(self, metric_name):
         if metric_name in self.metrics['data']:
