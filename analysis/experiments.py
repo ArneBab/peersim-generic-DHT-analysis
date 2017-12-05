@@ -159,7 +159,7 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
         with open(exp_lock) as run_time_file:
             start_time = datetime.datetime.fromtimestamp(float(run_time_file.read()))
             delta = datetime.datetime.now() - start_time
-            if delta.total_seconds() < 600: # 10 minutes
+            if delta.total_seconds() < 300: # 5 minutes
                 logging.info('Another process is executing this experiment...')
                 return
 
