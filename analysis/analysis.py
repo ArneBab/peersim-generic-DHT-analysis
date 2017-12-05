@@ -38,9 +38,10 @@ class Manager(object):
         '''
         logging.info('Starting ...')
 
-        total = self.load_experiments(args.d)
+        output_directory = os.path.abspath(args.d)
+        total = self.load_experiments(output_directory)
         self.run_analysis(total, args.f, args.t)
-        self.run_summations(args.d, args.f, args.t)
+        self.run_summations(output_directory, args.f, args.t)
         logging.info('Finished!!!')
 
     @timeit
@@ -51,6 +52,13 @@ class Manager(object):
         logging.info('loading experiments ...')
         with open(os.path.join(output_directory, 'experiments.json'), 'r') as e_file:
             self._experiement_configurations = json.loads(e_file.read())
+
+        # make the paths absolute
+        for exp_files in self._experiement_configurations:
+            exp_files[CONST_CONFIG] = os.path.join(
+                output_directory, exp_files[CONST_CONFIG])
+            exp_files[CONST_EXPERIMENT] = os.path.join(
+                output_directory, exp_files[CONST_EXPERIMENT])
 
         total = len(self._experiement_configurations)
         logging.info('Loaded %s experiment configurations', total)
@@ -103,7 +111,8 @@ class Manager(object):
                 groups.append(pool.apply_async(_run_summations, args=(
                     exp_files, count, exp_group_count, must_run)))
             else:
-                groups.append(_run_summations(exp_files, count, exp_group_count, must_run))
+                groups.append(_run_summations(
+                    exp_files, count, exp_group_count, must_run))
             count += 1
         pool.close()
         pool.join()
@@ -160,7 +169,6 @@ def _run_summations(exp_files, count, total, must_run):
     base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
     output_file = _metrics(base_path, 'consolidated.json')
 
-
     # START NEW CODE
 
     metric_manager = MetricManager(base_path, must_run)
@@ -168,7 +176,6 @@ def _run_summations(exp_files, count, total, must_run):
     metric_manager.save_data()
 
     # END NEW CODE
-
 
     # check if we can skip running the summation
     if not must_run and os.path.exists(output_file):
@@ -212,9 +219,6 @@ def _run_pre_analysis(exp_files, count, total, must_run):
     metric_manager.archive_data()
 
     # END NEW CODE
-
-
-
 
     # skip analysis if it alreay done
     if not must_run and os.path.exists(_metrics(base_path, 'intercept_calculated.json')):
