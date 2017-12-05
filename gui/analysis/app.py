@@ -68,6 +68,13 @@ def load_experiment_data(app):
     with open(experiment_config_file, 'r') as e_file:
         experiments_config = json.loads(e_file.read())
 
+    # make the paths absolute
+    for exp_files in experiments_config:
+        exp_files['config'] = os.path.join(
+            app.config['DATA_DIRECTORY'], exp_files['config'])
+        exp_files['experiment'] = os.path.join(
+            app.config['DATA_DIRECTORY'], exp_files['experiment'])
+
     # read in each experiment config file
     configs = []
     config_groups = {}
