@@ -147,7 +147,9 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
     logging.info('Running command %d of %d',
                  experiment_count, total)
     directory = os.path.dirname(experiment_file)
-    if os.path.exists(os.path.join(directory, 'routing.json')):
+
+    exp_done = os.path.join(directory, 'experiment.done')
+    if os.path.exists(exp_done):
         logging.info('Experiment already run ... skipping')
         return
 
@@ -172,6 +174,9 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
         raise Exception('Simulator failed to run: %s', experiment_file)
 
     os.remove(exp_lock)
+    # mark this experiment as complete
+    with open(exp_done, 'w') as run_time_file:
+        run_time_file.write(str(time.time()))
 
 
 if __name__ == '__main__':
