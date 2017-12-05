@@ -157,10 +157,12 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
     exp_lock = os.path.join(directory, 'experiment.time')
     if os.path.exists(exp_lock):
         with open(exp_lock) as run_time_file:
-            start_time = datetime.datetime.fromtimestamp(float(run_time_file.read()))
+            start_time = datetime.datetime.fromtimestamp(
+                float(run_time_file.read()))
             delta = datetime.datetime.now() - start_time
-            if delta.total_seconds() < 300: # 5 minutes
-                logging.info('Another process is executing this experiment...')
+            if delta.total_seconds() < 300:  # 5 minutes
+                logging.info('Another process is executing this experiment... locked for %f seconds',
+                             delta.total_seconds())
                 return
 
     # mark this experiment as ours and time stamp it
