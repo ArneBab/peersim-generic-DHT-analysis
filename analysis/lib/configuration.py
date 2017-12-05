@@ -100,8 +100,10 @@ class Configuration(object):
         '''
         self._state_iterator = self._state_iterator + 1
         # generate topology if needed
-        self._eval_topology_type(self._permutations[self._state_iterator])
-        return self._state_iterator < len(self._permutations)
+        not_at_end = self._state_iterator < len(self._permutations)
+        if not_at_end:
+            self._eval_topology_type(self._permutations[self._state_iterator])
+        return not_at_end
 
     def get_total_count(self):
         '''
