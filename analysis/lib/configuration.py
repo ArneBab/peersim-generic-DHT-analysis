@@ -44,7 +44,7 @@ class Configuration(object):
         router_can_backtrack=['true'],
         router_drop_rate=[0.0],
         router_loop_detection=['GUIDLoopDetection'],
-        router_randomness=[0.0, 5.0, 10.0, 100.0],
+        router_randomness=[0.0, 5.0, 10.0],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
