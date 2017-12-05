@@ -10,6 +10,8 @@ import argparse
 import os
 import json
 import multiprocessing
+import time
+import datetime
 
 from lib.configuration import Configuration
 from lib.executioner import Executioner
@@ -149,11 +151,27 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
         logging.info('Experiment already run ... skipping')
         return
 
+    # check for working flag
+    exp_lock = os.path.join(directory, 'experiment.time')
+    if os.path.exists(exp_lock):
+        with open(exp_lock) as run_time_file:
+            start_time = datetime.datetime.fromtimestamp(float(run_time_file.read()))
+            delta = datetime.datetime.now() - start_time
+            if delta.total_seconds() < 600: # 10 minutes
+                logging.info('Another process is executing this experiment...')
+                return
+
+    # mark this experiment as ours and time stamp it
+    with open(exp_lock, 'w') as run_time_file:
+        run_time_file.write(str(time.time()))
+
     exp = Executioner(simulator_path)
     exit_code = exp.run(experiment_file)
     if exit_code > 0:
         logging.error('Returned exit code %d', exit_code)
         raise Exception('Simulator failed to run: %s', experiment_file)
+
+    os.remove(exp_lock)
 
 
 if __name__ == '__main__':
