@@ -80,8 +80,10 @@ class Experiments(object):
                 logging.info(
                     'Experiment config already exists, skipping file write')
 
-            exp_files[CONST_EXPERIMENT] = exp_file_name.replace(output_directory + os.sep, '')
-            exp_files[CONST_CONFIG] = config_file_name.replace(output_directory + os.sep, '')
+            exp_files[CONST_EXPERIMENT] = exp_file_name.replace(
+                output_directory + os.sep, '')
+            exp_files[CONST_CONFIG] = config_file_name.replace(
+                output_directory + os.sep, '')
             exp_files[CONST_GROUP] = config_manager.get_group_hash(
                 current_config)
             exp_files[CONST_ID] = count
@@ -108,16 +110,15 @@ class Experiments(object):
 
         experiment_count = 0
         for experiment_file in self._experiement_configurations:
-            exp_file_path = os.path.join(output_directory, experiment_file[CONST_EXPERIMENT])
+            exp_file_path = os.path.join(
+                output_directory, experiment_file[CONST_EXPERIMENT])
             experiment_count += 1
             if threaded:
                 pool.apply_async(_run_experiment, args=(
-                    simulator_path, exp_file_path))
+                    simulator_path, exp_file_path, experiment_count, total))
             else:
                 _run_experiment(
-                    simulator_path, exp_file_path)
-            logging.info('Running command %d of %d',
-                         experiment_count, total)
+                    simulator_path, exp_file_path, experiment_count, total)
         pool.close()
         pool.join()
 
@@ -140,7 +141,9 @@ class Experiments(object):
 
 
 @timeit
-def _run_experiment(simulator_path, experiment_file):
+def _run_experiment(simulator_path, experiment_file, experiment_count, total):
+    logging.info('Running command %d of %d',
+                 experiment_count, total)
     directory = os.path.dirname(experiment_file)
     if os.path.exists(os.path.join(directory, 'routing.json')):
         logging.info('Experiment already run ... skipping')
