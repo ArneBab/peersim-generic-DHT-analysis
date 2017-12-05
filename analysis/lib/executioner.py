@@ -19,7 +19,7 @@ class Executioner(object):
     _java_path = None
 
     def __init__(self, exe_path):
-        self._java_path = ':'.join([os.path.abspath(os.path.join(exe_path, 'bin', '*')),
+        self._java_path = os.path.pathsep.join([os.path.abspath(os.path.join(exe_path, 'bin', '*')),
                                     os.path.abspath(os.path.join(exe_path, 'lib', '*'))])
 
     def run(self, experiment_config_file):
