@@ -11,7 +11,7 @@ from random import randint
 from string import Template
 
 import networkx as nx
-from topology_generator import TopologyGenerator
+from lib.topology_generator import TopologyGenerator as TopGen
 
 ROUTING_DATA_FILE_NAME = 'routing.json'
 GRAPH_DATA_PATH = 'graphs'
@@ -28,35 +28,36 @@ class Configuration(object):
     _state_iterator = None
     _output_directory = ''
 
-    #'topology_type', 'router_type', 'look_ahead', 'adversary_count', 'size', 'degree', 'repeat'
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count=['1'],
-        size=[100, 200, 300, 400],
-        degree=[4, 5, 6],
-        repeat=[1, 2],
+        size=[1000, 2000, 3000, 4000],
+        degree=[8, 10, 12, 14],
+        repeat=[1, 2, 3],
         look_ahead=[1, 2],
-        adversary_count=['1%'],
-        traffic_step=[1000],
-        #size=[500, 1000, 2000, 3000, 4000, 5000],
-        #degree=[6, 8, 10, 12, 14],
-        #repeat=[1, 2, 3, 4],
-        #look_ahead=[1, 2],
-        #adversary_count=['1', '1%', '2%', '3%'],
-        #traffic_step=[50],
+        adversary_count=['1%', '2%', '3%'],
+        traffic_step=[100],
         traffic_generator=['RandomPingTraffic'],
-        topology_type=['random', 'random_erdos_renyi', 'random_power_law', 'small_world', 'structured'],
+        topology_type=['random_erdos_renyi', 'random_power_law',
+                       'small_world', 'structured'],
         router_type=['DHTRouterGreedy'],
         router_can_backtrack=['true'],
         router_drop_rate=[0.0],
         router_loop_detection=['GUIDLoopDetection'],
-        router_randomness=[0.0],
+        router_randomness=[0.0, 5.0, 10.0, 100.0],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x), GRAPH_DATA_PATH),
         path=lambda x: Configuration.file_path_for_config(x, '')
     )
+
+    _top_gen_map = {'random': TopGen.generate_random_topology,
+                    'random_erdos_renyi': TopGen.generate_random_topology_erdos_renyi,
+                    'random_power_law': TopGen.generate_random_power_law_topology,
+                    'small_world': TopGen.generate_small_world_topology,
+                    'structured': TopGen.generate_structured_topology
+                   }
 
     def __init__(self, output_directory='', template_file_name=None):
         self._output_directory = output_directory
@@ -73,11 +74,6 @@ class Configuration(object):
         Build the topologies for each permutation
         '''
         self.reset()
-        total = len(self._permutations)
-        for perm_index in range(0, total):
-            logging.info('Generating topology %d of %d' % (perm_index+1, total))
-            config = self._permutations[perm_index]
-            self._eval_topology_type(config)
 
     def get_file_path(self):
         '''
@@ -103,9 +99,15 @@ class Configuration(object):
         Moves the configuration iterator to the next configuration
         '''
         self._state_iterator = self._state_iterator + 1
+        # generate topology if needed
+        self._eval_topology_type(self._permutations[self._state_iterator])
         return self._state_iterator < len(self._permutations)
 
     def get_total_count(self):
+        '''
+        Get the total number of experiment configurations
+        :return: int count of experiment configurations
+        '''
         return len(self._permutations)
 
     def reset(self):
@@ -150,9 +152,6 @@ class Configuration(object):
             else:
                 config[key] = str(value)
 
-        # special check for topology type
-        #self._eval_topology_type(config)
-
         return config
 
     def _eval_topology_type(self, config):
@@ -165,45 +164,37 @@ class Configuration(object):
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
-        def is_float(s):
+        def _is_float(s):
             try:
                 return float(s)
             except ValueError:
                 return None
 
-        if os.path.exists(path):
-            logging.info('Topology already exists ... skipping')
-        else:
-            size = int(config['size'])
-            degree = int(config['degree'])
-
-            if config['topology_type'] == 'random':
-                graph = TopologyGenerator.generate_random_topology(
-                    size, degree)
-            elif config['topology_type'] == 'random_erdos_renyi':
-                graph = TopologyGenerator.generate_random_topology_erdos_renyi(size, degree)
-            elif config['topology_type'] == 'random_power_law':
-                graph = TopologyGenerator.generate_random_power_law_topology(size, degree)
-            elif config['topology_type'] == 'small_world':
-                graph = TopologyGenerator.generate_small_world_topology(size, degree)
-            elif config['topology_type'] == 'structured':
-                graph = TopologyGenerator.generate_structured_topology(size, degree)
-            else:
-                raise Exception('Unknown topology type')
-                
-            with open(path, 'w') as g_file:
-                for line in nx.generate_gml(graph):
-                    # hack to fix mantissa on floats
-                    if 'E-' in line:
-                        components = line.split(' ')
-                        for i in range(0, len(components)):
-                            value = is_float(components[i])
-                            if value:
-                                components[i] = '{:.18f}'.format(value)
-                        line = ' '.join(components)
-                    g_file.write((line + '\n').encode('ascii'))
-
+        # check if the file was already generated
         config['topology_file'] = path
+        if os.path.exists(path):
+            return
+
+        logging.info('Generating topology file ...')
+        size = int(config['size'])
+        degree = int(config['degree'])
+        top_type = config['topology_type']
+        if top_type not in self._top_gen_map:
+            raise Exception('Unknown topology type')
+
+        graph = self._top_gen_map[top_type](size, degree)
+
+        with open(path, 'w') as g_file:
+            for line in nx.generate_gml(graph):
+                # hack to fix mantissa on floats
+                if 'E-' in line:
+                    components = line.split(' ')
+                    for i in range(0, len(components)):
+                        value = _is_float(components[i])
+                        if value:
+                            components[i] = '{:.18f}'.format(value)
+                    line = ' '.join(components)
+                g_file.write((line + '\n').encode('ascii'))
 
     def __getitem__(self, key):
         '''
@@ -231,7 +222,8 @@ class Configuration(object):
         Get the used experiment parameters
         :return: List of parameter names
         '''
-        return ['topology_type', 'router_type', 'look_ahead', 'adversary_count', 'size', 'degree', 'repeat']
+        return ['topology_type', 'router_type', 'router_randomness',
+                'look_ahead', 'adversary_count', 'size', 'degree', 'repeat']
 
     @staticmethod
     def file_path_for_config(config, output_base_directory=None):
