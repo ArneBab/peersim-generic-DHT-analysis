@@ -54,6 +54,26 @@ class JSONAction(object):
         # add the new row to the end of the data set
         self.data_frame.loc[len(self.data_frame)] = row_values
 
+    def merge(self, other):
+        '''
+        Merge the data frame of this object with the data frame of another
+        :param other: JSONAction
+        '''
+        # check that the columns match
+        for column_name in other.data_frame.columns:
+            self.add_column(column_name)
+        # insert data from other into self
+        for i_index in range(len(other)):
+            row = []
+            i_row = other.iloc[i_index]
+            # make sure column values match up
+            for column_name in self.data_frame.columns:
+                if column_name not in i_row:
+                    row.append(numpy.nan)
+                else:
+                    row.append(i_row[column_name])
+            self.add_row(row)
+
     def to_csv(self):
         '''
         Get the JSON representation of this object

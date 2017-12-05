@@ -74,8 +74,12 @@ class MetricManager(object):
     def analyze(self):
         '''
         Run experiment analysis
+        :return: dict of the metric objects
         '''
-        routing_choice = self._routing_choice()
+        analysis_metrics = {}
+        analysis_metrics['routing_choice'] = self._routing_choice()
+
+        return analysis_metrics
 
     def summarize(self):
         '''
@@ -88,14 +92,28 @@ class MetricManager(object):
         finder = FileFinder([metric_managers])
         finder.process(self.base_directory, METRIC_FILE_NAME)
         # merge the repeat data into this metric instance
+        merged_state = None
+        for metric in metric_managers.class_instance:
+            merged_state = self._merge(merged_state, metric)
+        # calculate the new data
+        for metric_name, metric_obj in merged_state.items():
+            self._set_data(metric_name, metric_obj.to_csv())
+        return self.analyze()
 
     def _routing_choice(self):
         metric_name = 'routing_choice'
         # check if we already have the data
         if self._have_metric_data(metric_name):
             logging.debug('Loading existing routing choice metric data')
-            return RoutingChoiceReader.load(self._get_data(metric_name))
+            routing_choice_reader = RoutingChoiceReader.load(
+                self._get_data(metric_name))
+            # check if we have graph data
+            if self._get_graph(metric_name) is None:
+                logging.debug('Generating missing graph data: existing data was found')
+                self._set_graph(metric_name, routing_choice_reader.create_graph())
+            return routing_choice_reader
 
+        # no existing data found, recalculate it
         routing_choice_reader = RoutingChoiceReader()
         file_reader = JSONFileReader([routing_choice_reader])
         finder = FileFinder([file_reader])
@@ -104,9 +122,23 @@ class MetricManager(object):
         self._set_graph(metric_name, routing_choice_reader.create_graph())
         return routing_choice_reader
 
+    def _merge(self, merged_state, other_metric_manager):
+        analysis_metrics = other_metric_manager.analyze()
+        if merged_state is None:
+            return analysis_metrics
+        # merge the data sets
+        for metric_key, metric_obj in analysis_metrics.items():
+            # if the metric already exists
+            if metric_key not in merged_state:
+                merged_state[metric_key] = metric_obj
+                continue
+            # merge existing metrics
+            merged_state[metric_key].merge(metric_obj)
+        return merged_state
+
+
     def _have_metric_data(self, metric_name):
         return self._get_data(metric_name) is not None and \
-            self._get_graph(metric_name) is not None and \
             not self.force_run
 
     def _get_data(self, metric_name):
