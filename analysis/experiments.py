@@ -162,5 +162,5 @@ if __name__ == '__main__':
     PARSER.add_argument('-p', default='.', type=str,
                         help='Directory to find the PeerSim binaries in')
     PARSER.add_argument('-t', default=True, action='store_false',
-                        help='Run experiments in seperate threads')
+                        help='Do NOT run experiments in seperate threads')
     Experiments().main(PARSER.parse_args())

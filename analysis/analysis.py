@@ -340,5 +340,5 @@ if __name__ == '__main__':
     PARSER.add_argument('-f', default=False, action='store_true',
                         help='Force the experiments to rerun')
     PARSER.add_argument('-t', default=True, action='store_false',
-                        help='Run experiments in seperate threads')
+                        help='Do NOT run experiments in seperate threads')
     Manager().main(PARSER.parse_args())
