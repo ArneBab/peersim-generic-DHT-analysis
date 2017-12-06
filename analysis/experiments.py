@@ -81,7 +81,8 @@ class Experiments(object):
             exp_files = {}
             current_config = config_manager.get_config()
             # only write new files if there isn't already files there
-            if not os.path.exists(exp_file_name) or not os.path.exists(config_file_name):
+            if not os.path.exists(exp_file_name) or not os.path.exists(config_file_name) or \
+               must_run:
                 with open(exp_file_name, 'w') as c_file:
                     c_file.write(config_manager.generate_experiement_config())
                 # write the settings in JSON format for easy parsing
