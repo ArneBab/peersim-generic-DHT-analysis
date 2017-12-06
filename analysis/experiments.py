@@ -38,15 +38,24 @@ class Experiments(object):
         logging.info('Starting ...')
 
         output_directory = os.path.abspath(args.d)
-        total = self.setup_experiments(output_directory)
+        total = self.setup_experiments(output_directory, args.f)
         self.run_experiments(total, args.p, output_directory, args.t)
         logging.info('Finished!!!')
 
     @timeit
-    def setup_experiments(self, output_directory):
+    def setup_experiments(self, output_directory, must_run):
         '''
         Generate experiement configurationas and create fiel structure
         '''
+        exp_file_path = os.path.join(output_directory, 'experiments.json')
+        # load existing experiment configurations
+        if not must_run and os.path.exists(exp_file_path):
+            with open(exp_file_path, 'w') as e_file:
+                self._experiement_configurations = json.loads(e_file.read())
+            total = len(self._experiement_configurations)
+            logging.info('Loaded %s existing experiment configurations', total)
+            return total
+
         logging.info('setting up experiments ...')
         count = 1
 
@@ -92,7 +101,7 @@ class Experiments(object):
             self._experiement_configurations.append(exp_files)
             count += 1
 
-        with open(os.path.join(output_directory, 'experiments.json'), 'w') as e_file:
+        with open(exp_file_path, 'w') as e_file:
             e_file.write(json.dumps(self._experiement_configurations))
 
         total = len(self._experiement_configurations)
@@ -189,6 +198,8 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-p', default='.', type=str,
                         help='Directory to find the PeerSim binaries in')
+    PARSER.add_argument('-f', default=False, action='store_true',
+                        help='Force the experiments to rerun')
     PARSER.add_argument('-t', default=True, action='store_false',
                         help='Do NOT run experiments in seperate threads')
     Experiments().main(PARSER.parse_args())
