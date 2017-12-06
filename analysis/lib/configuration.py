@@ -40,9 +40,9 @@ class Configuration(object):
         router_loop_detection=['GUIDLoopDetection'],
         router_randomness=[0.0, 2.0, 4.0],
         routing_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x), ROUTING_DATA_FILE_NAME),
+            Configuration.file_path_for_config(x, ''), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x), GRAPH_DATA_PATH),
+            Configuration.file_path_for_config(x, ''), GRAPH_DATA_PATH),
         path=lambda x: Configuration.file_path_for_config(x, '')
     )
 
