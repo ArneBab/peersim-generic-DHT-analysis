@@ -156,6 +156,8 @@ class Configuration(object):
 
         path = os.path.join(Configuration.file_path_for_config(
             config), 'input-graph.gml')
+        rel_path = os.path.join(Configuration.file_path_for_config(
+            config, ''), 'input-graph.gml')
 
         # check if directory exists
         dir_name = os.path.dirname(path)
@@ -169,7 +171,7 @@ class Configuration(object):
                 return None
 
         # check if the file was already generated
-        config['topology_file'] = path
+        config['topology_file'] = rel_path
         if os.path.exists(path):
             return
 
