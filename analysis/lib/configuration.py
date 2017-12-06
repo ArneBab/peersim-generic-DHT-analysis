@@ -23,11 +23,6 @@ class Configuration(object):
     configuration files.
     '''
 
-    _template_string = ''
-    _permutations = None
-    _state_iterator = None
-    _output_directory = ''
-
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count=['1'],
@@ -59,6 +54,8 @@ class Configuration(object):
                    }
 
     def __init__(self, output_directory='', template_file_name=None):
+        self._permutations = None
+        self._state_iterator = None
         self._output_directory = output_directory
         # get the default template file
         if template_file_name is None:
