@@ -334,11 +334,11 @@ def _write_analysis_data(base_path, r_metrics):
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     PARSER = argparse.ArgumentParser(
-        description='Run some Anonymous P2P DHT experiments.')
+        description='Run some Anonymous P2P DHT experiment analysis.')
     PARSER.add_argument('-d', default='.', type=str,
                         help='Directory to store output in')
     PARSER.add_argument('-f', default=False, action='store_true',
-                        help='Force the experiments to rerun')
+                        help='Force the analysis to rerun')
     PARSER.add_argument('-t', default=True, action='store_false',
-                        help='Do NOT run experiments in seperate threads')
+                        help='Do NOT run analysis in seperate threads')
     Manager().main(PARSER.parse_args())
