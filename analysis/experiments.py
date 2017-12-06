@@ -39,7 +39,7 @@ class Experiments(object):
 
         output_directory = os.path.abspath(args.d)
         total = self.setup_experiments(output_directory, args.f)
-        self.run_experiments(total, args.p, output_directory, args.t)
+        self.run_experiments(total, args.p, output_directory, args.t, args.m)
         logging.info('Finished!!!')
 
     @timeit
@@ -109,10 +109,13 @@ class Experiments(object):
         logging.info('Generated %s experiment configurations', total)
         return total
 
-    def run_experiments(self, total, simulator_path, output_directory, threaded):
+    def run_experiments(self, total, simulator_path, output_directory, threaded, multiplexor):
         '''
         Run the simulation for each experiment configuration
         '''
+        # parse the multiplexor
+        exp_mod = int(multiplexor.split(':')[0])
+        exp_mod_cond = int(multiplexor.split(':')[1])
 
         # multi thread this
         nb_cores = multiprocessing.cpu_count() / 2
@@ -125,6 +128,13 @@ class Experiments(object):
             exp_file_path = os.path.join(
                 output_directory, experiment_file[CONST_EXPERIMENT])
             experiment_count += 1
+
+            # determine if this process is responsible for this experiment
+            if experiment_count % exp_mod != exp_mod_cond:
+                logging.info('Another process is running command %d of %d',
+                             experiment_count, total)
+                continue
+
             if threaded:
                 pool.apply_async(_run_experiment, args=(
                     simulator_path, output_directory, exp_file_path, experiment_count, total))
@@ -182,6 +192,8 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-p', default='.', type=str,
                         help='Directory to find the PeerSim binaries in')
+    PARSER.add_argument('-m', default='1:0', type=str,
+                        help='Multiple processes running experiments. Experiment # mod 1 == 0')
     PARSER.add_argument('-f', default=False, action='store_true',
                         help='Force the experiments to rerun')
     PARSER.add_argument('-t', default=True, action='store_false',
