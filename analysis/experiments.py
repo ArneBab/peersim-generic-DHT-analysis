@@ -50,7 +50,7 @@ class Experiments(object):
         exp_file_path = os.path.join(output_directory, 'experiments.json')
         # load existing experiment configurations
         if not must_run and os.path.exists(exp_file_path):
-            with open(exp_file_path, 'w') as e_file:
+            with open(exp_file_path, 'r') as e_file:
                 self._experiement_configurations = json.loads(e_file.read())
             total = len(self._experiement_configurations)
             logging.info('Loaded %s existing experiment configurations', total)
@@ -126,10 +126,10 @@ class Experiments(object):
             experiment_count += 1
             if threaded:
                 pool.apply_async(_run_experiment, args=(
-                    simulator_path, exp_file_path, experiment_count, total))
+                    simulator_path, output_directory, exp_file_path, experiment_count, total))
             else:
                 _run_experiment(
-                    simulator_path, exp_file_path, experiment_count, total)
+                    simulator_path, output_directory, exp_file_path, experiment_count, total)
         pool.close()
         pool.join()
 
@@ -152,7 +152,7 @@ class Experiments(object):
 
 
 @timeit
-def _run_experiment(simulator_path, experiment_file, experiment_count, total):
+def _run_experiment(simulator_path, output_directory, experiment_file, experiment_count, total):
     logging.info('Running command %d of %d',
                  experiment_count, total)
     directory = os.path.dirname(experiment_file)
@@ -179,10 +179,10 @@ def _run_experiment(simulator_path, experiment_file, experiment_count, total):
         run_time_file.write(str(time.time()))
 
     exp = Executioner(simulator_path)
-    exit_code = exp.run(experiment_file)
+    exit_code = exp.run(experiment_file, output_directory)
     if exit_code > 0:
         logging.error('Returned exit code %d', exit_code)
-        raise Exception('Simulator failed to run: %s', experiment_file)
+        raise Exception('Simulator failed to run: %s' % experiment_file)
 
     os.remove(exp_lock)
     # mark this experiment as complete
