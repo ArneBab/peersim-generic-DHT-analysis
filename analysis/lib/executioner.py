@@ -11,6 +11,7 @@ import subprocess
 
 STD_OUT_FILE_NAME = 'stdout.txt'
 
+
 class Executioner(object):
     '''
     Class for executing simulations
@@ -20,9 +21,9 @@ class Executioner(object):
 
     def __init__(self, exe_path):
         self._java_path = os.path.pathsep.join([os.path.abspath(os.path.join(exe_path, 'bin', '*')),
-                                    os.path.abspath(os.path.join(exe_path, 'lib', '*'))])
+                                                os.path.abspath(os.path.join(exe_path, 'lib', '*'))])
 
-    def run(self, experiment_config_file):
+    def run(self, experiment_config_file, base_directory):
         '''
         Run the simulation
         '''
@@ -32,5 +33,5 @@ class Executioner(object):
         with open(os.path.join(dir_path, STD_OUT_FILE_NAME), 'w') as std_out_file:
             command = list(java_exe_template)
             command.append(experiment_config_file)
-            logging.debug('Running command: %s' % ' '.join(command))
-            return subprocess.call(command, stdout=std_out_file, stderr=std_out_file)
+            logging.debug('Running command: %s', ' '.join(command))
+            return subprocess.call(command, cwd=base_directory, stdout=std_out_file, stderr=std_out_file)
