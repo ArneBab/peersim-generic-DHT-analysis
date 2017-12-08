@@ -47,7 +47,7 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/analysis/analysis.py",
             "args": [
-                "-d", "${workspaceRoot}/test_output", "-t"
+                "-d", "${workspaceRoot}/test_output", "-t", "1"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
@@ -62,7 +62,7 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/analysis/analysis.py",
             "args": [
-                "-d", "/mnt/hgfs/anp2p_data/experiments_1", "-t"
+                "-d", "/mnt/hgfs/anp2p_data/experiments_1", "-t", "1"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
