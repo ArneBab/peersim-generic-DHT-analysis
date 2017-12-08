@@ -17,7 +17,7 @@ def average_degree(nx_graph):
     :param nx_graph: networkx graph object
     :return: float average degree
     '''
-    return sum(nx_graph.degree().values()) / float(nx_graph.number_of_nodes())
+    return sum(dict(nx_graph.degree()).values()) / float(nx_graph.number_of_nodes())
 
 
 def to_histogram_ints(values, start=None, stop=None, bin_funct=None):
