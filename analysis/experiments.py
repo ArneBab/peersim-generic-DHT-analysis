@@ -121,7 +121,7 @@ class Experiments(object):
         nb_cores = threaded_count
         if threaded_count <= 0:
             nb_cores = multiprocessing.cpu_count()
-            logging.info('Running experiments on %d threads', nb_cores)
+        logging.info('Running experiments on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
         experiment_count = 0
