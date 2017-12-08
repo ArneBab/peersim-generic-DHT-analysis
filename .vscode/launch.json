@@ -32,7 +32,7 @@
             "args": [
                 "-d", "${workspaceRoot}/test_output",
                 "-p", "../../peersim-generic-DHT",
-                "-t"
+                "-t", "0"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
