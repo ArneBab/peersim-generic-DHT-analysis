@@ -19,10 +19,10 @@ class TopologyGenerator(object):
     @staticmethod
     def generate_random_topology(size, average_degree):
         graph = nx.random_regular_graph(average_degree, size)
-        for node_id in graph.nodes():
+        for node_id in graph.nodes:
             loc = random.random()
-            graph.node[node_id]['label'] = str(loc)
-            graph.node[node_id]['location'] = loc
+            graph.nodes[node_id]['label'] = str(loc)
+            graph.nodes[node_id]['location'] = loc
         return graph
 
     @staticmethod
@@ -35,10 +35,10 @@ class TopologyGenerator(object):
         # p = degree/(n-1)
         connection_p = average_degree / (size - 1.0)
         graph = nx.gnp_random_graph(size, connection_p)
-        for node_id in graph.nodes():
+        for node_id in graph.nodes:
             loc = random.random()
-            graph.node[node_id]['label'] = str(loc)
-            graph.node[node_id]['location'] = loc
+            graph.nodes[node_id]['label'] = str(loc)
+            graph.nodes[node_id]['location'] = loc
 
             # don't let the graph have orphans
             if len(graph[node_id]) < 1:
@@ -59,10 +59,10 @@ class TopologyGenerator(object):
         # https://networkx.github.io/documentation/latest/reference/generated/networkx.generators.random_graphs.powerlaw_cluster_graph.html#networkx.generators.random_graphs.powerlaw_cluster_graph
 
         graph = nx.powerlaw_cluster_graph(size, average_degree, 0.2)
-        for node_id in graph.nodes():
+        for node_id in graph.nodes:
             loc = random.random()
-            graph.node[node_id]['label'] = str(loc)
-            graph.node[node_id]['location'] = loc
+            graph.nodes[node_id]['label'] = str(loc)
+            graph.nodes[node_id]['location'] = loc
 
             # don't let the graph have orphans
             if len(graph[node_id]) < 1:
@@ -90,9 +90,9 @@ class TopologyGenerator(object):
         # add labels. Need to add labels in order
         label_step = 1.0 / size
         current_label = 0.0
-        for node_id in graph.nodes():
-            graph.node[node_id]['label'] = str(current_label)
-            graph.node[node_id]['location'] = current_label
+        for node_id in graph.nodes:
+            graph.nodes[node_id]['label'] = str(current_label)
+            graph.nodes[node_id]['location'] = current_label
             current_label += label_step
 
         return graph
@@ -105,9 +105,9 @@ class TopologyGenerator(object):
         # add labels. Need to add labels in order
         label_step = 1.0 / size
         current_label = 0.0
-        for node_id in graph.nodes():
-            graph.node[node_id]['label'] = str(current_label)
-            graph.node[node_id]['location'] = current_label
+        for node_id in graph.nodes:
+            graph.nodes[node_id]['label'] = str(current_label)
+            graph.nodes[node_id]['location'] = current_label
             current_label += label_step
 
         # create ring
@@ -131,7 +131,7 @@ class TopologyGenerator(object):
 
         # now bring the graph degree as close to average degree as we can
         exp = 1
-        while len(graph.edge[0]) < average_degree:
+        while len(graph.adj[0]) < average_degree:
             exp = exp * 2
             if not add_link(graph, exp):
                 break
