@@ -65,20 +65,21 @@ class Manager(object):
         return total
 
     @timeit
-    def run_analysis(self, total, must_run, threaded):
+    def run_analysis(self, total, must_run, thread_count):
         '''
         Run the post run analysis on a experiement
         '''
 
         # multi thread this
-        nb_cores = multiprocessing.cpu_count() / 2
-        if threaded:
-            logging.info('Running analysis on %d threads', nb_cores)
+        nb_cores = thread_count
+        if thread_count <= 0:
+            nb_cores = multiprocessing.cpu_count()
+        logging.info('Running experiments on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
         count = 1
         for exp_files in self._experiement_configurations:
-            if threaded:
+            if thread_count > 1:
                 pool.apply_async(_run_analysis, args=(
                     exp_files, count, total, must_run))
             else:
@@ -88,7 +89,7 @@ class Manager(object):
         pool.join()
 
     @timeit
-    def run_summations(self, output_directory, must_run, threaded):
+    def run_summations(self, output_directory, must_run, thread_count):
         '''
         Run after all experiments are complete. Compare the variables
         '''
@@ -101,13 +102,14 @@ class Manager(object):
         groups = []
 
         # multi thread this
-        nb_cores = multiprocessing.cpu_count() / 2
-        if threaded:
-            logging.info('Running summations on %d threads', nb_cores)
+        nb_cores = thread_count
+        if thread_count <= 0:
+            nb_cores = multiprocessing.cpu_count()
+        logging.info('Running analysis on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
         for exp_files in exp_grouped.values():
-            if threaded:
+            if thread_count > 1:
                 groups.append(pool.apply_async(_run_summations, args=(
                     exp_files, count, exp_group_count, must_run)))
             else:
@@ -118,7 +120,7 @@ class Manager(object):
         pool.join()
 
         # get the async results
-        if threaded:
+        if thread_count > 1:
             holder = [result.get() for result in groups]
             groups = holder
 
@@ -339,6 +341,6 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-f', default=False, action='store_true',
                         help='Force the analysis to rerun')
-    PARSER.add_argument('-t', default=True, action='store_false',
-                        help='Do NOT run analysis in seperate threads')
+    PARSER.add_argument('-t', default='0', type=int,
+                        help='Number of threads to run. Default is the # of core CPUs available')
     Manager().main(PARSER.parse_args())
