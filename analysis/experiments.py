@@ -109,7 +109,7 @@ class Experiments(object):
         logging.info('Generated %s experiment configurations', total)
         return total
 
-    def run_experiments(self, total, simulator_path, output_directory, threaded_ratio, multiplexor):
+    def run_experiments(self, total, simulator_path, output_directory, threaded_count, multiplexor):
         '''
         Run the simulation for each experiment configuration
         '''
@@ -118,9 +118,9 @@ class Experiments(object):
         exp_mod_cond = int(multiplexor.split(':')[1])
 
         # multi thread this
-        nb_cores = multiprocessing.cpu_count()
-        if threaded_ratio > 0:
-            nb_cores = nb_cores / threaded_ratio
+        nb_cores = threaded_count
+        if threaded_count <= 0:
+            nb_cores = multiprocessing.cpu_count()
             logging.info('Running experiments on %d threads', nb_cores)
         pool = multiprocessing.Pool(processes=nb_cores)
 
@@ -136,7 +136,7 @@ class Experiments(object):
                              experiment_count, total)
                 continue
 
-            if threaded_ratio > 0:
+            if threaded_count > 1:
                 pool.apply_async(_run_experiment, args=(
                     simulator_path, output_directory, exp_file_path, experiment_count, total))
             else:
@@ -197,6 +197,6 @@ if __name__ == '__main__':
                         help='Multiple processes running experiments. Experiment # mod 1 == 0')
     PARSER.add_argument('-f', default=False, action='store_true',
                         help='Force the experiments to rerun')
-    PARSER.add_argument('-t', default='1', type=int,
-                        help='Ratio of thread to use 1/t threads. Default is 1/1.')
+    PARSER.add_argument('-t', default='0', type=int,
+                        help='Number of threads to run. Default is the # of core CPUs available')
     Experiments().main(PARSER.parse_args())
