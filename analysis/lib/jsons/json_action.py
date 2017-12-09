@@ -63,9 +63,9 @@ class JSONAction(object):
         for column_name in other.data_frame.columns:
             self.add_column(column_name)
         # insert data from other into self
-        for i_index in range(len(other)):
+        for i_index in range(len(other.data_frame)):
             row = []
-            i_row = other.iloc[i_index]
+            i_row = other.data_frame.iloc[i_index]
             # make sure column values match up
             for column_name in self.data_frame.columns:
                 if column_name not in i_row:
