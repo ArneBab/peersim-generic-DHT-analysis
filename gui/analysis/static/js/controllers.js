@@ -1,6 +1,7 @@
 angular.module('challengerApp.controllers', [])
-  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, ExperimentCsvService, ExperimentStaticService, MetricService) {
+  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, ExperimentServiceV2, ExperimentCsvService, ExperimentStaticService, MetricService) {
     $scope.id = $stateParams.id
+    $scope.experiment_v2 = ExperimentServiceV2.get({id: $stateParams.id})
     $scope.experiment = ExperimentService.get({id: $stateParams.id})
     $scope.perf_correlation = ExperimentCsvService.get({id: $stateParams.id, csv: 'performance_corr.csv'})
     $scope.perf_pvalue = ExperimentCsvService.get({id: $stateParams.id, csv: 'performance_p_values.csv'})

@@ -13,7 +13,26 @@
 </script>
 
 <button ui-sref="data_view({id: id})" class="btn btn-primary">Routing Data View</button>
-<h2>Experiment {{experiment.id}} Data</h2>
+<h2>Experiment {{experiment_v2.id}} Data</h2>
+
+<h3>Graphs</h3>
+
+<div class="row" ng-repeat-start="(group_name, grouped_graphs) in experiment_v2.metrics.graphs">
+    <h4 class="capitalize">{{group_name | prettyName}}</h4>
+</div>
+<div class="col-sm-6" ng-repeat="(graph_name, graph) in grouped_graphs">
+    <canvas ng-click="open(graph)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
+        chart-series="graph.series" chart-options="graph.options">
+    </canvas>
+</div>
+<div class="row" ng-repeat-end="">
+    <hr />
+</div>
+
+
+<hr/>
+<hr/>
+<h2>Experiment {{experiment.id}} Data (old)</h2>
 <div class="row" ng-repeat-start="(group, values) in can_show(experiment.metrics)">
     <h4 class="capitalize">{{group | prettyName}}</h4>
 </div>
@@ -26,7 +45,7 @@
     </div>
 </div>
 <hr ng-repeat-end="" />
-<h3>Graphs</h3>
+<h3>Graphs (old)</h3>
 
 <div class="row" ng-repeat-start="(group, values) in graphs">
     <h4 class="capitalize">{{group | prettyName}}</h4>

@@ -45,6 +45,7 @@ def register_resources(app):
     api = Api(app)
     api.add_resource(exp.ExperimentList, '/api/v1/experiments')
     api.add_resource(exp.Experiment, '/api/v1/experiments/<int:experiment_id>')
+    api.add_resource(exp.ExperimentMetrics, '/api/v2/experiments/<int:experiment_id>')
     api.add_resource(metrics.Metrics,
                      '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
     api.add_resource(exp.ExperimentCSV,

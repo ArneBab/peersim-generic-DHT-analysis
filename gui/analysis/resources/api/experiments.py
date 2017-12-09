@@ -53,6 +53,23 @@ class Experiment(Resource):
             experiment_config['metrics'] = json.loads(m_file.read())
         return jsonify(experiment_config)
 
+class ExperimentMetrics(Resource):
+    '''
+    Represents a list of experiments
+    '''
+
+    def get(self, experiment_id):
+        '''
+        Only supports get operation
+        '''
+        experiment_config = current_app.config['EXPERIMENT_LIST'][experiment_id]
+
+        metrics_path = os.path.join(os.path.dirname(
+            experiment_config['self']), 'metrics.json')
+        with open(metrics_path, 'r') as m_file:
+            experiment_config['metrics'] = json.loads(m_file.read())
+        return jsonify(experiment_config)
+
 class ExperimentCSV(Resource):
     '''
     Represents a list of experiments
