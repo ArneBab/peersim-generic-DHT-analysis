@@ -43,9 +43,14 @@ class RoutingChoiceReader(JSONAction, GraphAction):
         # Add row
         self.add_row(row)
 
+    def merge(self, other):
+        super(RoutingChoiceReader, self).merge(other)
+        # groupby cycle
+        self.data_frame = self.data_frame.groupby(['cycle']).sum().reset_index()
+
     def create_graph(self):
         # sum up the values based on cycle
-        data_frame = self.data_frame.groupby(['cycle']).sum().reset_index()
+        data_frame = self.data_frame
 
         labels = list(data_frame['cycle'])
         # Only choice data
