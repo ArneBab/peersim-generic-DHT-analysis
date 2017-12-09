@@ -152,7 +152,7 @@ angular.module('challengerApp.controllers', [])
         animation: true,
         ariaLabelledBy: 'modal-title',
         ariaDescribedBy: 'modal-body',
-        templateUrl: 'myModalContentCvs.html',
+        templateUrl: 'myModalContentCsv.html',
         controller: 'ModalInstanceCtrl',
         controllerAs: '$ctrl',
         size: 'lg',
