@@ -40,7 +40,7 @@ class Manager(object):
 
         output_directory = os.path.abspath(args.d)
         total = self.load_experiments(output_directory)
-        self.run_analysis(total, args.f, args.t)
+        self.run_analysis(output_directory, total, args.f, args.t)
         self.run_summations(output_directory, args.f, args.t)
         logging.info('Finished!!!')
 
@@ -65,7 +65,7 @@ class Manager(object):
         return total
 
     @timeit
-    def run_analysis(self, total, must_run, thread_count):
+    def run_analysis(self, output_directory, total, must_run, thread_count):
         '''
         Run the post run analysis on a experiement
         '''
@@ -81,9 +81,9 @@ class Manager(object):
         for exp_files in self._experiement_configurations:
             if thread_count > 1:
                 pool.apply_async(_run_analysis, args=(
-                    exp_files, count, total, must_run))
+                    output_directory, exp_files, count, total, must_run))
             else:
-                _run_analysis(exp_files, count, total, must_run)
+                _run_analysis(output_directory, exp_files, count, total, must_run)
             count += 1
         pool.close()
         pool.join()
@@ -111,9 +111,9 @@ class Manager(object):
         for exp_files in exp_grouped.values():
             if thread_count > 1:
                 groups.append(pool.apply_async(_run_summations, args=(
-                    exp_files, count, exp_group_count, must_run)))
+                    output_directory, exp_files, count, exp_group_count, must_run)))
             else:
-                groups.append(_run_summations(
+                groups.append(_run_summations(output_directory,
                     exp_files, count, exp_group_count, must_run))
             count += 1
         pool.close()
@@ -162,7 +162,7 @@ def _metrics(base_path, *args):
     return path
 
 
-def _run_summations(exp_files, count, total, must_run):
+def _run_summations(base_directory, exp_files, count, total, must_run):
     # base directory
     logging.info('Averaging group %d of %d', count, total)
     count += 1
@@ -195,18 +195,18 @@ def _run_summations(exp_files, count, total, must_run):
         routing_choice_avg, graph_data = analyzer.run_routing_choice_metrics()
         s_file.write(json.dumps(graph_data))
 
-    r_metrics = analyzer.get_routing_metrics(None, None, None)
+    r_metrics = analyzer.get_routing_metrics(base_directory, None, None, None)
     r_metrics.calculate_metrics()
     _write_analysis_data(base_path, r_metrics)
     return output_file
 
 
-def _run_analysis(exp_files, count, total, must_run):
-    _run_pre_analysis(exp_files, count, total, must_run)
+def _run_analysis(output_directory, exp_files, count, total, must_run):
+    _run_pre_analysis(output_directory, exp_files, count, total, must_run)
     _run_post_analysis(exp_files, count, total, must_run)
 
 
-def _run_pre_analysis(exp_files, count, total, must_run):
+def _run_pre_analysis(base_directory, exp_files, count, total, must_run):
     logging.info('Running pre analysis %d of %d', count, total)
 
     # base directory
@@ -240,7 +240,7 @@ def _run_pre_analysis(exp_files, count, total, must_run):
     routing_data_name = _base(base_path, R_F_NAME)
     new_routing_data = _base(base_path, 'processed.' + R_F_NAME)
 
-    r_metrics = analyzer.get_routing_metrics(
+    r_metrics = analyzer.get_routing_metrics(base_directory, 
         routing_data_name, new_routing_data, routing_choice_avg)
     r_metrics.calculate_metrics()
     _write_analysis_data(base_path, r_metrics)

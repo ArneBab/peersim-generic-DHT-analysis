@@ -85,7 +85,7 @@ class RoutingMetrics(object):
     ##########################################
 
     #@timeit
-    def __init__(self, graphs, experiment_config_list, routing_choice_avg=None,
+    def __init__(self, graphs, experiment_config_list, base_directory, routing_choice_avg=None,
                  input_data_file_name=None, output_data_file_name=None):
         '''
         Update the routing data with post metrics
@@ -99,12 +99,12 @@ class RoutingMetrics(object):
         self._metrics = {}
 
         if input_data_file_name:
-            self._init_full(experiment_config_list, routing_choice_avg,
+            self._init_full(base_directory, experiment_config_list, routing_choice_avg,
                             input_data_file_name, output_data_file_name)
         else:
-            self._init_load(experiment_config_list)
+            self._init_load(base_directory, experiment_config_list)
 
-    def _init_load(self, experiment_config_list):
+    def _init_load(self, base_directory, experiment_config_list):
         parameters = {}
         for param in Configuration.get_parameters():
             if param == 'repeat':
@@ -115,8 +115,8 @@ class RoutingMetrics(object):
         self._metrics['variables'] = parameters
 
         for exp_config in experiment_config_list:
-            base_directory = os.path.dirname(exp_config['routing_data_path'])
-            raw_data_file = os.path.join(base_directory, 'metrics', 'consolidated.json')
+            path_directory = os.path.dirname(exp_config['routing_data_path'])
+            raw_data_file = os.path.join(base_directory, path_directory, 'metrics', 'consolidated.json')
             with open(raw_data_file, 'r') as r_file:
                 raw_metrics = json.loads(r_file.read())['_raw']
             for name, metric in raw_metrics.items():
@@ -127,7 +127,7 @@ class RoutingMetrics(object):
                 else:
                     self._raw.set(name, self._raw.get(name) + metric)
 
-    def _init_full(self, experiment_config_list, routing_choice_avg,
+    def _init_full(self, base_directory, experiment_config_list, routing_choice_avg,
                    input_data_file_name, output_data_file_name):
         ''' Load a single experiment '''
         experiment_config = experiment_config_list[0]

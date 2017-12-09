@@ -86,13 +86,14 @@ class Analyzer(object):
                 graph_data[choice_index])
         return routing_choices_average, self._generate_graph_data(label_list, graph_series, graph_data)
 
-    def get_routing_metrics(self, routing_data_file_name, new_routing_data_file_name, routing_choice_avg):
+    def get_routing_metrics(self, base_directory, routing_data_file_name, new_routing_data_file_name, routing_choice_avg):
         '''
         Calculate routing related metrics
         :return: RoutingMetric object
         '''
         return RoutingMetrics(self._load_graphs(), 
                               self._experiment_config_jsons.values(),
+                              base_directory,
                               routing_choice_avg,
                               routing_data_file_name,
                               new_routing_data_file_name)
