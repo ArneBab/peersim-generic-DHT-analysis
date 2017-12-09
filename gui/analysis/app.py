@@ -45,19 +45,23 @@ def register_resources(app):
     api = Api(app)
     api.add_resource(exp.ExperimentList, '/api/v1/experiments')
     api.add_resource(exp.Experiment, '/api/v1/experiments/<int:experiment_id>')
-    api.add_resource(exp.ExperimentMetrics, '/api/v2/experiments/<int:experiment_id>')
+    api.add_resource(exp.ExperimentMetrics,
+                     '/api/v2/experiments/<int:experiment_id>')
     api.add_resource(metrics.Metrics,
                      '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
     api.add_resource(exp.ExperimentCSV,
                      '/api/v1/experiments/<int:experiment_id>/csv/<path:csv_file>')
     api.add_resource(exp.ExperimentStatic,
                      '/api/v1/experiments/<int:experiment_id>/static/<path:static_file>')
-    api.add_resource(data.Data,'/api/v1/data/<int:experiment_id>')
+    api.add_resource(data.Data, '/api/v1/data/<int:experiment_id>')
 
-    api.add_resource(summary.Summary,'/api/v1/summary')
-    api.add_resource(csv.Csv,'/api/v1/summary/csv')
-    api.add_resource(summary.SummaryGraphs,'/api/v1/summary/graphs/<path:variable>')
-    api.add_resource(summary.SummaryCorrelations,'/api/v1/summary/correlations/<path:variable>')
+    api.add_resource(summary.Summary, '/api/v1/summary')
+    api.add_resource(csv.Csv, '/api/v1/summary/csv')
+    api.add_resource(summary.SummaryGraphs,
+                     '/api/v1/summary/graphs/<path:variable>')
+    api.add_resource(summary.SummaryCorrelations,
+                     '/api/v1/summary/correlations/<path:variable>')
+
 
 def load_experiment_data(app):
     '''
@@ -88,7 +92,8 @@ def load_experiment_data(app):
             exp_id += 1
             config['self'] = exp['config']
             config['menu_path'] = _clean_path(config['path'])
-            config['menu_path_name'] = _clean_path_name(config['menu_path'], config['id'])
+            config['menu_path_name'] = _clean_path_name(
+                config['menu_path'], config['id'])
             configs.append(config)
 
             if exp['repeat_group'] not in config_groups:
@@ -102,16 +107,19 @@ def load_experiment_data(app):
         config['id'] = exp_id
         exp_id += 1
         config['menu_path'] = _clean_path(config['path'], True)
-        config['menu_path_name'] = _clean_path_name(config['menu_path'], config['id'])
+        config['menu_path_name'] = _clean_path_name(
+            config['menu_path'], config['id'])
 
     experiment_hier = {}
     # Build experiment hierarchy before finishing the experiment config list
     for config in config_groups.values():
         key = _clean_path_name(config['menu_path'], None)
-        experiment_hier[key] = {'children':[], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])}
+        experiment_hier[key] = {'children': [
+        ], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])}
     for config in configs:
         group_name = _clean_path_name(_clean_path(config['path'], True), None)
-        experiment_hier[group_name]['children'].append({'children':[], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])})
+        experiment_hier[group_name]['children'].append(
+            {'children': [], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])})
     for exp_hier in experiment_hier.values():
         exp_hier['children'].sort(key=lambda x: x['label'])
 
@@ -128,10 +136,12 @@ def load_experiment_data(app):
     app.config['EXPERIMENT_LIST'] = configs
     app.config['EXPERIMENT_HIERARCHY'] = experiment_hier_items
 
+
 def _clean_path(path, is_group=False):
     if is_group:
-        return path.split('/')[1:-1:2]
-    return path.split('/')[1::2]
+        return path.replace('\\', '/').split('/')[1:-1:2]
+    return path.replace('\\', '/').split('/')[1::2]
+
 
 def _clean_path_name(path_list, id_num):
     menu_path = ':'.join(path_list).lower()
