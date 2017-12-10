@@ -11,7 +11,6 @@ import os
 import json
 import multiprocessing
 import time
-import datetime
 
 from lib.configuration import Configuration
 from lib.executioner import Executioner
@@ -136,7 +135,7 @@ class Experiments(object):
                              experiment_count, total)
                 continue
 
-            if threaded_count > 1:
+            if nb_cores > 1:
                 pool.apply_async(_run_experiment, args=(
                     simulator_path, output_directory, exp_file_path, experiment_count, total))
             else:
