@@ -14,11 +14,11 @@ class FileReader(object):
     Process a file one line at a time
     '''
 
-    def __init__(self, json_actions):
+    def __init__(self, metric_actions):
         '''
         :param json_actions: JSONAction object list
         '''
-        self.json_actions = json_actions
+        self.metric_actions = metric_actions
 
     def process(self, file_path):
         '''
@@ -27,12 +27,14 @@ class FileReader(object):
         '''
         pass
 
+    def _send_data(self, data):
+        for action in self.metric_actions:
+            action.process(data)
 
-class JSONFileReader(FileReader):
+class TextFileReader(FileReader):
     '''
-    Process a file one line at a time
+    Process a file one line at a time as text
     '''
-
     def process(self, file_path):
         '''
         Process a given file by applying each file action to every line in the file
@@ -44,6 +46,9 @@ class JSONFileReader(FileReader):
 
         with open(file_path, 'r') as open_file:
             for line in open_file:
-                json_object = json.loads(line)
-                for action in self.json_actions:
-                    action.process(json_object)
+                self._send_data(line)
+
+class JSONFileReader(TextFileReader):
+    ''' Read each line as a JSON object '''
+    def _send_data(self, data):
+        super(JSONFileReader, self)._send_data(json.loads(data))

@@ -11,7 +11,7 @@ import json
 
 from lib.metrics.routing_choice_metric import RoutingChoiceMetric
 from lib.file.file_finder import FileFinder
-from lib.file.json_file_reader import JSONFileReader
+from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
 
 
