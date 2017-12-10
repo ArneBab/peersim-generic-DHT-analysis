@@ -9,7 +9,7 @@ import logging
 import os
 import json
 
-from lib.jsons.routing_choice_reader import RoutingChoiceReader
+from lib.metrics.routing_choice_metric import RoutingChoiceMetric
 from lib.file.file_finder import FileFinder
 from lib.file.json_file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
@@ -32,6 +32,7 @@ class MetricManager(object):
         self.is_dirty = False
         self.force_run = force_run
 
+        # can pass either full file path or directory path
         if os.path.isdir(base_directory):
             # only directory was passed in
             self.base_directory = base_directory
@@ -71,14 +72,13 @@ class MetricManager(object):
         '''
         pass
 
-    def analyze(self):
+    def analyze(self, summary_mode=False):
         '''
         Run experiment analysis
         :return: dict of the metric objects
         '''
-        analysis_metrics = {}
-        analysis_metrics.update(self._routing_choice())
-
+        analysis_metrics = self._routing_choice(summary_mode)
+        #self._merge_store(analysis_metrics, self._routing_paths(summary_mode))
         return analysis_metrics
 
     def summarize(self):
@@ -95,78 +95,107 @@ class MetricManager(object):
         merged_state = None
         for metric in metric_managers.class_instance:
             merged_state = self._merge(merged_state, metric)
-        # calculate the new data
-        for group_name, group_obj in merged_state.items():
-            for metric_name, metric_obj in group_obj.items():
-                self._set_data(group_name, metric_name, metric_obj.to_csv())
-        return self.analyze()
+        # Set the new metric data
+        for group_name, metric_name, metric_obj in self._iter_store(merged_state):
+            self._set_data(group_name, metric_name, metric_obj.to_csv())
+        # run graph calculations
+        return self.analyze(True)
 
-    def _routing_choice(self):
-        group_name = 'routing'
-        metric_name = 'routing_choice'
-        # check if we already have the data
-        if self._have_metric_data(group_name, metric_name):
-            logging.debug('Loading existing routing choice metric data')
-            routing_choice_reader = RoutingChoiceReader.load(
-                self._get_data(group_name, metric_name))
-            # check if we have graph data
-            if self._get_graph(group_name, metric_name) is None:
-                logging.debug(
-                    'Generating missing graph data: existing data was found')
-                self._set_graph(group_name, metric_name,
-                                routing_choice_reader.create_graph())
-            return {group_name: {metric_name: routing_choice_reader}}
+    def _routing_choice(self, summary_mode):
+        metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric)]
+        search_dir = os.path.join(self.base_directory, 'graphs')
+        return self._process_metrics(metric_seq, search_dir, '*.stats', summary_mode)
 
-        # no existing data found, recalculate it
-        routing_choice_reader = RoutingChoiceReader()
-        file_reader = JSONFileReader([routing_choice_reader])
-        finder = FileFinder([file_reader])
-        finder.process(os.path.join(self.base_directory, 'graphs'), '*.stats')
-        self._set_data(group_name, metric_name, routing_choice_reader.to_csv())
-        self._set_graph(group_name, metric_name,
-                        routing_choice_reader.create_graph())
-        return {group_name: {metric_name: routing_choice_reader}}
+    def _routing_paths(self, summary_mode):
+        pass
+
+    def _process_metrics(self, metric_seq, folder_path, file_filter, summary_mode):
+        # check if we already have the data for each metric
+        metric_data = {}
+        not_loaded_seq = []
+        for g_name, m_name, m_class in metric_seq:
+            # data was found
+            if self._have_metric_data(g_name, m_name, summary_mode):
+                logging.debug('Loading existing routing choice metric data for %s:%s',
+                              g_name, m_name)
+                metric = m_class.load(self._get_data(g_name, m_name))
+                # check if we have graph data
+                if self._get_graph(g_name, m_name) is None:
+                    logging.debug('Generating graph data from existing data')
+                    self._set_graph(g_name, m_name, metric.create_graph())
+                self._add_store(g_name, m_name, metric, metric_data)
+            # no existing data found, will need to calculate it later
+            else:
+                not_loaded_seq.append((g_name, m_name, m_class()))
+
+        # run the missing metrics
+        metrics_list = [m_inst for g_n, m_n, m_inst in not_loaded_seq]
+        if len(metrics_list) > 0:
+            file_reader = JSONFileReader(metrics_list)
+            finder = FileFinder([file_reader])
+            finder.process(folder_path, file_filter)
+            # save the results of running the metrics
+            for g_name, m_name, metric_obj in not_loaded_seq:
+                self._set_data(g_name, m_name, metric_obj.to_csv())
+                self._set_graph(g_name, m_name, metric_obj.create_graph())
+                self._add_store(g_name, m_name, metric_obj, metric_data)
+        return metric_data
 
     def _merge(self, merged_state, other_metric_manager):
         analysis_metrics = other_metric_manager.analyze()
         if merged_state is None:
             return analysis_metrics
         # merge the data sets
-        for group_key, group_metrics in analysis_metrics.items():
-            for metric_key, metric_obj in group_metrics.items():
-                if group_key not in merged_state:
-                    merged_state[group_key] = {}
-                # if the metric already exists
-                if metric_key not in merged_state[group_key]:
-                    merged_state[group_key][metric_key] = metric_obj
-                    continue
-                # merge existing metrics
-                merged_state[group_key][metric_key].merge(metric_obj)
+        for group_key, metric_key, metric_obj in self._iter_store(analysis_metrics):
+            existing = self._get_store(group_key, metric_key, merged_state)
+            # new entry?
+            if existing is None:
+                self._add_store(group_key, metric_key,
+                                metric_obj, merged_state)
+                continue
+            # merge existing metrics
+            existing.merge(metric_obj)
         return merged_state
 
-    def _have_metric_data(self, group_name, metric_name):
+    def _iter_store(self, metric_dic):
+        for group_name, group_obj in metric_dic.items():
+            for metric_name, metric_obj in group_obj.items():
+                yield (group_name, metric_name, metric_obj)
+
+    def _add_store(self, group_name, metric_name, metric_obj, metric_dict=None):
+        if metric_dict is None:
+            return {group_name: {metric_name: metric_obj}}
+        if group_name not in metric_dict:
+            metric_dict[group_name] = {}
+        metric_dict[group_name][metric_name] = metric_obj
+        return metric_dict
+
+    def _get_store(self, group_name, metric_name, metric_dict):
+        if group_name in metric_dict and metric_name in metric_dict[group_name]:
+            return metric_dict[group_name][metric_name]
+        return None
+
+    def _merge_store(self, store_one, store_two):
+        if store_one is None:
+            return store_two
+        for g_name, m_name, m_obj in self._iter_store(store_two):
+            self._add_store(g_name, m_name, m_obj, store_one)
+        return store_one
+
+    def _have_metric_data(self, group_name, metric_name, summary_mode):
         return self._get_data(group_name, metric_name) is not None and \
-            not self.force_run
+            (not self.force_run or summary_mode)
 
     def _get_data(self, group_name, metric_name):
-        if group_name in self.metrics['data'] and metric_name in self.metrics['data'][group_name]:
-            return self.metrics['data'][group_name][metric_name]
-        return None
+        return self._get_store(group_name, metric_name, self.metrics['data'])
 
     def _set_data(self, group_name, metric_name, value):
         self.is_dirty = True
-        if group_name not in self.metrics['data']:
-            self.metrics['data'][group_name] = {}
-        self.metrics['data'][group_name][metric_name] = value
+        self._add_store(group_name, metric_name, value, self.metrics['data'])
 
     def _get_graph(self, group_name, metric_name):
-        if group_name in self.metrics['graphs'] and \
-           metric_name in self.metrics['graphs'][group_name]:
-            return self.metrics['graphs'][group_name][metric_name]
-        return None
+        return self._get_store(group_name, metric_name, self.metrics['graphs'])
 
     def _set_graph(self, group_name, metric_name, value):
         self.is_dirty = True
-        if group_name not in self.metrics['graphs']:
-            self.metrics['graphs'][group_name] = {}
-        self.metrics['graphs'][group_name][metric_name] = value
+        self._add_store(group_name, metric_name, value, self.metrics['graphs'])

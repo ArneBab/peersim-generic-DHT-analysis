@@ -5,11 +5,10 @@ Updated on Nov, 2017
 
 Framework for processing a files
 '''
-from lib.jsons.json_action import JSONAction
-from lib.graphs.graph_action import GraphAction
+from lib.metrics.metric_base import MetricBase
 
 
-class RoutingChoiceReader(JSONAction, GraphAction):
+class RoutingChoiceMetric(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
@@ -19,7 +18,7 @@ class RoutingChoiceReader(JSONAction, GraphAction):
         Process a given file
         :param json_object: JSON object
         '''
-        super(RoutingChoiceReader, self).process(json_object)
+        super(RoutingChoiceMetric, self).process(json_object)
 
         cycle = json_object['cycle']
         # skip cycle 0, its empty
@@ -44,9 +43,10 @@ class RoutingChoiceReader(JSONAction, GraphAction):
         self.add_row(row)
 
     def merge(self, other):
-        super(RoutingChoiceReader, self).merge(other)
+        super(RoutingChoiceMetric, self).merge(other)
         # groupby cycle
-        self.data_frame = self.data_frame.groupby(['cycle']).sum().reset_index()
+        self.data_frame = self.data_frame.groupby(
+            ['cycle']).sum().reset_index()
 
     def create_graph(self):
         # sum up the values based on cycle
