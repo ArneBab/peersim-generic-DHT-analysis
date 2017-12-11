@@ -36,6 +36,10 @@ class FileFinder(object):
             for filename in fnmatch.filter(sorted(filenames), file_pattern):
                 found_files.append(os.path.abspath(os.path.join(root, filename)))
 
+        for reader in self.file_reader_list:
+            reader.on_start(base_directory)
         for file_path in found_files:
             for reader in self.file_reader_list:
                 reader.process(file_path)
+        for reader in self.file_reader_list:
+            reader.on_stop()

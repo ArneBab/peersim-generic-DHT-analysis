@@ -27,6 +27,19 @@ class FileReader(object):
         '''
         pass
 
+    def on_start(self, file_path):
+        '''
+        Start of processing a new file
+        :param file_path: Full path to the file being processed
+        '''
+        pass
+
+    def on_stop(self):
+        '''
+        End of processing a new file
+        '''
+        pass
+
     def _send_data(self, data):
         for action in self.metric_actions:
             data = action.process(data)
