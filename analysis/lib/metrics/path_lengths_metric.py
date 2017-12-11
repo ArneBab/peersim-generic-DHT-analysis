@@ -61,14 +61,14 @@ class PathLengthsMetric(MetricBase):
         # average
         route_values = list(data_frame['Routing Path Length'].values)
         circuit_values = list(data_frame['Circuit Path Length'].values)
-        metrics.append(self._value_wrapper(len(route_values), '',
-                                           'M_c', 'message_count'))
-        metrics.append(self._value_wrapper(round(numpy.mean(route_values), 5), '',
-                                           'PR_a', 'path_length_routing_avg'))
-        metrics.append(self._value_wrapper(round(numpy.std(route_values), 5), '',
-                                           'PR_s', 'path_length_routing_std'))
-        metrics.append(self._value_wrapper(round(numpy.mean(circuit_values), 5), '',
-                                           'PC_a', 'path_length_circuit_avg'))
-        metrics.append(self._value_wrapper(round(numpy.std(circuit_values), 5), '',
-                                           'PC_s', 'path_length_circuit_std'))
+        metrics.append(self._w(len(route_values), '',
+                               'M_c', 'message_count'))
+        metrics.append(self._w(round(numpy.mean(route_values), 5), '',
+                               'PR_a', 'path_length_routing_avg'))
+        metrics.append(self._w(round(numpy.std(route_values), 5), '',
+                               'PR_s', 'path_length_routing_std'))
+        metrics.append(self._w(round(numpy.mean(circuit_values), 5), '',
+                               'PC_a', 'path_length_circuit_avg'))
+        metrics.append(self._w(round(numpy.std(circuit_values), 5), '',
+                               'PC_s', 'path_length_circuit_std'))
         return metrics

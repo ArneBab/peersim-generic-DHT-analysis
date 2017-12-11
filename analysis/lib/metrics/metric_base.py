@@ -107,7 +107,7 @@ class MetricBase(object):
         '''
         return self.data_frame.to_csv(index=False)
 
-    def _value_wrapper(self, value, description, short_name, full_name):
+    def _w(self, value, description, short_name, full_name):
         return {'value': value, 'description': description,
                 'short_name': short_name, 'full_name': full_name}
 

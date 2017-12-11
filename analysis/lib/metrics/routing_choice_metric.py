@@ -85,8 +85,8 @@ class RoutingChoiceMetric(MetricBase):
         total = float(last_row.sum())
         for column, data in last_row.items():
             short_name = column.replace('oice ', '_') + '_a'
-            metrics.append(self._value_wrapper(round(data/total, 5), '',
-                                               short_name, column.replace(' ', '_') + '_avg'))
+            metrics.append(self._w(round(data/total, 5), '',
+                                   short_name, column.replace(' ', '_') + '_avg'))
 
         return metrics
 
