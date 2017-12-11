@@ -13,6 +13,7 @@ from lib.metrics.routing_choice_metric import RoutingChoiceMetric
 from lib.metrics.path_lengths_metric import PathLengthsMetric
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
+from lib.metrics.graph_manager import GraphManager
 from lib.file.class_loader import ClassLoader
 
 
@@ -79,6 +80,7 @@ class MetricManager(object):
         :return: dict of the metric objects
         '''
         analysis_metrics = self._routing_choice()
+        self._merge_store(analysis_metrics, self._load_graphs())
         self._merge_store(analysis_metrics, self._routing_paths())
         return analysis_metrics
 
@@ -86,9 +88,6 @@ class MetricManager(object):
         '''
         Run the summation metrics over a set of experiment repeats
         '''
-        # check if the summation needs to run
-        if len(self.metrics['graphs'].values()) > 0:
-            return self.analyze()
         # load the metric data for each experiment repeat
         metric_managers = ClassLoader(MetricManager)
         finder = FileFinder([metric_managers])
@@ -99,9 +98,29 @@ class MetricManager(object):
             merged_state = self._merge(merged_state, metric)
         # Set the new metric data
         for group_name, metric_name, metric_obj in self._iter_store(merged_state):
-            self._set_data(group_name, metric_name, metric_obj.to_csv())
+            if not self._have_metric_data(group_name, metric_name):
+                self._set_data(group_name, metric_name, metric_obj.to_csv())
         # run graph calculations
         return self.analyze()
+
+    def _load_graphs(self):
+        group_name = 'graph'
+        metric_name = 'graph'
+        # check if data is already available
+        if self._have_metric_data(group_name, metric_name):
+            graph_manager = GraphManager.load(self._get_data(group_name, metric_name))
+        else:
+            # No data available, get it
+            search_dir = os.path.join(self.base_directory, 'graphs')
+            graph_manager = GraphManager()
+            finder = FileFinder([graph_manager])
+            finder.process(search_dir, '*.gml')
+            # store the results
+            self._set_data(group_name, metric_name, graph_manager.to_csv())
+
+        if self._get_sum(group_name, metric_name) is None:
+            self._set_sum(group_name, metric_name, graph_manager.create_summation())
+        return {group_name: {metric_name: graph_manager}}
 
     def _routing_choice(self):
         metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric)]
