@@ -81,3 +81,17 @@ class RoutingChoiceMetric(MetricBase):
                                                short_name, column.replace(' ', '_') + '_avg'))
 
         return metrics
+
+    def get_final_routing_choices(self):
+        data_frame = self.data_frame
+        data_frame = data_frame[data_frame.columns[2:]].fillna(0)
+        # get the last row
+        last_row = data_frame.iloc[len(data_frame) - 1]
+        choices = {}
+        # average
+        total = float(last_row.sum())
+        index = 1
+        for data in last_row.values:
+            choices[index] = data/total
+            index += 1
+        return choices
