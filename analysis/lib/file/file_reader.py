@@ -29,7 +29,7 @@ class FileReader(object):
 
     def _send_data(self, data):
         for action in self.metric_actions:
-            action.process(data)
+            data = action.process(data)
 
 class TextFileReader(FileReader):
     '''
@@ -45,8 +45,15 @@ class TextFileReader(FileReader):
             raise Exception('Unable to find the file %s' % file_path)
 
         with open(file_path, 'r') as open_file:
+            # call on start
+            for action in self.metric_actions:
+                action.on_start(file_path)
+            # process each line
             for line in open_file:
                 self._send_data(line)
+            # call on stop
+            for action in self.metric_actions:
+                action.on_stop()
 
 class JSONFileReader(TextFileReader):
     ''' Read each line as a JSON object '''

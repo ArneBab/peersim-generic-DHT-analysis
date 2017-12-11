@@ -17,14 +17,49 @@ class MetricBase(object):
 
     def __init__(self):
         self.data_frame = pandas.DataFrame()
+        self._columns_to_add = []
+        self._rows_to_add = []
 
-    def process(self, json_object):
+    def process(self, data_object):
         '''
         Process a given file
-        :param json_object: JSON object
+        :param data_object: Data object
+        :return: Updated data_object reference
         '''
-        if json_object is None:
-            raise Exception('JSON object is null')
+        if data_object is None:
+            raise Exception('Data object is null')
+        return data_object
+
+    def on_start(self, file_path):
+        '''
+        Start of processing a new file
+        :param file_path: Full path to the file being processed
+        '''
+        pass
+
+    def on_stop(self):
+        '''
+        End of processing a new file
+        '''
+        # create a data frame from the cached columns and rows
+        # first normalize the rows to match the column length
+        columns = list(self.data_frame.columns) + self._columns_to_add
+        column_len = len(columns)
+        for row_index in range(len(self._rows_to_add)):
+            row = self._rows_to_add[row_index]
+            self._rows_to_add[row_index] = row + [numpy.nan] * (column_len - len(row))
+        # get existing data
+        existing_data = [list(row.values) for index, row in self.data_frame.iterrows()]
+        # normalize existing data
+        for row_index in range(len(existing_data)):
+            row = existing_data[row_index]
+            existing_data[row_index] = row + [numpy.nan] * (column_len - len(row))
+        # create Data frame
+        self.data_frame = pandas.DataFrame(
+            existing_data + self._rows_to_add, columns=columns)
+        # clear cached data to add
+        self._columns_to_add = []
+        self._rows_to_add = []
 
     def add_column(self, column_name):
         '''
@@ -32,10 +67,9 @@ class MetricBase(object):
         :param column_name: Name of the column
         '''
         column_name = column_name.strip()
-        if column_name in self.data_frame:
+        if column_name in self._columns_to_add or column_name in self.data_frame.columns:
             return
-        # add an empty column
-        self.data_frame[column_name] = numpy.nan
+        self._columns_to_add.append(column_name)
 
     def add_row(self, row_values):
         '''
@@ -45,14 +79,12 @@ class MetricBase(object):
         empty values if it doesn't have a value for each column.
         '''
         row_len = len(row_values)
-        column_len = len(self.data_frame.columns)
+        column_len = len(self._columns_to_add) + len(self.data_frame.columns)
         # row can't be longer than columns
         if row_len > column_len:
             raise Exception('Unable to add a row longer than defined columns')
-        # add empty values for missing row columns
-        row_values = row_values + [numpy.nan] * (column_len - row_len)
         # add the new row to the end of the data set
-        self.data_frame.loc[len(self.data_frame)] = row_values
+        self._rows_to_add.append(row_values)
 
     def merge(self, other):
         '''
@@ -63,16 +95,10 @@ class MetricBase(object):
         for column_name in other.data_frame.columns:
             self.add_column(column_name)
         # insert data from other into self
-        for i_index in range(len(other.data_frame)):
-            row = []
-            i_row = other.data_frame.iloc[i_index]
-            # make sure column values match up
-            for column_name in self.data_frame.columns:
-                if column_name not in i_row:
-                    row.append(numpy.nan)
-                else:
-                    row.append(i_row[column_name])
-            self.add_row(row)
+        for index, row in other.data_frame.iterrows():
+            self.add_row(list(row.values))
+        # call on stop to merge data into the data frame
+        self.on_stop()
 
     def to_csv(self):
         '''
@@ -114,7 +140,7 @@ class MetricBase(object):
                         ]
                     }
                 }
-               }
+                }
 
     @classmethod
     def load(cls, csv_string):

@@ -6,7 +6,7 @@ Updated on Nov, 2017
 Framework for processing a files contents one line at a time
 '''
 import os
-from lib.file.json_file_reader import FileReader
+from lib.file.file_reader import FileReader
 
 
 class ClassLoader(FileReader):

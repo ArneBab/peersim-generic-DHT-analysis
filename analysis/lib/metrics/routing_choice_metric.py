@@ -13,22 +13,23 @@ class RoutingChoiceMetric(MetricBase):
     Generic interface for JSON based actions
     '''
 
-    def process(self, json_object):
+    def process(self, data_object):
         '''
         Process a given file
-        :param json_object: JSON object
+        :param data_object: Data object
+        :return: Updated data_object reference
         '''
-        super(RoutingChoiceMetric, self).process(json_object)
+        data_object = super(RoutingChoiceMetric, self).process(data_object)
 
-        cycle = json_object['cycle']
+        cycle = data_object['cycle']
         # skip cycle 0, its empty
         if cycle == 0:
             return
 
-        churn = json_object['churn_count']
+        churn = data_object['churn_count']
 
         frequencies = {}
-        for freq_obj in json_object['routing_choice_frequency']:
+        for freq_obj in data_object['routing_choice_frequency']:
             frequencies[freq_obj['choice']] = freq_obj['frequency']
 
         # Add columns and build row data
@@ -41,6 +42,7 @@ class RoutingChoiceMetric(MetricBase):
 
         # Add row
         self.add_row(row)
+        return data_object
 
     def merge(self, other):
         super(RoutingChoiceMetric, self).merge(other)
