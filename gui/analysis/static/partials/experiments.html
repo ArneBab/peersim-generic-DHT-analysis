@@ -42,6 +42,24 @@
 <button ui-sref="data_view({id: id})" class="btn btn-primary">Routing Data View</button>
 <h2>Experiment {{experiment_v2.id}} Data</h2>
 
+<h3>Summation Metrics</h3>
+
+<div class="row" ng-repeat-start="(group_name, group_objs) in experiment_v2.metrics.summations">
+    <h4 class="capitalize">{{group_name | prettyName}}</h4>
+</div>
+<div ng-repeat="(key, values) in group_objs">
+    <h5>{{key | prettyName}}</h5>
+    <div class="row" ng-repeat="value in values">
+        <div class="col-sm-4 col-sm-offset-1 capitalize">
+            {{value.full_name | prettyName}}
+        </div>
+        <div class="col-sm-6">
+            {{value.value}} {{value.description}}
+        </div>
+    </div>
+</div>
+<hr ng-repeat-end="" />
+
 <h3>Graphs</h3>
 
 <div class="row" ng-repeat-start="(group_name, grouped_graphs) in experiment_v2.metrics.graphs">
