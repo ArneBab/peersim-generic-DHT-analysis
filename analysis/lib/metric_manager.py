@@ -10,6 +10,7 @@ import os
 import json
 
 from lib.metrics.routing_choice_metric import RoutingChoiceMetric
+from lib.metrics.path_lengths_metric import PathLengthsMetric
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
@@ -48,7 +49,7 @@ class MetricManager(object):
 
         # load the metrics file if it exists
         self.metrics = {'graphs': {}, 'data': {}}
-        if os.path.exists(self.metric_file_path):
+        if not self.force_run and os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             with open(self.metric_file_path, 'r') as metric_file:
                 self.metrics = json.loads(metric_file.read())
@@ -72,13 +73,13 @@ class MetricManager(object):
         '''
         pass
 
-    def analyze(self, summary_mode=False):
+    def analyze(self):
         '''
         Run experiment analysis
         :return: dict of the metric objects
         '''
-        analysis_metrics = self._routing_choice(summary_mode)
-        #self._merge_store(analysis_metrics, self._routing_paths(summary_mode))
+        analysis_metrics = self._routing_choice()
+        self._merge_store(analysis_metrics, self._routing_paths())
         return analysis_metrics
 
     def summarize(self):
@@ -86,7 +87,8 @@ class MetricManager(object):
         Run the summation metrics over a set of experiment repeats
         '''
         # check if the summation needs to run
-
+        if len(self.metrics['graphs'].values()) > 0:
+            return self.analyze()
         # load the metric data for each experiment repeat
         metric_managers = ClassLoader(MetricManager)
         finder = FileFinder([metric_managers])
@@ -99,23 +101,25 @@ class MetricManager(object):
         for group_name, metric_name, metric_obj in self._iter_store(merged_state):
             self._set_data(group_name, metric_name, metric_obj.to_csv())
         # run graph calculations
-        return self.analyze(True)
+        return self.analyze()
 
-    def _routing_choice(self, summary_mode):
+    def _routing_choice(self):
         metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric)]
         search_dir = os.path.join(self.base_directory, 'graphs')
-        return self._process_metrics(metric_seq, search_dir, '*.stats', summary_mode)
+        return self._process_metrics(metric_seq, search_dir, '*.stats')
 
-    def _routing_paths(self, summary_mode):
-        pass
+    def _routing_paths(self):
+        metric_seq = [('routing', 'path_lengths', PathLengthsMetric)]
+        search_dir = self.base_directory
+        return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
-    def _process_metrics(self, metric_seq, folder_path, file_filter, summary_mode):
+    def _process_metrics(self, metric_seq, folder_path, file_filter):
         # check if we already have the data for each metric
         metric_data = {}
         not_loaded_seq = []
         for g_name, m_name, m_class in metric_seq:
             # data was found
-            if self._have_metric_data(g_name, m_name, summary_mode):
+            if self._have_metric_data(g_name, m_name):
                 logging.debug('Loading existing routing choice metric data for %s:%s',
                               g_name, m_name)
                 metric = m_class.load(self._get_data(g_name, m_name))
@@ -182,9 +186,8 @@ class MetricManager(object):
             self._add_store(g_name, m_name, m_obj, store_one)
         return store_one
 
-    def _have_metric_data(self, group_name, metric_name, summary_mode):
-        return self._get_data(group_name, metric_name) is not None and \
-            (not self.force_run or summary_mode)
+    def _have_metric_data(self, group_name, metric_name):
+        return self._get_data(group_name, metric_name) is not None
 
     def _get_data(self, group_name, metric_name):
         return self._get_store(group_name, metric_name, self.metrics['data'])
