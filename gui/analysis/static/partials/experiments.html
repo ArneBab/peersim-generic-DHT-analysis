@@ -27,7 +27,7 @@
             </thead>
             <tbody>
                 <tr ng-repeat="row in $ctrl.data.body">
-                    <td ng-repeat="col in row">
+                    <td ng-repeat="col in row track by $index">
                         {{col}}
                     </td>
                 </tr>
