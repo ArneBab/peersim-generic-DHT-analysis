@@ -11,9 +11,10 @@ import json
 
 from lib.metrics.routing_choice_metric import RoutingChoiceMetric
 from lib.metrics.path_lengths_metric import PathLengthsMetric
+from lib.metrics.graph_manager import GraphManager
+from lib.metrics.experiment_config import ExperimentConfig
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
-from lib.metrics.graph_manager import GraphManager
 from lib.file.class_loader import ClassLoader
 
 
@@ -80,6 +81,7 @@ class MetricManager(object):
         :return: dict of the metric objects
         '''
         analysis_metrics = self._routing_choice()
+        self._merge_store(analysis_metrics, self._experiment_config())
         self._merge_store(analysis_metrics, self._load_graphs())
         self._merge_store(analysis_metrics, self._routing_paths())
         return analysis_metrics
@@ -121,6 +123,11 @@ class MetricManager(object):
         if self._get_sum(group_name, metric_name) is None:
             self._set_sum(group_name, metric_name, graph_manager.create_summation())
         return {group_name: {metric_name: graph_manager}}
+
+    def _experiment_config(self):
+        metric_seq = [('variables', 'variables', ExperimentConfig)]
+        search_dir = self.base_directory
+        return self._process_metrics(metric_seq, search_dir, 'config.json')
 
     def _routing_choice(self):
         metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric)]
