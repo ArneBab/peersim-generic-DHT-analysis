@@ -31,6 +31,10 @@ class PathLengthsMetric(MetricBase):
         return data_object
 
     def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
         # sum up the values based on cycle
         data_frame = self.data_frame
 
@@ -47,6 +51,10 @@ class PathLengthsMetric(MetricBase):
                                      'Path Lengths (Hops): Histogram')
 
     def create_summation(self):
+        '''
+        Create a list of summation metrics for this data set
+        :return: metric list
+        '''
         # average up the values based on choice
         data_frame = self.data_frame
         metrics = []

@@ -51,6 +51,10 @@ class RoutingChoiceMetric(MetricBase):
             ['cycle']).sum().reset_index()
 
     def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
         # sum up the values based on cycle
         data_frame = self.data_frame
 
@@ -66,6 +70,10 @@ class RoutingChoiceMetric(MetricBase):
                                      'Routing Preferences Taken: Stacked', True)
 
     def create_summation(self):
+        '''
+        Create a list of summation metrics for this data set
+        :return: metric list
+        '''
         # average up the values based on choice
         data_frame = self.data_frame
         # Only choice data
@@ -83,6 +91,10 @@ class RoutingChoiceMetric(MetricBase):
         return metrics
 
     def get_final_routing_choices(self):
+        '''
+        Create a dict of routing choice to percent choosen
+        :return: dict of percents to routing choices
+        '''
         data_frame = self.data_frame
         data_frame = data_frame[data_frame.columns[2:]].fillna(0)
         # get the last row
