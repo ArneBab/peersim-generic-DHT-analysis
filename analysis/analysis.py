@@ -79,11 +79,12 @@ class Manager(object):
 
         count = 1
         for exp_files in self._experiement_configurations:
-            if thread_count > 1:
+            if nb_cores > 1:
                 pool.apply_async(_run_analysis, args=(
                     output_directory, exp_files, count, total, must_run))
             else:
-                _run_analysis(output_directory, exp_files, count, total, must_run)
+                _run_analysis(output_directory, exp_files,
+                              count, total, must_run)
             count += 1
         pool.close()
         pool.join()
@@ -109,12 +110,12 @@ class Manager(object):
         pool = multiprocessing.Pool(processes=nb_cores)
 
         for exp_files in exp_grouped.values():
-            if thread_count > 1:
+            if nb_cores > 1:
                 groups.append(pool.apply_async(_run_summations, args=(
                     output_directory, exp_files, count, exp_group_count, must_run)))
             else:
                 groups.append(_run_summations(output_directory,
-                    exp_files, count, exp_group_count, must_run))
+                                              exp_files, count, exp_group_count, must_run))
             count += 1
         pool.close()
         pool.join()
@@ -240,8 +241,8 @@ def _run_pre_analysis(base_directory, exp_files, count, total, must_run):
     routing_data_name = _base(base_path, R_F_NAME)
     new_routing_data = _base(base_path, 'processed.' + R_F_NAME)
 
-    r_metrics = analyzer.get_routing_metrics(base_directory, 
-        routing_data_name, new_routing_data, routing_choice_avg)
+    r_metrics = analyzer.get_routing_metrics(base_directory,
+                                             routing_data_name, new_routing_data, routing_choice_avg)
     r_metrics.calculate_metrics()
     _write_analysis_data(base_path, r_metrics)
 
