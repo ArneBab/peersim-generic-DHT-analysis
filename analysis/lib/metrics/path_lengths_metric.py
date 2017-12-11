@@ -13,6 +13,7 @@ class PathLengthsMetric(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
+
     def process(self, data_object):
         '''
         Process a given file
@@ -44,3 +45,22 @@ class PathLengthsMetric(MetricBase):
         return self._graph_structure(labels, [list(route_counts), list(circuit_counts)],
                                      series_list, 'line',
                                      'Path Lengths (Hops): Histogram')
+
+    def create_summation(self):
+        # average up the values based on choice
+        data_frame = self.data_frame
+        metrics = []
+        # average
+        route_values = list(data_frame['Routing Path Length'].values)
+        circuit_values = list(data_frame['Circuit Path Length'].values)
+        metrics.append(self._value_wrapper(len(route_values), '',
+                                           'M_c', 'message_count'))
+        metrics.append(self._value_wrapper(round(numpy.mean(route_values), 5), '',
+                                           'PR_a', 'path_length_routing_avg'))
+        metrics.append(self._value_wrapper(round(numpy.std(route_values), 5), '',
+                                           'PR_s', 'path_length_routing_std'))
+        metrics.append(self._value_wrapper(round(numpy.mean(circuit_values), 5), '',
+                                           'PC_a', 'path_length_circuit_avg'))
+        metrics.append(self._value_wrapper(round(numpy.std(circuit_values), 5), '',
+                                           'PC_s', 'path_length_circuit_std'))
+        return metrics
