@@ -19,17 +19,20 @@ class FileFinder(object):
         '''
         self.file_reader_list = file_reader_list
 
-    def process(self, base_directory, file_pattern):
+    def process(self, base_directory, file_pattern, skip_base_directory=False):
         '''
         Find file in the given base directory that contain the file pattern
         :param base_directory: Directory to start recursive search from
         :param file_pattern: File name pattern to look for
+        :param skip_base_directory: Skip looking for file in the base directory
         '''
         if not os.path.exists(base_directory):
             raise Exception('The directory %s does not exists' % base_directory)
 
         found_files = []
         for root, dirnames, filenames in os.walk(base_directory):
+            if skip_base_directory and root == base_directory:
+                continue
             for filename in fnmatch.filter(sorted(filenames), file_pattern):
                 found_files.append(os.path.abspath(os.path.join(root, filename)))
 
