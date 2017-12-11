@@ -48,7 +48,7 @@ class MetricManager(object):
         logging.debug('Metric file directory: %s', self.base_directory)
 
         # load the metrics file if it exists
-        self.metrics = {'graphs': {}, 'data': {}}
+        self.metrics = {'graphs': {}, 'data': {}, 'summations': {}}
         if not self.force_run and os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             with open(self.metric_file_path, 'r') as metric_file:
@@ -92,7 +92,7 @@ class MetricManager(object):
         # load the metric data for each experiment repeat
         metric_managers = ClassLoader(MetricManager)
         finder = FileFinder([metric_managers])
-        finder.process(self.base_directory, METRIC_FILE_NAME)
+        finder.process(self.base_directory, METRIC_FILE_NAME, True)
         # merge the repeat data into this metric instance
         merged_state = None
         for metric in metric_managers.class_instance:
@@ -117,22 +117,28 @@ class MetricManager(object):
         # check if we already have the data for each metric
         metric_data = {}
         not_loaded_seq = []
+        # try graphs first
         for g_name, m_name, m_class in metric_seq:
             # data was found
             if self._have_metric_data(g_name, m_name):
-                logging.debug('Loading existing routing choice metric data for %s:%s',
+                logging.debug('Loading existing data for %s:%s',
                               g_name, m_name)
                 metric = m_class.load(self._get_data(g_name, m_name))
                 # check if we have graph data
-                if self._get_graph(g_name, m_name) is None:
-                    logging.debug('Generating graph data from existing data')
-                    self._set_graph(g_name, m_name, metric.create_graph())
+                if hasattr(metric, 'create_graph'):
+                    if self._get_graph(g_name, m_name) is None:
+                        logging.debug('Generating graph data from existing data')
+                        self._set_graph(g_name, m_name, metric.create_graph())
+                if hasattr(metric, 'create_summation'):
+                    if self._get_sum(g_name, m_name) is None:
+                        logging.debug('Generating metric data from existing data')
+                        self._set_sum(g_name, m_name, metric.create_summation())
                 self._add_store(g_name, m_name, metric, metric_data)
             # no existing data found, will need to calculate it later
             else:
                 not_loaded_seq.append((g_name, m_name, m_class()))
 
-        # run the missing metrics
+        # run the missing graphs
         metrics_list = [m_inst for g_n, m_n, m_inst in not_loaded_seq]
         if len(metrics_list) > 0:
             file_reader = JSONFileReader(metrics_list)
@@ -141,7 +147,10 @@ class MetricManager(object):
             # save the results of running the metrics
             for g_name, m_name, metric_obj in not_loaded_seq:
                 self._set_data(g_name, m_name, metric_obj.to_csv())
-                self._set_graph(g_name, m_name, metric_obj.create_graph())
+                if hasattr(metric_obj, 'create_graph'):
+                    self._set_graph(g_name, m_name, metric_obj.create_graph())
+                if hasattr(metric_obj, 'create_summation'):
+                    self._set_sum(g_name, m_name, metric_obj.create_summation())
                 self._add_store(g_name, m_name, metric_obj, metric_data)
         return metric_data
 
@@ -202,3 +211,10 @@ class MetricManager(object):
     def _set_graph(self, group_name, metric_name, value):
         self.is_dirty = True
         self._add_store(group_name, metric_name, value, self.metrics['graphs'])
+
+    def _get_sum(self, group_name, metric_name):
+        return self._get_store(group_name, metric_name, self.metrics['summations'])
+
+    def _set_sum(self, group_name, metric_name, value):
+        self.is_dirty = True
+        self._add_store(group_name, metric_name, value, self.metrics['summations'])

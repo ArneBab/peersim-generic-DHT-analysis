@@ -107,14 +107,9 @@ class MetricBase(object):
         '''
         return self.data_frame.to_csv(index=False)
 
-    def create_graph(self):
-        '''
-        Create a graph from the metric data
-        :param param: param_description
-        :return: Object {'labels': label, 'data': data_list, 'series': series_list,
-                         'type': type, }
-        '''
-        pass
+    def _value_wrapper(self, value, description, short_name, full_name):
+        return {'value': value, 'description': description,
+                'short_name': short_name, 'full_name': full_name}
 
     def _round(self, data_list):
         return map(lambda row: map(lambda x: round(x, 5), row), data_list)

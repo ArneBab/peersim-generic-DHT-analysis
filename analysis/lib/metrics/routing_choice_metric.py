@@ -64,3 +64,20 @@ class RoutingChoiceMetric(MetricBase):
         data_list = self._round(data_list)
         return self._graph_structure(labels, data_list, series_list, 'line',
                                      'Routing Preferences Taken: Stacked', True)
+
+    def create_summation(self):
+        # average up the values based on choice
+        data_frame = self.data_frame
+        # Only choice data
+        data_frame = data_frame[data_frame.columns[2:]].fillna(0)
+        last_row = data_frame.iloc[len(data_frame) - 1]
+        # Calculate average
+        metrics = []
+        # average
+        total = float(last_row.sum())
+        for column, data in last_row.items():
+            short_name = column.replace('oice ', '_') + '_a'
+            metrics.append(self._value_wrapper(round(data/total, 5), '',
+                                               short_name, column.replace(' ', '_') + '_avg'))
+
+        return metrics
