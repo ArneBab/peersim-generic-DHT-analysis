@@ -5,7 +5,6 @@ Updated on Nov, 2017
 
 Framework for processing a files
 '''
-import math
 import networkx as nx
 import numpy
 from lib.metrics.metric_base import MetricBase
@@ -15,6 +14,8 @@ class GraphManager(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
+    loaded_graphs = []
+    last_loaded_graph = {'cycle': None, 'graph': None}
 
     def process(self, data_object):
         '''
@@ -53,17 +54,40 @@ class GraphManager(MetricBase):
         self.add_row(row)
         return data_object
 
+    def on_stop(self):
+        super(GraphManager, self).on_stop()
+        # load graph data into list for faster look ups
+        # data is frequently accessed and data frames are slow
+        self.loaded_graphs = []
+        for index, row in self.data_frame.iterrows():
+            self.loaded_graphs.append((int(row.cycle), str(row.file_path)))
+
     def get_graph(self, cylce):
         '''
         Get the graph closest to the given cycle
         :param cylce: experiment cycle
         :return: netorkx Graph
         '''
-        # get all graphs with a start cycle less than or equal the request
-        data_frame = self.data_frame[self.data_frame.cycle <= cylce]
+        last_graph_file = None
+        last_cycle = None
+        for g_cycle, graph_file in self.loaded_graphs:
+            if g_cycle <= cylce:
+                last_graph_file = graph_file
+                last_cycle = g_cycle
+            else:
+                break
+        assert(last_graph_file is not None)
+
+        # check the cache (performance)
+        if self.last_loaded_graph['cycle'] == last_cycle:
+            return self.last_loaded_graph['graph']
         # get file path of the last entry (largest)
-        file_path = data_frame.iloc[len(data_frame) - 1].file_path
-        return nx.read_gml(file_path, 'id')
+        graph = nx.read_gml(last_graph_file, 'id')
+
+        # cache graph
+        self.last_loaded_graph['cycle'] = last_cycle
+        self.last_loaded_graph['graph'] = graph
+        return graph
 
     def create_summation(self):
         '''
