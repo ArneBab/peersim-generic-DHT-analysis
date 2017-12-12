@@ -17,9 +17,8 @@ class SenderSetCalculator(MetricBase):
     Generic interface for JSON based actions
     '''
 
-    def __init__(self, path_metrics, graph_manager, experiment_config, routing_choice):
+    def __init__(self, graph_manager, experiment_config, routing_choice):
         super(SenderSetCalculator, self).__init__()
-        self.path_metrics = path_metrics
         self.graph_manager = graph_manager
         self.experiment_config = experiment_config
         self.routing_choice = routing_choice
