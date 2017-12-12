@@ -49,9 +49,9 @@ class SenderSetSize(MetricBase):
         # sum up the values based on cycle
         data_frame = self.data_frame[self.data_frame.sender_set_size.notnull()]
 
-        bins = numpy.arange(0, data_frame.max().max() + 2, dtype=int)
+        bins = numpy.arange(0, data_frame.sender_set_size.max() + 2, dtype=int)
         set_counts, r_bins = numpy.histogram(
-            data_frame['sender_set_size'], bins=bins)
+            data_frame.sender_set_size, bins=bins)
 
         labels = list(bins[:-1])
         series_list = list(data_frame.columns)
@@ -103,10 +103,3 @@ class SenderSetSize(MetricBase):
 
         self._replace_nan(metrics)
         return metrics
-
-    def get_count(self):
-        '''
-        Get number of calculated anonymity sets
-        :return: int # of calculated sets
-        '''
-        return len(self.data_frame)
