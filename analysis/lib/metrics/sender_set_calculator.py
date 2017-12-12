@@ -47,7 +47,8 @@ class SenderSetCalculator(MetricBase):
         End of processing a new file
         '''
         super(SenderSetCalculator, self).on_stop()
-        self.output_file.close()
+        if self.output_file is not None:
+            self.output_file.close()
         self.output_file = None
 
     def process(self, data_object):
