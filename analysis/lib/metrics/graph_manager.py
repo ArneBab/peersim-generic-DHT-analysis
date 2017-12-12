@@ -14,8 +14,10 @@ class GraphManager(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
-    loaded_graphs = []
-    last_loaded_graph = {'cycle': None, 'graph': None}
+    def __init__(self):
+        super(GraphManager, self).__init__()
+        self.loaded_graphs = []
+        self.last_loaded_graph = {'cycle': None, 'graph': None}
 
     def process(self, data_object):
         '''
