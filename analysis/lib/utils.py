@@ -122,6 +122,17 @@ def max_entropy(distro):
     '''
     return math.log(len(distro), 2)
 
+def percent(selected, total):
+    '''
+    Calculate the percentage
+    :param selected: Items selected
+    :param total: Total items
+    :return: value between 1.0 and 0.0
+    '''
+    if total == 0:
+        return 0.0
+    return selected / float(total)
+
 def _to_histogram_(values, start=None, stop=None, bin_funct=None):
     if len(values) <= 0:
         return None, None, None

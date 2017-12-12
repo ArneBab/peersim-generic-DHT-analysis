@@ -140,9 +140,10 @@ class MetricManager(object):
         exp_config = self._get_store('variables', 'variables', analysis_metrics_dict)
         graph_manager = self._get_store('graph', 'graph', analysis_metrics_dict)
         routing_choice = self._get_store('routing', 'routing_choice', analysis_metrics_dict)
+        
         path_lengths = PathLengthsMetric()
         sender_set_calc = SenderSetCalculator(graph_manager, exp_config, routing_choice)
-        sender_set_size = SenderSetSize()
+        sender_set_size = SenderSetSize(path_lengths)
 
         metric_seq = [('routing', 'path_lengths', path_lengths),
                       ('sender_set', 'sender_set', sender_set_calc),
