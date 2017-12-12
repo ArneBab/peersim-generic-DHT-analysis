@@ -94,8 +94,5 @@ class GraphManager(MetricBase):
         metrics.append(self._w(round(d_f['edge_count'].std(), 5), '',
                                'ED_s', 'edge_count_std'))
 
-        for metric in metrics:
-            if math.isnan(metric['value']):
-                metric['value'] = 0.0
-
+        self._replace_nan(metrics)
         return metrics
