@@ -53,6 +53,18 @@ class GraphManager(MetricBase):
         self.add_row(row)
         return data_object
 
+    def get_graph(self, cylce):
+        '''
+        Get the graph closest to the given cycle
+        :param cylce: experiment cycle
+        :return: netorkx Graph
+        '''
+        # get all graphs with a start cycle less than or equal the request
+        data_frame = self.data_frame[self.data_frame.cycle <= cylce]
+        # get file path of the last entry (largest)
+        file_path = data_frame.iloc[len(data_frame) - 1].file_path
+        return nx.read_gml(file_path, 'id')
+
     def create_summation(self):
         '''
         Create a list of summation metrics for this data set

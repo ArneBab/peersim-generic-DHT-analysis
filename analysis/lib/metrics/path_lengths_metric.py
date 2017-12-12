@@ -72,3 +72,6 @@ class PathLengthsMetric(MetricBase):
         metrics.append(self._w(round(numpy.std(circuit_values), 5), '',
                                'PC_s', 'path_length_circuit_std'))
         return metrics
+
+    def get_message_count(self):
+        return len(self.data_frame)

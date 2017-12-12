@@ -107,6 +107,14 @@ class MetricBase(object):
         '''
         return self.data_frame.to_csv(index=False)
 
+    def load(self, csv_string):
+        '''
+        Load a JSON action from a CSV string
+        :param csv_string: String representation of a JSONAction object
+        :return: object
+        '''
+        self.data_frame = pandas.read_csv(StringIO(csv_string))
+
     def _w(self, value, description, short_name, full_name):
         return {'value': value, 'description': description,
                 'short_name': short_name, 'full_name': full_name}
@@ -136,14 +144,3 @@ class MetricBase(object):
                     }
                 }
                 }
-
-    @classmethod
-    def load(cls, csv_string):
-        '''
-        Load a JSON action from a CSV string
-        :param csv_string: String representation of a JSONAction object
-        :return: object
-        '''
-        action = cls()
-        action.data_frame = pandas.read_csv(StringIO(csv_string))
-        return action

@@ -108,13 +108,13 @@ class MetricManager(object):
     def _load_graphs(self):
         group_name = 'graph'
         metric_name = 'graph'
+        graph_manager = GraphManager()
         # check if data is already available
         if self._have_metric_data(group_name, metric_name):
-            graph_manager = GraphManager.load(self._get_data(group_name, metric_name))
+            graph_manager.load(self._get_data(group_name, metric_name))
         else:
             # No data available, get it
             search_dir = os.path.join(self.base_directory, 'graphs')
-            graph_manager = GraphManager()
             finder = FileFinder([graph_manager])
             finder.process(search_dir, '*.gml')
             # store the results
@@ -125,17 +125,17 @@ class MetricManager(object):
         return {group_name: {metric_name: graph_manager}}
 
     def _experiment_config(self):
-        metric_seq = [('variables', 'variables', ExperimentConfig)]
+        metric_seq = [('variables', 'variables', ExperimentConfig())]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'config.json')
 
     def _routing_choice(self):
-        metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric)]
+        metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric())]
         search_dir = os.path.join(self.base_directory, 'graphs')
         return self._process_metrics(metric_seq, search_dir, '*.stats')
 
     def _routing_paths(self):
-        metric_seq = [('routing', 'path_lengths', PathLengthsMetric)]
+        metric_seq = [('routing', 'path_lengths', PathLengthsMetric())]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
@@ -144,12 +144,12 @@ class MetricManager(object):
         metric_data = {}
         not_loaded_seq = []
         # try graphs first
-        for g_name, m_name, m_class in metric_seq:
+        for g_name, m_name, metric in metric_seq:
             # data was found
             if self._have_metric_data(g_name, m_name):
                 logging.debug('Loading existing data for %s:%s',
                               g_name, m_name)
-                metric = m_class.load(self._get_data(g_name, m_name))
+                metric.load(self._get_data(g_name, m_name))
                 # check if we have graph data
                 if hasattr(metric, 'create_graph'):
                     if self._get_graph(g_name, m_name) is None:
@@ -162,7 +162,7 @@ class MetricManager(object):
                 self._add_store(g_name, m_name, metric, metric_data)
             # no existing data found, will need to calculate it later
             else:
-                not_loaded_seq.append((g_name, m_name, m_class()))
+                not_loaded_seq.append((g_name, m_name, metric))
 
         # run the missing graphs
         metrics_list = [m_inst for g_n, m_n, m_inst in not_loaded_seq]

@@ -42,3 +42,11 @@ class ExperimentConfig(MetricBase):
         for column in data_frame.keys():
             metrics.append(self._w(str(data_frame[column]), '', column, column))
         return metrics
+
+    def get_parameter(self, key):
+        '''
+        Get eh experiment configuration value for the given key
+        :param key: parameter index name
+        :return: value of the parameter
+        '''
+        return self.data_frame.iloc[len(self.data_frame) - 1][key]
