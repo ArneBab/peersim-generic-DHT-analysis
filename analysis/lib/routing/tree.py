@@ -7,7 +7,7 @@ Class for storing and building potentical routing trees
 '''
 import logging
 import math
-from .utils import average_degree, distance
+from lib.utils import average_degree, distance
 
 
 class RoutingTree(object):
