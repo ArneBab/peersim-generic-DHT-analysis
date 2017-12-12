@@ -8,7 +8,7 @@ Unit test for routing metrics
 import unittest
 import tempfile
 
-from lib.routingMetrics import RoutingMetrics
+from lib.routing_metrics import RoutingMetrics
 from .utils import get_nx_graphs_100, get_nx_graphs, list_equals
 from .utils import get_route_json_path, get_route_json_path_100
 

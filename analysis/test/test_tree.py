@@ -7,7 +7,7 @@ Unit test for routing tree
 '''
 import unittest
 
-from lib.tree import RoutingTree
+from lib.routing.tree import RoutingTree
 from .utils import get_nx_graphs, list_equals
 
 

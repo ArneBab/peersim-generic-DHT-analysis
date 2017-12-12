@@ -11,7 +11,7 @@ import json
 import networkx as nx
 import numpy
 
-from .tree import RoutingTree
+from lib.routing.tree import RoutingTree
 from .utils import average_degree, to_histogram_ints, to_histogram_floats
 from .utils import distance, entropy_normalized, entropy, max_entropy, timeit
 from .configuration import Configuration
