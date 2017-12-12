@@ -15,6 +15,7 @@ from lib.metrics.graph_manager import GraphManager
 from lib.metrics.experiment_config import ExperimentConfig
 from lib.metrics.sender_set_calculator import SenderSetCalculator
 from lib.metrics.sender_set_size import SenderSetSize
+from lib.metrics.intercept_hop import InterceptHop
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
@@ -140,14 +141,16 @@ class MetricManager(object):
         exp_config = self._get_store('variables', 'variables', analysis_metrics_dict)
         graph_manager = self._get_store('graph', 'graph', analysis_metrics_dict)
         routing_choice = self._get_store('routing', 'routing_choice', analysis_metrics_dict)
-        
+
         path_lengths = PathLengthsMetric()
         sender_set_calc = SenderSetCalculator(graph_manager, exp_config, routing_choice)
         sender_set_size = SenderSetSize(path_lengths)
+        intercept_hop = InterceptHop(sender_set_size)
 
         metric_seq = [('routing', 'path_lengths', path_lengths),
                       ('sender_set', 'sender_set', sender_set_calc),
-                      ('sender_set', 'sender_set_size', sender_set_size)]
+                      ('sender_set', 'sender_set_size', sender_set_size),
+                      ('sender_set', 'intercept_hop', intercept_hop)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
