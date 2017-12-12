@@ -39,7 +39,7 @@ class SenderSetCalculator(MetricBase):
         '''
         super(SenderSetCalculator, self).on_start(file_path)
         directory = os.path.dirname(file_path)
-        self.output_file_path = os.path.join(directory, 'processed.routing.json')
+        self.output_file_path = os.path.join(directory, 'sender_set.routing.json')
         self.output_file = open(self.output_file_path, 'w')
 
     def on_stop(self):
@@ -71,6 +71,9 @@ class SenderSetCalculator(MetricBase):
         a_node, p_node = next(
             iter(self._get_adversaries(data_object)), (None, None))
         if a_node is None:
+            # no adversary node found in the path
+            self.output_file.write(json.dumps(data_object))
+            self.output_file.write('\n')
             return data_object
 
         r_tree = RoutingTree()
@@ -114,6 +117,7 @@ class SenderSetCalculator(MetricBase):
         data_object['anonymity_set'] = a_data
 
         self.output_file.write(json.dumps(data_object))
+        self.output_file.write('\n')
         return data_object
 
     def _get_adversaries(self, data_obj):
