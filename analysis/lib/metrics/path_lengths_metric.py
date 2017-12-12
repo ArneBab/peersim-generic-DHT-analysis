@@ -74,4 +74,8 @@ class PathLengthsMetric(MetricBase):
         return metrics
 
     def get_message_count(self):
+        '''
+        Get total message count
+        :return: int # of messages observed
+        '''
         return len(self.data_frame)

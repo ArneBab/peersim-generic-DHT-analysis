@@ -5,6 +5,7 @@ Updated on Nov, 2017
 
 Framework for processing a files
 '''
+import math
 from StringIO import StringIO
 import pandas
 import numpy
@@ -47,13 +48,16 @@ class MetricBase(object):
         column_len = len(columns)
         for row_index in range(len(self._rows_to_add)):
             row = self._rows_to_add[row_index]
-            self._rows_to_add[row_index] = row + [numpy.nan] * (column_len - len(row))
+            self._rows_to_add[row_index] = row + \
+                [numpy.nan] * (column_len - len(row))
         # get existing data
-        existing_data = [list(row.values) for index, row in self.data_frame.iterrows()]
+        existing_data = [list(row.values)
+                         for index, row in self.data_frame.iterrows()]
         # normalize existing data
         for row_index in range(len(existing_data)):
             row = existing_data[row_index]
-            existing_data[row_index] = row + [numpy.nan] * (column_len - len(row))
+            existing_data[row_index] = row + \
+                [numpy.nan] * (column_len - len(row))
         # create Data frame
         self.data_frame = pandas.DataFrame(
             existing_data + self._rows_to_add, columns=columns)
@@ -121,6 +125,11 @@ class MetricBase(object):
 
     def _round(self, data_list):
         return map(lambda row: map(lambda x: round(x, 5), row), data_list)
+
+    def _replace_nan(self, metrics_list):
+        for metric in metrics_list:
+            if math.isnan(metric['value']):
+                metric['value'] = 0.0
 
     def _graph_structure(self, labels, data_list, series_list, chart_type,
                          title, stack_graph=False):

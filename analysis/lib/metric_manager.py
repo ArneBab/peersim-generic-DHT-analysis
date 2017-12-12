@@ -13,6 +13,8 @@ from lib.metrics.routing_choice_metric import RoutingChoiceMetric
 from lib.metrics.path_lengths_metric import PathLengthsMetric
 from lib.metrics.graph_manager import GraphManager
 from lib.metrics.experiment_config import ExperimentConfig
+from lib.metrics.sender_set_calculator import SenderSetCalculator
+from lib.metrics.sender_set_size import SenderSetSize
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
@@ -75,17 +77,6 @@ class MetricManager(object):
         '''
         pass
 
-    def analyze(self):
-        '''
-        Run experiment analysis
-        :return: dict of the metric objects
-        '''
-        analysis_metrics = self._routing_choice()
-        self._merge_store(analysis_metrics, self._experiment_config())
-        self._merge_store(analysis_metrics, self._load_graphs())
-        self._merge_store(analysis_metrics, self._routing_paths())
-        return analysis_metrics
-
     def summarize(self):
         '''
         Run the summation metrics over a set of experiment repeats
@@ -104,6 +95,17 @@ class MetricManager(object):
                 self._set_data(group_name, metric_name, metric_obj.to_csv())
         # run graph calculations
         return self.analyze()
+
+    def analyze(self):
+        '''
+        Run experiment analysis
+        :return: dict of the metric objects
+        '''
+        analysis_metrics = self._routing_choice()
+        self._merge_store(analysis_metrics, self._experiment_config())
+        self._merge_store(analysis_metrics, self._load_graphs())
+        self._merge_store(analysis_metrics, self._routing_paths(analysis_metrics))
+        return analysis_metrics
 
     def _load_graphs(self):
         group_name = 'graph'
@@ -134,8 +136,17 @@ class MetricManager(object):
         search_dir = os.path.join(self.base_directory, 'graphs')
         return self._process_metrics(metric_seq, search_dir, '*.stats')
 
-    def _routing_paths(self):
-        metric_seq = [('routing', 'path_lengths', PathLengthsMetric())]
+    def _routing_paths(self, analysis_metrics_dict):
+        exp_config = self._get_store('variables', 'variables', analysis_metrics_dict)
+        graph_manager = self._get_store('graph', 'graph', analysis_metrics_dict)
+        routing_choice = self._get_store('routing', 'routing_choice', analysis_metrics_dict)
+        path_lengths = PathLengthsMetric()
+        sender_set_calc = SenderSetCalculator(graph_manager, exp_config, routing_choice)
+        sender_set_size = SenderSetSize()
+
+        metric_seq = [('routing', 'path_lengths', path_lengths),
+                      ('sender_set', 'sender_set', sender_set_calc),
+                      ('sender_set', 'sender_set_size', sender_set_size)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
