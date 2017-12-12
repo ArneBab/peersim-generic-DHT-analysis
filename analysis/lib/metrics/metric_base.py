@@ -109,6 +109,8 @@ class MetricBase(object):
         Get the JSON representation of this object
         :return: JSON string
         '''
+        if len(self.data_frame.columns) <= 0 and len(self.data_frame) <= 0:
+            return ''
         return self.data_frame.to_csv(index=False)
 
     def load(self, csv_string):
@@ -117,6 +119,8 @@ class MetricBase(object):
         :param csv_string: String representation of a JSONAction object
         :return: object
         '''
+        if not csv_string:
+            return
         self.data_frame = pandas.read_csv(StringIO(csv_string))
 
     def _w(self, value, description, short_name, full_name):
