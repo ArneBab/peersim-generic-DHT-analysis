@@ -30,6 +30,7 @@ class AnonymityMetrics(MetricBase):
         self.add_column('max_entropy_actual')
 
         self.add_column('top_rank_set_size')
+        self.add_column('hop')
 
         row = []
         # exponential backoff entropies
@@ -46,6 +47,8 @@ class AnonymityMetrics(MetricBase):
         ranked_set = data_object['anonymity_set']['ranked_set']
         top_rank = sorted(ranked_set.keys())[0]
         row.append(len(ranked_set[top_rank]))
+
+        row.append(int(data_object['anonymity_set']['hop']))
 
         self.add_row(row)
         return data_object
@@ -99,14 +102,17 @@ class AnonymityMetrics(MetricBase):
         self._replace_nan(metrics)
         return metrics
 
+
 class AnonymityEntropy(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
 
-    def __init__(self, anonymity_metrics):
+    def __init__(self, anonymity_metrics, column_name, graph_name):
         super(AnonymityEntropy, self).__init__()
         self.anonymity_metrics = anonymity_metrics
+        self.column_name = column_name
+        self.graph_name = graph_name
 
     def create_graph(self):
         '''
@@ -116,21 +122,59 @@ class AnonymityEntropy(MetricBase):
         # sum up the values based on cycle
         data_frame = self.anonymity_metrics.data_frame
         set_counts, r_bins = numpy.histogram(
-            data_frame.entropy, bins=20)
+            data_frame[self.column_name], bins=20)
 
         labels = [round(r_bin, 3) for r_bin in r_bins]
-        series_list = ['Entropy']
+        series_list = [self.column_name]
         return self._graph_structure(labels, [list(set_counts)],
                                      series_list, 'bar',
-                                     'Entropy: Histogram')
+                                     self.graph_name + ': Histogram')
 
-class AnonymityEntropyNormalized(MetricBase):
+
+class AnonymityEntropyAtHop(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, anonymity_metrics, column_name, max_column_name, graph_name):
+        super(AnonymityEntropyAtHop, self).__init__()
+        self.anonymity_metrics = anonymity_metrics
+        self.column_name = column_name
+        self.max_column_name = max_column_name
+        self.graph_name = graph_name
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.anonymity_metrics.data_frame
+
+        data_avg = data_frame.groupby(['hop']).mean().reset_index()
+        data_std = data_frame.groupby(['hop']).std().reset_index()
+
+        labels = list(data_avg.hop)
+        series_list = ['Entropy Average', 'Entropy Standard Deviation']
+        data = [list(data_avg[self.column_name]),
+                list(data_std[self.column_name])]
+
+        if self.max_column_name:
+            series_list.insert(0, 'Max Entropy Average')
+            data.insert(0, list(data_avg[self.max_column_name]))
+
+        return self._graph_structure(labels, data,
+                                     series_list, 'line',
+                                     self.graph_name + ' at Intercepted Hop: Average')
+
+
+class AnonymityTopRankedSetSize(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
 
     def __init__(self, anonymity_metrics):
-        super(AnonymityEntropyNormalized, self).__init__()
+        super(AnonymityTopRankedSetSize, self).__init__()
         self.anonymity_metrics = anonymity_metrics
 
     def create_graph(self):
@@ -140,11 +184,15 @@ class AnonymityEntropyNormalized(MetricBase):
         '''
         # sum up the values based on cycle
         data_frame = self.anonymity_metrics.data_frame
-        set_counts, r_bins = numpy.histogram(
-            data_frame.normalized_entropy, bins=20)
 
-        labels = [round(r_bin, 3) for r_bin in r_bins]
-        series_list = ['normalized_entropy']
-        return self._graph_structure(labels, [list(set_counts)],
-                                     series_list, 'bar',
-                                     'Entropy Normalized: Histogram')
+        data_avg = data_frame.groupby(['hop']).mean().reset_index()
+        data_std = data_frame.groupby(['hop']).std().reset_index()
+
+        labels = list(data_avg.hop)
+        series_list = ['Average', 'Standard Deviation']
+        data = [list(data_avg['top_rank_set_size']),
+                list(data_std['top_rank_set_size'])]
+
+        return self._graph_structure(labels, data,
+                                     series_list, 'line',
+                                     'Top Ranked Sender Set Size at Intercepted Hop: Average')

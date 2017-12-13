@@ -16,7 +16,7 @@ from lib.metrics.experiment_config import ExperimentConfig
 from lib.metrics.sender_set_calculator import SenderSetCalculator
 from lib.metrics.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
 from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, AdversaryInterceptHopCalculated
-from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyNormalized
+from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyAtHop, AnonymityTopRankedSetSize
 from lib.metrics.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
 
 from lib.file.file_finder import FileFinder
@@ -159,8 +159,25 @@ class MetricManager(object):
         sender_set_size_inter = SenderSetSizeInterceptHop(sender_set_size)
 
         anon_metrics = AnonymityMetrics()
-        anon_entropy = AnonymityEntropy(anon_metrics)
-        anon_entropy_norm = AnonymityEntropyNormalized(anon_metrics)
+
+        anon_entropy = AnonymityEntropy(anon_metrics, 'entropy', 'Entropy')
+        anon_entropy_norm = AnonymityEntropy(
+            anon_metrics, 'normalized_entropy', 'Entropy Normalized')
+        anon_entropy_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'entropy', 'max_entropy', 'Entropy')
+        anon_entropy_norm_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'normalized_entropy', '', 'Entropy Normalized')
+
+        anon_entropy_act = AnonymityEntropy(
+            anon_metrics, 'entropy_actual', 'Actual Entropy')
+        anon_entropy_norm_act = AnonymityEntropy(
+            anon_metrics, 'normalized_entropy_actual', 'Actual Entropy Normalized')
+        anon_entropy_act_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'entropy_actual', 'max_entropy_actual', 'Actual Entropy')
+        anon_entropy_act_norm_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'normalized_entropy_actual', '', 'Actual Entropy Normalized')
+
+        top_ranked_set_avg = AnonymityTopRankedSetSize(anon_metrics)
 
         anon_accuracy_metrics = AnonymityAccuracyMetrics()
 
@@ -174,7 +191,18 @@ class MetricManager(object):
                       ('anonymity', 'anonymity', anon_metrics),
                       ('anonymity', 'anonymity_entropy', anon_entropy),
                       ('anonymity', 'anonymity_entropy_normalized', anon_entropy_norm),
-                      ('anonymity', 'anonymity_accuracy', anon_accuracy_metrics)]
+                      ('anonymity', 'anonymity_entropy_at_hop', anon_entropy_hop),
+                      ('anonymity', 'anonymity_entropy_normalized_at_hop',
+                       anon_entropy_norm_hop),
+                      ('anonymity_actual', 'anonymity_entropy', anon_entropy_act),
+                      ('anonymity_actual', 'anonymity_entropy_normalized',
+                       anon_entropy_norm_act),
+                      ('anonymity_actual', 'anonymity_entropy_at_hop',
+                       anon_entropy_act_hop),
+                      ('anonymity_actual', 'anonymity_entropy_normalized_at_hop',
+                       anon_entropy_act_norm_hop),
+                      ('anonymity_accuracy', 'anonymity_accuracy', anon_accuracy_metrics),
+                      ('top_ranked', 'sender_set_size', top_ranked_set_avg)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
