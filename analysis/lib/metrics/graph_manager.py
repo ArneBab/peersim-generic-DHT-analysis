@@ -7,6 +7,7 @@ Framework for processing a files
 '''
 import networkx as nx
 import numpy
+from lib.utils import percent
 from lib.metrics.metric_base import MetricBase
 
 
@@ -42,6 +43,7 @@ class GraphManager(MetricBase):
         self.add_column('diameter')
         self.add_column('node_count')
         self.add_column('edge_count')
+        self.add_column('adversary_count')
 
         row = []
         row.append(graph.graph['cycle'])
@@ -52,6 +54,9 @@ class GraphManager(MetricBase):
         row.append(nx.diameter(graph))
         row.append(graph.number_of_nodes())
         row.append(graph.number_of_edges())
+        
+        ad_count = len([n for n in graph.node if graph.node[n]['adversary'] == 1])     
+        row.append(ad_count)   
 
         self.add_row(row)
         return data_object
@@ -120,5 +125,14 @@ class GraphManager(MetricBase):
         metrics.append(self._w(round(d_f['edge_count'].std(), 5), '',
                                'ED_s', 'edge_count_std'))
 
+        ad_percent = percent(d_f['adversary_count'].sum(), d_f['node_count'].sum())
+        metrics.append(self._w(round(ad_percent, 5), '',
+                               'A_p', 'adversary_count_percent'))
+        metrics.append(self._w(round(d_f['adversary_count'].mean(), 5), '',
+                               'A_a', 'adversary_count_avg'))
+        metrics.append(self._w(round(d_f['adversary_count'].std(), 5), '',
+                               'A_s', 'adversary_count_std'))
+
         self._replace_nan(metrics)
         return metrics
+
