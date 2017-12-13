@@ -5,7 +5,6 @@ Updated on Nov, 2017
 
 Calculate the send set for each captured route
 '''
-import numpy
 from lib.utils import entropy, max_entropy, entropy_normalized
 from lib.metrics.metric_base import MetricBase
 
@@ -17,7 +16,7 @@ class AnonymityMetrics(MetricBase):
 
     def process(self, data_object):
         data_object = super(AnonymityMetrics, self).process(data_object)
-         # no anonymity set calculated
+        # no anonymity set calculated
         if 'anonymity_set' not in data_object or not data_object['anonymity_set']['calculated']:
             return data_object
 
