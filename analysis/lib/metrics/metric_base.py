@@ -155,5 +155,4 @@ class MetricBase(object):
                             }
                         ]
                     }
-                }
-                }
+                }}
