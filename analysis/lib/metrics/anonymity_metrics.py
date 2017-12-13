@@ -5,6 +5,7 @@ Updated on Nov, 2017
 
 Calculate the send set for each captured route
 '''
+import numpy
 from lib.utils import entropy, max_entropy, entropy_normalized
 from lib.metrics.metric_base import MetricBase
 
@@ -97,3 +98,53 @@ class AnonymityMetrics(MetricBase):
 
         self._replace_nan(metrics)
         return metrics
+
+class AnonymityEntropy(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, anonymity_metrics):
+        super(AnonymityEntropy, self).__init__()
+        self.anonymity_metrics = anonymity_metrics
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.anonymity_metrics.data_frame
+        set_counts, r_bins = numpy.histogram(
+            data_frame.entropy, bins=20)
+
+        labels = [round(r_bin, 3) for r_bin in r_bins]
+        series_list = ['Entropy']
+        return self._graph_structure(labels, [list(set_counts)],
+                                     series_list, 'bar',
+                                     'Entropy: Histogram')
+
+class AnonymityEntropyNormalized(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, anonymity_metrics):
+        super(AnonymityEntropyNormalized, self).__init__()
+        self.anonymity_metrics = anonymity_metrics
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.anonymity_metrics.data_frame
+        set_counts, r_bins = numpy.histogram(
+            data_frame.normalized_entropy, bins=20)
+
+        labels = [round(r_bin, 3) for r_bin in r_bins]
+        series_list = ['normalized_entropy']
+        return self._graph_structure(labels, [list(set_counts)],
+                                     series_list, 'bar',
+                                     'Entropy Normalized: Histogram')

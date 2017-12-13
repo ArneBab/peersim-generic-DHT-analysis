@@ -16,7 +16,7 @@ from lib.metrics.experiment_config import ExperimentConfig
 from lib.metrics.sender_set_calculator import SenderSetCalculator
 from lib.metrics.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
 from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, AdversaryInterceptHopCalculated
-from lib.metrics.anonymity_metrics import AnonymityMetrics
+from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyNormalized
 from lib.metrics.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
 
 from lib.file.file_finder import FileFinder
@@ -159,6 +159,8 @@ class MetricManager(object):
         sender_set_size_inter = SenderSetSizeInterceptHop(sender_set_size)
 
         anon_metrics = AnonymityMetrics()
+        anon_entropy = AnonymityEntropy(anon_metrics)
+        anon_entropy_norm = AnonymityEntropyNormalized(anon_metrics)
 
         anon_accuracy_metrics = AnonymityAccuracyMetrics()
 
@@ -170,6 +172,8 @@ class MetricManager(object):
                       ('adversary', 'intercept_hop', intercept_hop),
                       ('adversary', 'intercept_hop_calced', intercept_hop_calced),
                       ('anonymity', 'anonymity', anon_metrics),
+                      ('anonymity', 'anonymity_entropy', anon_entropy),
+                      ('anonymity', 'anonymity_entropy_normalized', anon_entropy_norm),
                       ('anonymity', 'anonymity_accuracy', anon_accuracy_metrics)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
