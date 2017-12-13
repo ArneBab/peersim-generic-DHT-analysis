@@ -14,8 +14,9 @@ from lib.metrics.path_lengths_metric import PathLengthsMetric
 from lib.metrics.graph_manager import GraphManager
 from lib.metrics.experiment_config import ExperimentConfig
 from lib.metrics.sender_set_calculator import SenderSetCalculator
-from lib.metrics.sender_set_size import SenderSetSize
-from lib.metrics.intercept_hop import InterceptHop
+from lib.metrics.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
+from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, AdversaryInterceptHopCalculated
+
 from lib.file.file_finder import FileFinder
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
@@ -105,7 +106,8 @@ class MetricManager(object):
         analysis_metrics = self._routing_choice()
         self._merge_store(analysis_metrics, self._experiment_config())
         self._merge_store(analysis_metrics, self._load_graphs())
-        self._merge_store(analysis_metrics, self._routing_paths(analysis_metrics))
+        self._merge_store(analysis_metrics,
+                          self._routing_paths(analysis_metrics))
         return analysis_metrics
 
     def _load_graphs(self):
@@ -124,7 +126,8 @@ class MetricManager(object):
             self._set_data(group_name, metric_name, graph_manager.to_csv())
 
         if self._get_sum(group_name, metric_name) is None:
-            self._set_sum(group_name, metric_name, graph_manager.create_summation())
+            self._set_sum(group_name, metric_name,
+                          graph_manager.create_summation())
         return {group_name: {metric_name: graph_manager}}
 
     def _experiment_config(self):
@@ -138,19 +141,29 @@ class MetricManager(object):
         return self._process_metrics(metric_seq, search_dir, '*.stats')
 
     def _routing_paths(self, analysis_metrics_dict):
-        exp_config = self._get_store('variables', 'variables', analysis_metrics_dict)
-        graph_manager = self._get_store('graph', 'graph', analysis_metrics_dict)
-        routing_choice = self._get_store('routing', 'routing_choice', analysis_metrics_dict)
+        exp_config = self._get_store(
+            'variables', 'variables', analysis_metrics_dict)
+        graph_manager = self._get_store(
+            'graph', 'graph', analysis_metrics_dict)
+        routing_choice = self._get_store(
+            'routing', 'routing_choice', analysis_metrics_dict)
 
         path_lengths = PathLengthsMetric()
-        sender_set_calc = SenderSetCalculator(graph_manager, exp_config, routing_choice)
+        sender_set_calc = SenderSetCalculator(
+            graph_manager, exp_config, routing_choice)
         sender_set_size = SenderSetSize(path_lengths)
-        intercept_hop = InterceptHop(sender_set_size)
+        intercept_hop = AdversaryInterceptHop(sender_set_size)
+        intercept_hop_calced = AdversaryInterceptHopCalculated(sender_set_size)
+        sender_set_size_inter = SenderSetSizeInterceptHop(sender_set_size)
 
         metric_seq = [('routing', 'path_lengths', path_lengths),
                       ('sender_set', 'sender_set', sender_set_calc),
                       ('sender_set', 'sender_set_size', sender_set_size),
-                      ('sender_set', 'intercept_hop', intercept_hop)]
+                      ('sender_set', 'sender_set_intercept_hop',
+                       sender_set_size_inter),
+                      ('adversary', 'intercept_hop', intercept_hop),
+                      ('adversary', 'intercept_hop_calced', intercept_hop_calced)
+                      ]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
 
@@ -168,12 +181,15 @@ class MetricManager(object):
                 # check if we have graph data
                 if hasattr(metric, 'create_graph'):
                     if self._get_graph(g_name, m_name) is None:
-                        logging.debug('Generating graph data from existing data')
+                        logging.debug(
+                            'Generating graph data from existing data')
                         self._set_graph(g_name, m_name, metric.create_graph())
                 if hasattr(metric, 'create_summation'):
                     if self._get_sum(g_name, m_name) is None:
-                        logging.debug('Generating metric data from existing data')
-                        self._set_sum(g_name, m_name, metric.create_summation())
+                        logging.debug(
+                            'Generating metric data from existing data')
+                        self._set_sum(g_name, m_name,
+                                      metric.create_summation())
                 self._add_store(g_name, m_name, metric, metric_data)
             # no existing data found, will need to calculate it later
             else:
@@ -191,7 +207,8 @@ class MetricManager(object):
                 if hasattr(metric_obj, 'create_graph'):
                     self._set_graph(g_name, m_name, metric_obj.create_graph())
                 if hasattr(metric_obj, 'create_summation'):
-                    self._set_sum(g_name, m_name, metric_obj.create_summation())
+                    self._set_sum(g_name, m_name,
+                                  metric_obj.create_summation())
                 self._add_store(g_name, m_name, metric_obj, metric_data)
         return metric_data
 
@@ -258,4 +275,5 @@ class MetricManager(object):
 
     def _set_sum(self, group_name, metric_name, value):
         self.is_dirty = True
-        self._add_store(group_name, metric_name, value, self.metrics['summations'])
+        self._add_store(group_name, metric_name, value,
+                        self.metrics['summations'])

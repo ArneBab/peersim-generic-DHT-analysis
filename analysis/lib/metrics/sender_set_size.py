@@ -103,3 +103,34 @@ class SenderSetSize(MetricBase):
 
         self._replace_nan(metrics)
         return metrics
+
+
+class SenderSetSizeInterceptHop(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, sender_set_size):
+        super(SenderSetSizeInterceptHop, self).__init__()
+        self.sender_set_size = sender_set_size
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.sender_set_size.data_frame
+
+        # only get calculated sender sets
+        data_frame = data_frame[data_frame.sender_set_size.notnull()]
+
+        data_avg = data_frame.groupby(['intercept_hop']).mean().reset_index()
+        data_std = data_frame.groupby(['intercept_hop']).std().reset_index()
+
+        labels = list(data_avg.intercept_hop)
+        series_list = ['Average', 'Standard Deviation']
+        data = [list(data_avg.sender_set_size), list(data_std.sender_set_size)]
+        return self._graph_structure(labels, data,
+                                     series_list, 'line',
+                                     'Sender Set Size at Intercept Hop: Average')
