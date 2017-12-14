@@ -19,7 +19,7 @@ from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, Adversary
 from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyAtHop, AnonymityTopRankedSetSize
 from lib.metrics.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
 
-from lib.file.file_finder import FileFinder
+from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
 
@@ -79,7 +79,10 @@ class MetricManager(object):
         Archive (deflate) the experiment data in this directory.
         Leave the calculated metric data inflated.
         '''
-        pass
+        archiver = FileArchiver(self.base_directory)
+        archiver.process(self.base_directory, 'metrics.json')
+        cleaner = FileCleaner(self.base_directory)
+        cleaner.process(self.base_directory, 'metrics.json')
 
     def summarize(self):
         '''
@@ -133,9 +136,12 @@ class MetricManager(object):
         return {group_name: {metric_name: graph_manager}}
 
     def _experiment_config(self):
-        metric_seq = [('variables', 'variables', ExperimentConfig())]
+        exp_config = ExperimentConfig()
+        metric_seq = [('variables', 'variables', exp_config)]
         search_dir = self.base_directory
-        return self._process_metrics(metric_seq, search_dir, 'config.json')
+        metric_dict = self._process_metrics(metric_seq, search_dir, 'config.json')
+        self._set_config(exp_config.get_raw_config())
+        return metric_dict
 
     def _routing_choice(self):
         metric_seq = [('routing', 'routing_choice', RoutingChoiceMetric())]
@@ -316,3 +322,7 @@ class MetricManager(object):
         self.is_dirty = True
         self._add_store(group_name, metric_name, value,
                         self.metrics['summations'])
+
+    def _set_config(self, value):
+        self.is_dirty = True
+        self.metrics['config'] = value
