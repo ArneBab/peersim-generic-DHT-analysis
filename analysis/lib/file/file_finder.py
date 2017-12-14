@@ -81,7 +81,10 @@ class FileArchiver(FileFinder):
 
     def _match(self, file_names, file_pattern):
         included = set(file_names)
-        excluded = set(fnmatch.filter(sorted(file_names), file_pattern))
+        excluded = set()
+        for pattern in file_pattern:
+            for file_found in fnmatch.filter(sorted(file_names), pattern):
+                excluded.add(file_found)
         excluded.add('archive.zip')
         return included - excluded
 

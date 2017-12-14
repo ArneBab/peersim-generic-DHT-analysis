@@ -80,9 +80,9 @@ class MetricManager(object):
         Leave the calculated metric data inflated.
         '''
         archiver = FileArchiver(self.base_directory)
-        archiver.process(self.base_directory, 'metrics.json')
+        archiver.process(self.base_directory, ['metrics.json', 'routing.json*'])
         cleaner = FileCleaner(self.base_directory)
-        cleaner.process(self.base_directory, 'metrics.json')
+        cleaner.process(self.base_directory, ['metrics.json'])
 
     def summarize(self):
         '''
