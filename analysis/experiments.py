@@ -10,6 +10,7 @@ import argparse
 import os
 import json
 import multiprocessing
+from multiprocessing.pool import ThreadPool
 import time
 
 from lib.configuration import Configuration
@@ -121,7 +122,7 @@ class Experiments(object):
         if threaded_count <= 0:
             nb_cores = multiprocessing.cpu_count()
         logging.info('Running experiments on %d threads', nb_cores)
-        pool = multiprocessing.Pool(processes=nb_cores)
+        pool = ThreadPool(processes=nb_cores)
 
         experiment_count = 0
         for experiment_file in self._experiement_configurations:
