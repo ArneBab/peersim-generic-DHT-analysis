@@ -13,6 +13,9 @@ class ExperimentConfig(MetricBase):
     '''
     Generic interface for JSON based actions
     '''
+    def __init__(self):
+        super(ExperimentConfig, self).__init__()
+        self.config = None
 
     def process(self, data_object):
         '''
@@ -21,6 +24,7 @@ class ExperimentConfig(MetricBase):
         :return: Updated data_object reference
         '''
         super(ExperimentConfig, self).process(data_object)
+        self.config = data_object
         row = []
         for param in Configuration.get_parameters():
             if param == 'repeat':
@@ -45,8 +49,16 @@ class ExperimentConfig(MetricBase):
 
     def get_parameter(self, key):
         '''
-        Get eh experiment configuration value for the given key
+        Get the experiment configuration value for the given key
         :param key: parameter index name
         :return: value of the parameter
         '''
         return self.data_frame.iloc[len(self.data_frame) - 1][key]
+
+    def get_raw_config(self):
+        '''
+        Get the raw experiment configuration object
+        :param key: parameter index name
+        :return: return dict of config settings
+        '''
+        return self.config
