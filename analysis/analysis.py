@@ -161,6 +161,9 @@ def _metrics(base_path, *args):
 
 @timeit
 def _run_summations(exp_files, count, total, must_run):
+    # set log level (can be lost if multiprocessing is used)
+    logging.getLogger().setLevel(logging.INFO)
+    
     # base directory
     logging.info('Averaging group %d of %d', count, total)
     count += 1
@@ -175,6 +178,9 @@ def _run_summations(exp_files, count, total, must_run):
 
 @timeit
 def _run_analysis(exp_files, count, total, must_run):
+    # set log level (can be lost if multiprocessing is used)
+    logging.getLogger().setLevel(logging.INFO)
+
     logging.info('Running analysis %d of %d', count, total)
 
     # base directory

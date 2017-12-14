@@ -165,6 +165,9 @@ class Experiments(object):
 
 @timeit
 def _run_experiment(simulator_path, output_directory, experiment_file, experiment_count, total):
+    # set log level (can be lost if multiprocessing is used)
+    logging.getLogger().setLevel(logging.INFO)
+    
     logging.info('Running command %d of %d',
                  experiment_count, total)
     directory = os.path.dirname(experiment_file)
