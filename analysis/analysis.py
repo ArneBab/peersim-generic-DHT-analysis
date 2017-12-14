@@ -159,7 +159,7 @@ def _metrics(base_path, *args):
             path = os.path.join(path, sec)
     return path
 
-
+@timeit
 def _run_summations(exp_files, count, total, must_run):
     # base directory
     logging.info('Averaging group %d of %d', count, total)
@@ -173,7 +173,7 @@ def _run_summations(exp_files, count, total, must_run):
     metric_manager.save_data()
     return metric_manager.metric_file_path
 
-
+@timeit
 def _run_analysis(exp_files, count, total, must_run):
     logging.info('Running analysis %d of %d', count, total)
 
