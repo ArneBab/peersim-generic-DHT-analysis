@@ -86,11 +86,14 @@ def load_experiment_data(app):
     exp_id = 0
 
     for exp in experiments_config:
-        with open(exp['config'], 'r') as c_file:
+        config_dir = os.path.dirname(exp['config'])
+        metrics_file_path = os.path.join(config_dir, 'metrics.json')
+        with open(metrics_file_path, 'r') as c_file:
             config = json.loads(c_file.read())
+            config = config['config']
             config['id'] = exp_id
             exp_id += 1
-            config['self'] = exp['config']
+            config['self'] = metrics_file_path
             config['menu_path'] = _clean_path(config['path'])
             config['menu_path_name'] = _clean_path_name(
                 config['menu_path'], config['id'])

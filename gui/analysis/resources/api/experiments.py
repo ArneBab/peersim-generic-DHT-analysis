@@ -22,12 +22,12 @@ class ExperimentList(Resource):
         Only supports get operation
         '''
         experiment_config = current_app.config['EXPERIMENT_LIST'][0]
-        metrics_path = os.path.join(os.path.dirname(
-            experiment_config['self']), 'metrics', 'consolidated.json')
+        metrics_path = experiment_config['self']
         with open(metrics_path, 'r') as m_file:
             experiment_metrics = json.loads(m_file.read())
 
-        variables = sorted(experiment_metrics['variables'].keys())
+        exp_vars = experiment_metrics['summations']['variables']['variables']
+        variables = sorted([var['full_name'] for var in exp_vars])
 
         var_list = []
         for var in variables:
