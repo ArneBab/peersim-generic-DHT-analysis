@@ -39,7 +39,7 @@ class Configuration(object):
         router_drop_rate=[0.0],
         router_loop_detection=['GUIDLoopDetection'],
         #router_randomness=[0.0, 2.0, 4.0],
-        router_randomness=[0.0, 2.0],
+        router_randomness=[0.0],
         routing_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x, ''), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
@@ -159,6 +159,8 @@ class Configuration(object):
             config), 'input-graph.gml')
         rel_path = os.path.join(Configuration.file_path_for_config(
             config, ''), 'input-graph.gml')
+        exp_archived = os.path.join(Configuration.file_path_for_config(
+            config), 'archive.zip')
 
         # check if directory exists
         dir_name = os.path.dirname(path)
@@ -174,6 +176,9 @@ class Configuration(object):
         # check if the file was already generated
         config['topology_file'] = rel_path
         if os.path.exists(path):
+            return
+
+        if os.path.exists(exp_archived):
             return
 
         logging.info('Generating topology file ...')

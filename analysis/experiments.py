@@ -72,6 +72,7 @@ class Experiments(object):
             dir_name = os.path.dirname(exp_file_name)
 
             config_file_name = os.path.join(dir_name, 'config.json')
+            exp_archived = os.path.join(dir_name, 'archive.zip')
 
             # check if directory exists
             if not os.path.exists(dir_name):
@@ -81,7 +82,9 @@ class Experiments(object):
             exp_files = {}
             current_config = config_manager.get_config()
             # only write new files if there isn't already files there
-            if not os.path.exists(exp_file_name) or not os.path.exists(config_file_name) or \
+            if os.path.exists(exp_archived):
+                logging.info('Experiment already run and archived, skipping file write')
+            elif not os.path.exists(exp_file_name) or not os.path.exists(config_file_name) or \
                must_run:
                 with open(exp_file_name, 'w') as c_file:
                     c_file.write(config_manager.generate_experiement_config())
@@ -167,7 +170,7 @@ class Experiments(object):
 def _run_experiment(simulator_path, output_directory, experiment_file, experiment_count, total):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
-    
+
     logging.info('Running command %d of %d',
                  experiment_count, total)
     directory = os.path.dirname(experiment_file)
@@ -175,6 +178,11 @@ def _run_experiment(simulator_path, output_directory, experiment_file, experimen
     exp_done = os.path.join(directory, 'experiment.done')
     if os.path.exists(exp_done):
         logging.info('Experiment already run ... skipping')
+        return
+
+    exp_archived = os.path.join(directory, 'archive.zip')
+    if os.path.exists(exp_archived):
+        logging.info('Experiment already run and archived ... skipping')
         return
 
     exp = Executioner(simulator_path)
