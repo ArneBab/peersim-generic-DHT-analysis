@@ -179,6 +179,12 @@ def timeit(method):
             else:
                 logging.info('%r ran in %2.2f sec', method.__name__, te-ts)
         except Exception as ex:
-            logging.error('Error: %s ', str(ex))
+            logging.error('ERROR')
+            logging.error('ERROR')
+            logging.error('ERROR')
+            logging.error('    Error: %s ', str(ex))
+            logging.error('ERROR')
+            logging.error('ERROR')
+            logging.error('ERROR')
         return value
     return wrapper
