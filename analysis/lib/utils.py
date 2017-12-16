@@ -169,9 +169,16 @@ def timeit(method):
     ''' Logs a method call time '''
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
-        ts = time()
-        value = method(*args, **kwargs)
-        te = time()
-        logging.info('%r ran in %2.2f sec', method.__name__, te-ts)
+        value = ''
+        try:
+            ts = time()
+            value = method(*args, **kwargs)
+            te = time()
+            if len(args) > 0 and isinstance(args[0], dict) and 'id' in args[0]:
+                logging.info(' -- %s -- %r ran in %2.2f sec', str(args[0]['id']), method.__name__, te-ts)
+            else:
+                logging.info('%r ran in %2.2f sec', method.__name__, te-ts)
+        except Exception as ex:
+            logging.error('Error: %s ', str(ex))
         return value
     return wrapper
