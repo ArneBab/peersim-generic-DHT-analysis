@@ -59,8 +59,13 @@ class MetricManager(object):
         self.metrics = {'graphs': {}, 'data': {}, 'summations': {}}
         if not self.force_run and os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
-            with open(self.metric_file_path, 'r') as metric_file:
-                self.metrics = json.loads(metric_file.read())
+            try:
+                with open(self.metric_file_path, 'r') as metric_file:
+                    self.metrics = json.loads(metric_file.read())
+            except Exception as ex:
+                # error reading storing metrics.json file, well fuck what do we do now
+                # Panic obviously, but lets take shifts so we don't get tired
+                raise Exception('unable to read : %s - %s' % (self.metric_file_path, str(ex)))
 
     def save_data(self):
         '''
