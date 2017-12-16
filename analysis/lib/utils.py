@@ -183,9 +183,9 @@ def timeit(method):
             logging.error('ERROR')
             logging.error('ERROR')
             if len(args) > 0 and isinstance(args[0], dict) and 'id' in args[0]:
-                logging.error('     -- %s -- Error: %s ', str(args[0]['id']), str(ex))
+                logging.exception('     -- %s -- Error: %s ', str(args[0]['id']), str(ex))
             else:
-                logging.error('    Error: %s ', str(ex))
+                logging.exception('    Error: %s ', str(ex))
             logging.error('ERROR')
             logging.error('ERROR')
             logging.error('ERROR')
