@@ -86,7 +86,7 @@ class FileArchiver(FileFinder):
         Check if an archive version already exists
         :return: True if it exists
         '''
-        return os.path.exists(self.output_file_name)
+        return self.output_file is None
 
     def _match(self, file_names, file_pattern):
         included = set(file_names)
