@@ -65,6 +65,7 @@ class FileFinder(object):
 
 class FileArchiver(FileFinder):
     ''' Archive files in a zip '''
+
     def __init__(self, output_directory):
         super(FileArchiver, self).__init__([])
         self.output_directory_path = output_directory
@@ -72,7 +73,8 @@ class FileArchiver(FileFinder):
         self.output_file = None
         # is there already an archive
         if not os.path.exists(self.output_file_name):
-            self.output_file = zipfile.ZipFile(self.output_file_name, 'w', zipfile.ZIP_DEFLATED)
+            self.output_file = zipfile.ZipFile(
+                self.output_file_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
 
     def on_stop(self):
         if self.output_file is not None:
@@ -90,11 +92,13 @@ class FileArchiver(FileFinder):
 
     def _process_file(self, file_path):
         if self.output_file is not None:
-            rel_file_path = file_path.replace(self.output_directory_path + os.sep, '')
+            rel_file_path = file_path.replace(
+                self.output_directory_path + os.sep, '')
             self.output_file.write(file_path, rel_file_path)
 
 
 class FileCleaner(FileArchiver):
     ''' delete found files '''
+
     def _process_file(self, file_path):
         os.remove(file_path)
