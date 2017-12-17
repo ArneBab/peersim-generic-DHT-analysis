@@ -81,6 +81,9 @@ class FileArchiver(FileFinder):
             self.output_file.close()
         self.output_file = None
 
+    def exists(self):
+        return os.path.exists(self.output_file_name)
+
     def _match(self, file_names, file_pattern):
         included = set(file_names)
         excluded = set()
