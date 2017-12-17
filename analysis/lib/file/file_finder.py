@@ -82,6 +82,10 @@ class FileArchiver(FileFinder):
         self.output_file = None
 
     def exists(self):
+        '''
+        Check if an archive version already exists
+        :return: True if it exists
+        '''
         return os.path.exists(self.output_file_name)
 
     def _match(self, file_names, file_pattern):
