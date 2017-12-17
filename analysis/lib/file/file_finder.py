@@ -69,17 +69,24 @@ class FileArchiver(FileFinder):
     def __init__(self, output_directory):
         super(FileArchiver, self).__init__([])
         self.output_directory_path = output_directory
+        self.output_file_processing_name = os.path.join(
+            output_directory, 'archive.zip.processing')
         self.output_file_name = os.path.join(output_directory, 'archive.zip')
         self.output_file = None
         # is there already an archive
         if not os.path.exists(self.output_file_name):
             self.output_file = zipfile.ZipFile(
-                self.output_file_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
+                self.output_file_processing_name, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
 
     def on_stop(self):
         if self.output_file is not None:
             self.output_file.close()
         self.output_file = None
+        # move the temp zip archive to the final archive
+        # fixes issue when stoping the zip in mid processing
+        if not os.path.exists(self.output_file_name) and \
+           os.path.exists(self.output_file_processing_name):
+            os.rename(self.output_file_processing_name, self.output_file_name)
 
     def exists(self):
         '''
