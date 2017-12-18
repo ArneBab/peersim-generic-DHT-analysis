@@ -40,14 +40,7 @@ class FileFinder(object):
                 found_files.append(os.path.abspath(
                     os.path.join(root, filename)))
 
-        for reader in self.file_reader_list:
-            reader.on_start(base_directory)
-        for file_path in found_files:
-            self._process_file(file_path)
-        for reader in self.file_reader_list:
-            reader.on_stop()
-
-        self.on_stop()
+        self._process_list(base_directory, found_files)
 
     def on_stop(self):
         '''
@@ -55,12 +48,33 @@ class FileFinder(object):
         '''
         pass
 
+    def _process_list(self, base_directory, file_list):
+        for reader in self.file_reader_list:
+            reader.on_start(base_directory)
+        for file_path in file_list:
+            self._process_file(file_path)
+        for reader in self.file_reader_list:
+            reader.on_stop()
+        self.on_stop()
+
     def _match(self, file_names, file_pattern):
         return fnmatch.filter(sorted(file_names), file_pattern)
 
     def _process_file(self, file_path):
         for reader in self.file_reader_list:
             reader.process(file_path)
+
+
+class FileFinderList(FileFinder):
+    ''' Finds files from a given list of files '''
+
+    def process(self, base_directory, file_list):
+        '''
+        Find file in the given base directory that contain the file pattern
+        :param base_directory: Directory to start recursive search from
+        :param file_list: List of file paths
+        '''
+        self._process_list(base_directory, file_list)
 
 
 class FileArchiver(FileFinder):

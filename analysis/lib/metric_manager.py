@@ -18,8 +18,9 @@ from lib.metrics.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
 from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, AdversaryInterceptHopCalculated
 from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyAtHop, AnonymityTopRankedSetSize
 from lib.metrics.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
+from lib.metrics.summation import Summation
 
-from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner
+from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner, FileFinderList
 from lib.file.file_reader import JSONFileReader
 from lib.file.class_loader import ClassLoader
 
@@ -121,6 +122,23 @@ class MetricManager(object):
         self._merge_store(analysis_metrics,
                           self._routing_paths(analysis_metrics))
         return analysis_metrics
+
+    def final_analyze(self, experiment_metric_file_paths):
+        '''
+        Run analysis the compares the output from each experiment
+        :param experiment_metric_file_paths: List of the metric files
+         for each of the experiments
+        :return: dict of the metric objects
+        '''
+        # load metric data
+        metric_managers = ClassLoader(MetricManager)
+        finder = FileFinderList([metric_managers])
+        finder.process(self.base_directory, experiment_metric_file_paths)
+        # combine the data from each experiment
+        summation = Summation()
+        for experiment in metric_managers.class_instance:
+            summation.process(experiment)
+
 
     def _load_graphs(self):
         group_name = 'graph'
