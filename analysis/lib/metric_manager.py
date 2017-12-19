@@ -36,7 +36,7 @@ class MetricManager(object):
     Manage all of the analysis metrics for a given experiment
     '''
 
-    def __init__(self, base_directory, force_run=False):
+    def __init__(self, base_directory, force_run=False, experiment_id=''):
         base_directory = os.path.abspath(base_directory)
         if not os.path.exists(base_directory):
             raise Exception('Unable to find the directory: %s' %
@@ -44,6 +44,7 @@ class MetricManager(object):
 
         self.is_dirty = False
         self.force_run = force_run
+        self.experiment_id = str(experiment_id)
 
         # can pass either full file path or directory path
         if os.path.isdir(base_directory):
@@ -92,7 +93,7 @@ class MetricManager(object):
         archiver = FileArchiver(self.base_directory)
         if not archiver.exists():
 
-            logging.info(' -- %d -- Archiving experiment data', self._get_experiment_id())
+            logging.info(' -- %s -- Archiving experiment data', self.experiment_id)
             archiver.process(self.base_directory,
                              ['metrics.json', 'routing.json*'])
             cleaner = FileCleaner(self.base_directory)
@@ -313,8 +314,3 @@ class MetricManager(object):
     def _set_config(self, value):
         self.is_dirty = True
         self.metrics['config'] = value
-
-    def _get_experiment_id(self):
-        if 'config' in self.metrics and 'id' in self.metrics['config']:
-            return int(self.metrics['config']['id'])
-        return -1

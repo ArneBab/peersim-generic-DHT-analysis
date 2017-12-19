@@ -187,7 +187,7 @@ def _run_analysis(exp_files, count, total, must_run):
     base_path = _get_base(exp_files[CONST_CONFIG])
 
     # calculate analysis metrics
-    metric_manager = MetricManager(base_path, must_run)
+    metric_manager = MetricManager(base_path, must_run, count)
     metric_manager.analyze()
     metric_manager.save_data()
     metric_manager.archive_data()
