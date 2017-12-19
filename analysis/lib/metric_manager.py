@@ -9,20 +9,23 @@ import logging
 import os
 import json
 
-from lib.metrics.routing_choice_metric import RoutingChoiceMetric
-from lib.metrics.path_lengths_metric import PathLengthsMetric
-from lib.metrics.graph_manager import GraphManager
-from lib.metrics.experiment_config import ExperimentConfig
-from lib.metrics.sender_set_calculator import SenderSetCalculator
-from lib.metrics.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
-from lib.metrics.adversary_intercept_hop import AdversaryInterceptHop, AdversaryInterceptHopCalculated
-from lib.metrics.anonymity_metrics import AnonymityMetrics, AnonymityEntropy, AnonymityEntropyAtHop, AnonymityTopRankedSetSize
-from lib.metrics.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
-from lib.metrics.summation import Summation
+from lib.actions.routing_choice_metric import RoutingChoiceMetric
+from lib.actions.path_lengths_metric import PathLengthsMetric
+from lib.actions.graph_manager import GraphManager
+from lib.actions.experiment_config import ExperimentConfig
+from lib.actions.sender_set_calculator import SenderSetCalculator
+from lib.actions.sender_set_size import SenderSetSize, SenderSetSizeInterceptHop
+from lib.actions.adversary_intercept_hop import AdversaryInterceptHop
+from lib.actions.adversary_intercept_hop import AdversaryInterceptHopCalculated
+from lib.actions.anonymity_metrics import AnonymityMetrics, AnonymityEntropy
+from lib.actions.anonymity_metrics import AnonymityEntropyAtHop, AnonymityTopRankedSetSize
+from lib.actions.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
+from lib.actions.merge.metric_manager_merger import MetricManagerMerger
 
-from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner, FileFinderList
-from lib.file.file_reader import JSONFileReader
-from lib.file.class_loader import ClassLoader
+from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner
+from lib.file.file_reader import JSONFileReader, ClassReader
+
+from lib.utils import metric_iter, metric_add, metric_get, metric_merge
 
 
 METRIC_FILE_NAME = 'metrics.json'
@@ -66,7 +69,8 @@ class MetricManager(object):
             except Exception as ex:
                 # error reading storing metrics.json file, well fuck what do we do now
                 # Panic obviously, but lets take shifts so we don't get tired
-                raise Exception('unable to read : %s - %s' % (self.metric_file_path, str(ex)))
+                raise Exception('unable to read : %s - %s' %
+                                (self.metric_file_path, str(ex)))
 
     def save_data(self):
         '''
@@ -87,25 +91,41 @@ class MetricManager(object):
         '''
         archiver = FileArchiver(self.base_directory)
         if not archiver.exists():
-            logging.info('Archiving experiment data')
-            archiver.process(self.base_directory, ['metrics.json', 'routing.json*'])
+
+            logging.info(' -- %d -- Archiving experiment data', self._get_experiment_id())
+            archiver.process(self.base_directory,
+                             ['metrics.json', 'routing.json*'])
             cleaner = FileCleaner(self.base_directory)
             cleaner.process(self.base_directory, ['metrics.json'])
+
+    def compare_experiments(self, experiment_metric_file_paths):
+        '''
+        Run analysis the compares the output from each experiment
+        :param experiment_metric_file_paths: List of the metric files
+         for each of the experiments
+        :return: dict of the metric objects
+        '''
+        # load metric data
+        avg_repeat_exps = MetricManagerMerger()
+        class_reader = ClassReader([avg_repeat_exps], MetricManager)
+        finder = FileFinder([class_reader])
+        finder.process_file_list(
+            self.base_directory, experiment_metric_file_paths)
+        # Set the new metric data
+
 
     def summarize(self):
         '''
         Run the summation metrics over a set of experiment repeats
         '''
         # load the metric data for each experiment repeat
-        metric_managers = ClassLoader(MetricManager)
-        finder = FileFinder([metric_managers])
+        avg_repeat_exps = MetricManagerMerger()
+        class_reader = ClassReader([avg_repeat_exps], MetricManager)
+        finder = FileFinder([class_reader])
         finder.process(self.base_directory, METRIC_FILE_NAME, True)
-        # merge the repeat data into this metric instance
-        merged_state = None
-        for metric in metric_managers.class_instance:
-            merged_state = self._merge(merged_state, metric)
         # Set the new metric data
-        for group_name, metric_name, metric_obj in self._iter_store(merged_state):
+        merged_data = avg_repeat_exps.get_merged_data()
+        for group_name, metric_name, metric_obj in metric_iter(merged_data):
             if not self._have_metric_data(group_name, metric_name):
                 self._set_data(group_name, metric_name, metric_obj.to_csv())
         # run graph calculations
@@ -117,28 +137,10 @@ class MetricManager(object):
         :return: dict of the metric objects
         '''
         analysis_metrics = self._routing_choice()
-        self._merge_store(analysis_metrics, self._experiment_config())
-        self._merge_store(analysis_metrics, self._load_graphs())
-        self._merge_store(analysis_metrics,
-                          self._routing_paths(analysis_metrics))
+        metric_merge(analysis_metrics, self._experiment_config())
+        metric_merge(analysis_metrics, self._load_graphs())
+        metric_merge(analysis_metrics, self._routing_paths(analysis_metrics))
         return analysis_metrics
-
-    def final_analyze(self, experiment_metric_file_paths):
-        '''
-        Run analysis the compares the output from each experiment
-        :param experiment_metric_file_paths: List of the metric files
-         for each of the experiments
-        :return: dict of the metric objects
-        '''
-        # load metric data
-        metric_managers = ClassLoader(MetricManager)
-        finder = FileFinderList([metric_managers])
-        finder.process(self.base_directory, experiment_metric_file_paths)
-        # combine the data from each experiment
-        summation = Summation()
-        for experiment in metric_managers.class_instance:
-            summation.process(experiment)
-
 
     def _load_graphs(self):
         group_name = 'graph'
@@ -164,7 +166,8 @@ class MetricManager(object):
         exp_config = ExperimentConfig()
         metric_seq = [('variables', 'variables', exp_config)]
         search_dir = self.base_directory
-        metric_dict = self._process_metrics(metric_seq, search_dir, 'config.json')
+        metric_dict = self._process_metrics(
+            metric_seq, search_dir, 'config.json')
         self._set_config(exp_config.get_raw_config())
         return metric_dict
 
@@ -174,11 +177,11 @@ class MetricManager(object):
         return self._process_metrics(metric_seq, search_dir, '*.stats')
 
     def _routing_paths(self, analysis_metrics_dict):
-        exp_config = self._get_store(
+        exp_config = metric_get(
             'variables', 'variables', analysis_metrics_dict)
-        graph_manager = self._get_store(
+        graph_manager = metric_get(
             'graph', 'graph', analysis_metrics_dict)
-        routing_choice = self._get_store(
+        routing_choice = metric_get(
             'routing', 'routing_choice', analysis_metrics_dict)
 
         path_lengths = PathLengthsMetric()
@@ -232,7 +235,8 @@ class MetricManager(object):
                        anon_entropy_act_hop),
                       ('anonymity_actual', 'anonymity_entropy_normalized_at_hop',
                        anon_entropy_act_norm_hop),
-                      ('anonymity_accuracy', 'anonymity_accuracy', anon_accuracy_metrics),
+                      ('anonymity_accuracy', 'anonymity_accuracy',
+                       anon_accuracy_metrics),
                       ('top_ranked', 'sender_set_size', top_ranked_set_avg)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
@@ -260,7 +264,7 @@ class MetricManager(object):
                             'Generating metric data from existing data')
                         self._set_sum(g_name, m_name,
                                       metric.create_summation())
-                self._add_store(g_name, m_name, metric, metric_data)
+                metric_add(g_name, m_name, metric, metric_data)
             # no existing data found, will need to calculate it later
             else:
                 not_loaded_seq.append((g_name, m_name, metric))
@@ -279,75 +283,38 @@ class MetricManager(object):
                 if hasattr(metric_obj, 'create_summation'):
                     self._set_sum(g_name, m_name,
                                   metric_obj.create_summation())
-                self._add_store(g_name, m_name, metric_obj, metric_data)
+                metric_add(g_name, m_name, metric_obj, metric_data)
         return metric_data
-
-    def _merge(self, merged_state, other_metric_manager):
-        analysis_metrics = other_metric_manager.analyze()
-        if merged_state is None:
-            return analysis_metrics
-        # merge the data sets
-        for group_key, metric_key, metric_obj in self._iter_store(analysis_metrics):
-            existing = self._get_store(group_key, metric_key, merged_state)
-            # new entry?
-            if existing is None:
-                self._add_store(group_key, metric_key,
-                                metric_obj, merged_state)
-                continue
-            # merge existing metrics
-            existing.merge(metric_obj)
-        return merged_state
-
-    def _iter_store(self, metric_dic):
-        for group_name, group_obj in metric_dic.items():
-            for metric_name, metric_obj in group_obj.items():
-                yield (group_name, metric_name, metric_obj)
-
-    def _add_store(self, group_name, metric_name, metric_obj, metric_dict=None):
-        if metric_dict is None:
-            return {group_name: {metric_name: metric_obj}}
-        if group_name not in metric_dict:
-            metric_dict[group_name] = {}
-        metric_dict[group_name][metric_name] = metric_obj
-        return metric_dict
-
-    def _get_store(self, group_name, metric_name, metric_dict):
-        if group_name in metric_dict and metric_name in metric_dict[group_name]:
-            return metric_dict[group_name][metric_name]
-        return None
-
-    def _merge_store(self, store_one, store_two):
-        if store_one is None:
-            return store_two
-        for g_name, m_name, m_obj in self._iter_store(store_two):
-            self._add_store(g_name, m_name, m_obj, store_one)
-        return store_one
 
     def _have_metric_data(self, group_name, metric_name):
         return self._get_data(group_name, metric_name) is not None
 
     def _get_data(self, group_name, metric_name):
-        return self._get_store(group_name, metric_name, self.metrics['data'])
+        return metric_get(group_name, metric_name, self.metrics['data'])
 
     def _set_data(self, group_name, metric_name, value):
         self.is_dirty = True
-        self._add_store(group_name, metric_name, value, self.metrics['data'])
+        metric_add(group_name, metric_name, value, self.metrics['data'])
 
     def _get_graph(self, group_name, metric_name):
-        return self._get_store(group_name, metric_name, self.metrics['graphs'])
+        return metric_get(group_name, metric_name, self.metrics['graphs'])
 
     def _set_graph(self, group_name, metric_name, value):
         self.is_dirty = True
-        self._add_store(group_name, metric_name, value, self.metrics['graphs'])
+        metric_add(group_name, metric_name, value, self.metrics['graphs'])
 
     def _get_sum(self, group_name, metric_name):
-        return self._get_store(group_name, metric_name, self.metrics['summations'])
+        return metric_get(group_name, metric_name, self.metrics['summations'])
 
     def _set_sum(self, group_name, metric_name, value):
         self.is_dirty = True
-        self._add_store(group_name, metric_name, value,
-                        self.metrics['summations'])
+        metric_add(group_name, metric_name, value, self.metrics['summations'])
 
     def _set_config(self, value):
         self.is_dirty = True
         self.metrics['config'] = value
+
+    def _get_experiment_id(self):
+        if 'config' in self.metrics and 'id' in self.metrics['config']:
+            return int(self.metrics['config']['id'])
+        return -1

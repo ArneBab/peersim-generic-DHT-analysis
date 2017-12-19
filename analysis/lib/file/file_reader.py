@@ -44,10 +44,43 @@ class FileReader(object):
         for action in self.metric_actions:
             data = action.process(data)
 
+
+class ClassReader(FileReader):
+    '''
+    Process a file one line at a time
+    '''
+
+    def __init__(self, metric_actions, class_type):
+        '''
+        :param json_actions: JSONAction object list
+        :param class_type: Class to be constructed. Constructor will be passed
+        '''
+        super(ClassReader, self).__init__(metric_actions)
+        self.class_type = class_type
+
+    def process(self, file_path):
+        '''
+        Process a given file by applying each file action to every line in the file
+        :param file_path: Path to the file to read
+        '''
+        if not os.path.exists(file_path):
+            raise Exception('Unable to find the directory %s' % file_path)
+
+        # call on start
+        for action in self.metric_actions:
+            action.on_start(file_path)
+        # process file
+        self._send_data(self.class_type(file_path))
+        # call on stop
+        for action in self.metric_actions:
+            action.on_stop()
+
+
 class TextFileReader(FileReader):
     '''
     Process a file one line at a time as text
     '''
+
     def process(self, file_path):
         '''
         Process a given file by applying each file action to every line in the file
@@ -68,7 +101,9 @@ class TextFileReader(FileReader):
             for action in self.metric_actions:
                 action.on_stop()
 
+
 class JSONFileReader(TextFileReader):
     ''' Read each line as a JSON object '''
+
     def _send_data(self, data):
         super(JSONFileReader, self)._send_data(json.loads(data))

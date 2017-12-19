@@ -8,7 +8,7 @@ Framework for processing a files
 import networkx as nx
 import numpy
 from lib.utils import percent
-from lib.metrics.metric_base import MetricBase
+from lib.actions.metric_base import MetricBase
 
 
 class GraphManager(MetricBase):

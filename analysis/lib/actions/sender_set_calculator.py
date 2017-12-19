@@ -9,7 +9,7 @@ import os
 import json
 from lib.utils import distance
 from lib.routing.tree import RoutingTree
-from lib.metrics.metric_base import MetricBase
+from lib.actions.metric_base import MetricBase
 
 
 class SenderSetCalculator(MetricBase):

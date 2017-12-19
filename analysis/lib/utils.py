@@ -67,6 +67,7 @@ def max_entropy(distro):
     '''
     return math.log(len(distro), 2)
 
+
 def percent(selected, total):
     '''
     Calculate the percentage
@@ -83,21 +84,24 @@ def timeit(method):
     ''' Logs a method call time '''
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
+        ''' Function wrapper '''
         value = ''
         try:
-            ts = time()
+            t_s = time()
             value = method(*args, **kwargs)
-            te = time()
+            t_e = time()
             if len(args) > 0 and isinstance(args[0], dict) and 'id' in args[0]:
-                logging.info(' -- %s -- %r ran in %2.2f sec', str(args[0]['id']), method.__name__, te-ts)
+                logging.info(' -- %s -- %r ran in %2.2f sec',
+                             str(args[0]['id']), method.__name__, t_e - t_s)
             else:
-                logging.info('%r ran in %2.2f sec', method.__name__, te-ts)
+                logging.info('%r ran in %2.2f sec', method.__name__, t_e - t_s)
         except Exception as ex:
             logging.error('ERROR')
             logging.error('ERROR')
             logging.error('ERROR')
             if len(args) > 0 and isinstance(args[0], dict) and 'id' in args[0]:
-                logging.exception('     -- %s -- Error: %s ', str(args[0]['id']), str(ex))
+                logging.exception('     -- %s -- Error: %s ',
+                                  str(args[0]['id']), str(ex))
             else:
                 logging.exception('    Error: %s ', str(ex))
             logging.error('ERROR')
@@ -105,3 +109,58 @@ def timeit(method):
             logging.error('ERROR')
         return value
     return wrapper
+
+
+def metric_iter(metric_dic):
+    '''
+    Iterate over a Metric storage object
+    :param metric_dic: Store object
+    :return: yields (group name, metric name, metric object)
+    '''
+    for group_name, group_obj in metric_dic.items():
+        for metric_name, metric_obj in group_obj.items():
+            yield (group_name, metric_name, metric_obj)
+
+
+def metric_add(group_name, metric_name, metric_obj, metric_dict=None):
+    '''
+    Add item to a Metric storage
+    :param group_name: Name of the group
+    :param metric_name: Name of the metric
+    :param metric_obj: The metric object
+    :param metric_dict: The metric store to append the metric_obj to
+    :return: reference to the metric store
+    '''
+    if metric_dict is None:
+        return {group_name: {metric_name: metric_obj}}
+    if group_name not in metric_dict:
+        metric_dict[group_name] = {}
+    metric_dict[group_name][metric_name] = metric_obj
+    return metric_dict
+
+
+def metric_get(group_name, metric_name, metric_dict):
+    '''
+    Get item from a Metric storage
+    :param group_name: Name of the group
+    :param metric_name: Name of the metric
+    :param metric_dict: The metric store to append the metric_obj to
+    :return: reference to the metric object or None if not found
+    '''
+    if group_name in metric_dict and metric_name in metric_dict[group_name]:
+        return metric_dict[group_name][metric_name]
+    return None
+
+
+def metric_merge(metric_one, metric_two):
+    '''
+    Merge two metric stores together
+    :param metric_one: First metric storage. metric_two is merged into this structure.
+    :param metric_two: Second metric storage
+    :return: reference to the metric store with the added entries
+    '''
+    if metric_one is None:
+        return metric_two
+    for g_name, m_name, m_obj in metric_iter(metric_two):
+        metric_add(g_name, m_name, m_obj, metric_one)
+    return metric_one

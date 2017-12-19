@@ -7,7 +7,7 @@ Calculate the send set for each captured route
 '''
 import numpy
 from lib.utils import percent
-from lib.metrics.metric_base import MetricBase
+from lib.actions.metric_base import MetricBase
 
 
 class AnonymityAccuracyMetrics(MetricBase):

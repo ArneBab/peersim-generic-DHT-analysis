@@ -6,7 +6,7 @@ Updated on Nov, 2017
 Framework for processing a files
 '''
 import numpy
-from lib.metrics.metric_base import MetricBase
+from lib.actions.metric_base import MetricBase
 
 
 class PathLengthsMetric(MetricBase):
