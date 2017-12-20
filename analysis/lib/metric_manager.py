@@ -20,12 +20,14 @@ from lib.actions.adversary_intercept_hop import AdversaryInterceptHopCalculated
 from lib.actions.anonymity_metrics import AnonymityMetrics, AnonymityEntropy
 from lib.actions.anonymity_metrics import AnonymityEntropyAtHop, AnonymityTopRankedSetSize
 from lib.actions.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
-from lib.actions.merge.metric_manager_merger import MetricManagerMerger
+from lib.actions.merge.metric_merger import MetricManagerMerger
+from lib.actions.merge.metric_comparer import MetricManagerComparer, SummationVariableComparer
 
 from lib.file.file_finder import FileFinder, FileArchiver, FileCleaner
 from lib.file.file_reader import JSONFileReader, ClassReader
 
 from lib.utils import metric_iter, metric_add, metric_get, metric_merge
+from lib.configuration import Configuration
 
 
 METRIC_FILE_NAME = 'metrics.json'
@@ -61,7 +63,7 @@ class MetricManager(object):
         logging.debug('Metric file directory: %s', self.base_directory)
 
         # load the metrics file if it exists
-        self.metrics = {'graphs': {}, 'data': {}, 'summations': {}}
+        self.metrics = {'graphs': {}, 'data': {}, 'summations': {}, 'config': None}
         if not self.force_run and os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             try:
@@ -93,7 +95,8 @@ class MetricManager(object):
         archiver = FileArchiver(self.base_directory)
         if not archiver.exists():
 
-            logging.info(' -- %s -- Archiving experiment data', self.experiment_id)
+            logging.info(' -- %s -- Archiving experiment data',
+                         self.experiment_id)
             archiver.process(self.base_directory,
                              ['metrics.json', 'routing.json*'])
             cleaner = FileCleaner(self.base_directory)
@@ -106,14 +109,26 @@ class MetricManager(object):
          for each of the experiments
         :return: dict of the metric objects
         '''
-        # load metric data
-        avg_repeat_exps = MetricManagerMerger()
-        class_reader = ClassReader([avg_repeat_exps], MetricManager)
-        finder = FileFinder([class_reader])
-        finder.process_file_list(
-            self.base_directory, experiment_metric_file_paths)
-        # Set the new metric data
+        # pivot data and generate graph for each metric
+        for variable in Configuration.get_parameters():
+            if variable == 'repeat':
+                continue
+            # get metrics for variable
+            cmp_exps = MetricManagerComparer(variable)
+            class_reader = ClassReader([cmp_exps], MetricManager)
+            finder = FileFinder([class_reader])
+            finder.process_file_list(
+                self.base_directory, experiment_metric_file_paths)
 
+            for group_name, metric_name, position in metric_iter(cmp_exps.metric_map):
+                if group_name == 'variables':
+                    continue
+
+                metric_cmp = SummationVariableComparer(
+                    cmp_exps, metric_name)
+                metric_cmp.process(None)
+                self._set_data(metric_cmp.to_csv(True), variable, group_name, metric_name)
+                self._set_graph(metric_cmp.create_graph(), variable, group_name, metric_name)
 
     def summarize(self):
         '''
@@ -125,10 +140,11 @@ class MetricManager(object):
         finder = FileFinder([class_reader])
         finder.process(self.base_directory, METRIC_FILE_NAME, True)
         # Set the new metric data
+        self._set_config(avg_repeat_exps.get_merged_config())
         merged_data = avg_repeat_exps.get_merged_data()
         for group_name, metric_name, metric_obj in metric_iter(merged_data):
             if not self._have_metric_data(group_name, metric_name):
-                self._set_data(group_name, metric_name, metric_obj.to_csv())
+                self._set_data(metric_obj.to_csv(), group_name, metric_name)
         # run graph calculations
         return self.analyze()
 
@@ -143,6 +159,13 @@ class MetricManager(object):
         metric_merge(analysis_metrics, self._routing_paths(analysis_metrics))
         return analysis_metrics
 
+    def get_config(self):
+        '''
+        Get the experiment configuration
+        :return: dict of the configuration objects
+        '''
+        return self.metrics['config']
+
     def _load_graphs(self):
         group_name = 'graph'
         metric_name = 'graph'
@@ -156,11 +179,10 @@ class MetricManager(object):
             finder = FileFinder([graph_manager])
             finder.process(search_dir, '*.gml')
             # store the results
-            self._set_data(group_name, metric_name, graph_manager.to_csv())
+            self._set_data(graph_manager.to_csv(), group_name, metric_name)
 
         if self._get_sum(group_name, metric_name) is None:
-            self._set_sum(group_name, metric_name,
-                          graph_manager.create_summation())
+            self._set_sum(graph_manager.create_summation(), group_name, metric_name)
         return {group_name: {metric_name: graph_manager}}
 
     def _experiment_config(self):
@@ -169,7 +191,8 @@ class MetricManager(object):
         search_dir = self.base_directory
         metric_dict = self._process_metrics(
             metric_seq, search_dir, 'config.json')
-        self._set_config(exp_config.get_raw_config())
+        if exp_config.get_raw_config() is not None:
+            self._set_config(exp_config.get_raw_config())
         return metric_dict
 
     def _routing_choice(self):
@@ -258,14 +281,13 @@ class MetricManager(object):
                     if self._get_graph(g_name, m_name) is None:
                         logging.debug(
                             'Generating graph data from existing data')
-                        self._set_graph(g_name, m_name, metric.create_graph())
+                        self._set_graph(metric.create_graph(), g_name, m_name)
                 if hasattr(metric, 'create_summation'):
                     if self._get_sum(g_name, m_name) is None:
                         logging.debug(
                             'Generating metric data from existing data')
-                        self._set_sum(g_name, m_name,
-                                      metric.create_summation())
-                metric_add(g_name, m_name, metric, metric_data)
+                        self._set_sum(metric.create_summation(), g_name, m_name)
+                metric_add(metric, metric_data, g_name, m_name)
             # no existing data found, will need to calculate it later
             else:
                 not_loaded_seq.append((g_name, m_name, metric))
@@ -278,13 +300,12 @@ class MetricManager(object):
             finder.process(folder_path, file_filter)
             # save the results of running the metrics
             for g_name, m_name, metric_obj in not_loaded_seq:
-                self._set_data(g_name, m_name, metric_obj.to_csv())
+                self._set_data(metric_obj.to_csv(), g_name, m_name)
                 if hasattr(metric_obj, 'create_graph'):
-                    self._set_graph(g_name, m_name, metric_obj.create_graph())
+                    self._set_graph(metric_obj.create_graph(), g_name, m_name)
                 if hasattr(metric_obj, 'create_summation'):
-                    self._set_sum(g_name, m_name,
-                                  metric_obj.create_summation())
-                metric_add(g_name, m_name, metric_obj, metric_data)
+                    self._set_sum(metric_obj.create_summation(), g_name, m_name)
+                metric_add(metric_obj, metric_data, g_name, m_name)
         return metric_data
 
     def _have_metric_data(self, group_name, metric_name):
@@ -293,23 +314,23 @@ class MetricManager(object):
     def _get_data(self, group_name, metric_name):
         return metric_get(group_name, metric_name, self.metrics['data'])
 
-    def _set_data(self, group_name, metric_name, value):
+    def _set_data(self, value, *args):
         self.is_dirty = True
-        metric_add(group_name, metric_name, value, self.metrics['data'])
+        metric_add(value, self.metrics['data'], *args)
 
     def _get_graph(self, group_name, metric_name):
         return metric_get(group_name, metric_name, self.metrics['graphs'])
 
-    def _set_graph(self, group_name, metric_name, value):
+    def _set_graph(self, value, *args):
         self.is_dirty = True
-        metric_add(group_name, metric_name, value, self.metrics['graphs'])
+        metric_add(value, self.metrics['graphs'], *args)
 
     def _get_sum(self, group_name, metric_name):
         return metric_get(group_name, metric_name, self.metrics['summations'])
 
-    def _set_sum(self, group_name, metric_name, value):
+    def _set_sum(self, value, *args):
         self.is_dirty = True
-        metric_add(group_name, metric_name, value, self.metrics['summations'])
+        metric_add(value, self.metrics['summations'], *args)
 
     def _set_config(self, value):
         self.is_dirty = True

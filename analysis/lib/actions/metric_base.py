@@ -104,14 +104,14 @@ class MetricBase(object):
         # call on stop to merge data into the data frame
         self.on_stop()
 
-    def to_csv(self):
+    def to_csv(self, index=False):
         '''
         Get the JSON representation of this object
         :return: JSON string
         '''
         if len(self.data_frame.columns) <= 0 and len(self.data_frame) <= 0:
             return ''
-        return self.data_frame.to_csv(index=False)
+        return self.data_frame.to_csv(index=index)
 
     def load(self, csv_string):
         '''

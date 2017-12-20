@@ -122,20 +122,23 @@ def metric_iter(metric_dic):
             yield (group_name, metric_name, metric_obj)
 
 
-def metric_add(group_name, metric_name, metric_obj, metric_dict=None):
+def metric_add(metric_obj, metric_dict, *args):
     '''
     Add item to a Metric storage
-    :param group_name: Name of the group
-    :param metric_name: Name of the metric
     :param metric_obj: The metric object
     :param metric_dict: The metric store to append the metric_obj to
+    :param args: The path to store the metric_obj at
     :return: reference to the metric store
     '''
-    if metric_dict is None:
-        return {group_name: {metric_name: metric_obj}}
-    if group_name not in metric_dict:
-        metric_dict[group_name] = {}
-    metric_dict[group_name][metric_name] = metric_obj
+    if len(args) <= 0:
+        raise Exception('Must specify a storage path')
+    if len(args) == 1:
+        metric_dict[args[0]] = metric_obj
+        return
+    next_path = args[1:]
+    if args[0] not in metric_dict:
+        metric_dict[args[0]] = {}
+    metric_add(metric_obj, metric_dict[args[0]], *next_path)
     return metric_dict
 
 
@@ -162,5 +165,5 @@ def metric_merge(metric_one, metric_two):
     if metric_one is None:
         return metric_two
     for g_name, m_name, m_obj in metric_iter(metric_two):
-        metric_add(g_name, m_name, m_obj, metric_one)
+        metric_add(m_obj, metric_one, g_name, m_name)
     return metric_one

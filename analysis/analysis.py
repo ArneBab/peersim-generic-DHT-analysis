@@ -12,8 +12,6 @@ import json
 import multiprocessing
 
 from lib.utils import timeit
-#from lib.summary_metrics import SummaryMetrics
-
 from lib.metric_manager import MetricManager
 
 CONST_EXPERIMENT = 'experiment'
@@ -38,7 +36,7 @@ class Manager(object):
         output_directory = os.path.abspath(args.d)
         total = self.load_experiments(output_directory)
         self.run_analysis(total, args.f, args.t)
-        self.run_summations(args.f, args.t)
+        self.run_summations(output_directory, args.f, args.t)
         logging.info('Finished!!!')
 
     @timeit
@@ -87,7 +85,7 @@ class Manager(object):
         pool.join()
 
     @timeit
-    def run_summations(self, must_run, thread_count):
+    def run_summations(self, output_directory, must_run, thread_count):
         '''
         Run after all experiments are complete. Compare the variables
         '''
@@ -118,18 +116,14 @@ class Manager(object):
         pool.join()
 
         # get the async results
-        if thread_count > 1:
+        if nb_cores > 1:
             holder = [result.get() for result in groups]
             groups = holder
 
-        ## caluclate the summary comparision of the experiment runs
-        #summary = SummaryMetrics()
-        #experiment_data = summary.calculate(groups)
-        #with open(os.path.join(output_directory, 'summary.json'), 'w') as s_file:
-        #    s_file.write(json.dumps(experiment_data))
-
-        #with open(os.path.join(output_directory, 'summary_display.json'), 'w') as s_file:
-        #    s_file.write(json.dumps(summary.process(experiment_data)))
+        # caluclate the summary comparision of the experiment runs
+        manager = MetricManager(output_directory)
+        manager.compare_experiments(groups)
+        manager.save_data()
 
     def _get_experiments_by_group(self, experiments):
         by_groups = {}
@@ -159,11 +153,12 @@ def _metrics(base_path, *args):
             path = os.path.join(path, sec)
     return path
 
+
 @timeit
 def _run_summations(exp_files, count, total, must_run):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
-    
+
     # base directory
     logging.info('Averaging group %d of %d', count, total)
     count += 1
@@ -175,6 +170,7 @@ def _run_summations(exp_files, count, total, must_run):
     metric_manager.summarize()
     metric_manager.save_data()
     return metric_manager.metric_file_path
+
 
 @timeit
 def _run_analysis(exp_files, count, total, must_run):
