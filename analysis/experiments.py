@@ -14,7 +14,7 @@ from multiprocessing.pool import ThreadPool
 import time
 
 from lib.configuration import Configuration
-from lib.executioner import Executioner
+from lib.file.executioner import Executioner
 from lib.utils import timeit
 
 CONST_EXPERIMENT = 'experiment'

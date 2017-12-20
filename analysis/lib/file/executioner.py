@@ -34,4 +34,5 @@ class Executioner(object):
             command = list(java_exe_template)
             command.append(experiment_config_file)
             logging.debug('Running command: %s', ' '.join(command))
-            return subprocess.call(command, cwd=base_directory, stdout=std_out_file, stderr=std_out_file)
+            return subprocess.call(command, cwd=base_directory,
+                                   stdout=std_out_file, stderr=std_out_file)
