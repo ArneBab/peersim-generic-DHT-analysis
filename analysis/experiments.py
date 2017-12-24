@@ -38,33 +38,35 @@ class Experiments(object):
         logging.info('Starting ...')
 
         output_directory = os.path.abspath(args.d)
-        total = self.setup_experiments(output_directory, args.f)
-        self.run_experiments(total, args.p, output_directory, args.t, args.m)
+        total = self.setup_experiments(output_directory)
+        self.run_experiments(total, args.p, output_directory, args.t)
         logging.info('Finished!!!')
 
     @timeit
-    def setup_experiments(self, output_directory, must_run):
+    def setup_experiments(self, output_directory):
         '''
-        Generate experiement configurationas and create fiel structure
+        Generate experiement configurationas and create file structure
         '''
+        logging.info('setting up experiments ...')
+        count = 0
+
         exp_file_path = os.path.join(output_directory, 'experiments.json')
         # load existing experiment configurations
-        if not must_run and os.path.exists(exp_file_path):
+        if os.path.exists(exp_file_path):
             with open(exp_file_path, 'r') as e_file:
                 self._experiement_configurations = json.loads(e_file.read())
-            total = len(self._experiement_configurations)
-            logging.info('Loaded %s existing experiment configurations', total)
-            return total
+            count = len(self._experiement_configurations)
+            logging.info('Loaded %s existing experiment configurations', count)
 
-        logging.info('setting up experiments ...')
-        count = 1
-
+        # build the new experiment configurations
         config_manager = Configuration(output_directory)
         config_manager.build_configs()
 
+        config_count = 1
         while config_manager.next():
-            logging.info('Writing config %d of %d', count,
+            logging.info('Writing config %d of %d', config_count,
                          config_manager.get_total_count())
+            config_count += 1
 
             exp_file_name = os.path.join(
                 output_directory, config_manager.get_file_path(), 'config.cfg')
@@ -83,9 +85,9 @@ class Experiments(object):
             current_config = config_manager.get_config()
             # only write new files if there isn't already files there
             if os.path.exists(exp_archived):
-                logging.info('Experiment already run and archived, skipping file write')
-            elif not os.path.exists(exp_file_name) or not os.path.exists(config_file_name) or \
-               must_run:
+                logging.info(
+                    'Experiment already run and archived, skipping file write')
+            elif not os.path.exists(exp_file_name) or not os.path.exists(config_file_name):
                 with open(exp_file_name, 'w') as c_file:
                     c_file.write(config_manager.generate_experiement_config())
                 # write the settings in JSON format for easy parsing
@@ -95,15 +97,20 @@ class Experiments(object):
                 logging.info(
                     'Experiment config already exists, skipping file write')
 
-            exp_files[CONST_EXPERIMENT] = exp_file_name.replace(
+            config_file_name = config_file_name.replace(
                 output_directory + os.sep, '')
-            exp_files[CONST_CONFIG] = config_file_name.replace(
+            exp_file_name = exp_file_name.replace(
                 output_directory + os.sep, '')
-            exp_files[CONST_GROUP] = config_manager.get_group_hash(
-                current_config)
-            exp_files[CONST_ID] = count
-            self._experiement_configurations.append(exp_files)
-            count += 1
+
+            # check if we need to add the experiment entry
+            if not self._find(config_file_name):
+                count += 1
+                exp_files[CONST_EXPERIMENT] = exp_file_name
+                exp_files[CONST_CONFIG] = config_file_name
+                exp_files[CONST_GROUP] = config_manager.get_group_hash(
+                    current_config)
+                exp_files[CONST_ID] = count
+                self._experiement_configurations.append(exp_files)
 
         with open(exp_file_path, 'w') as e_file:
             e_file.write(json.dumps(self._experiement_configurations))
@@ -112,14 +119,10 @@ class Experiments(object):
         logging.info('Generated %s experiment configurations', total)
         return total
 
-    def run_experiments(self, total, simulator_path, output_directory, threaded_count, multiplexor):
+    def run_experiments(self, total, simulator_path, output_directory, threaded_count):
         '''
         Run the simulation for each experiment configuration
         '''
-        # parse the multiplexor
-        exp_mod = int(multiplexor.split(':')[0])
-        exp_mod_cond = int(multiplexor.split(':')[1])
-
         # multi thread this
         nb_cores = threaded_count
         if threaded_count <= 0:
@@ -133,12 +136,6 @@ class Experiments(object):
                 output_directory, experiment_file[CONST_EXPERIMENT])
             experiment_count += 1
 
-            # determine if this process is responsible for this experiment
-            if experiment_count % exp_mod != exp_mod_cond:
-                logging.info('Another process is running command %d of %d',
-                             experiment_count, total)
-                continue
-
             if nb_cores > 1:
                 pool.apply_async(_run_experiment, args=(
                     simulator_path, output_directory, exp_file_path, experiment_count, total))
@@ -148,22 +145,11 @@ class Experiments(object):
         pool.close()
         pool.join()
 
-    def _get_base(self, path):
-        return os.path.dirname(path)
-
-    def _base(self, base_path, *args):
-        path = base_path
-        if args:
-            for sec in args:
-                path = os.path.join(path, sec)
-        return path
-
-    def _metrics(self, base_path, *args):
-        path = os.path.join(base_path, 'metrics')
-        if args:
-            for sec in args:
-                path = os.path.join(path, sec)
-        return path
+    def _find(self, config_path):
+        for exp in self._experiement_configurations:
+            if exp[CONST_CONFIG] == config_path:
+                return True
+        return False
 
 
 @timeit
@@ -200,14 +186,10 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     PARSER = argparse.ArgumentParser(
         description='Run some Anonymous P2P DHT experiments.')
-    PARSER.add_argument('-d', default='.', type=str,
+    PARSER.add_argument('-d', default='.', type=str, required=True,
                         help='Directory to store output in')
-    PARSER.add_argument('-p', default='.', type=str,
+    PARSER.add_argument('-p', default='.', type=str, required=True,
                         help='Directory to find the PeerSim binaries in')
-    PARSER.add_argument('-m', default='1:0', type=str,
-                        help='Multiple processes running experiments. Experiment # mod 1 == 0')
-    PARSER.add_argument('-f', default=False, action='store_true',
-                        help='Force the experiments to rerun')
     PARSER.add_argument('-t', default='0', type=int,
                         help='Number of threads to run. Default is the # of core CPUs available')
     Experiments().main(PARSER.parse_args())
