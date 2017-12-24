@@ -35,8 +35,8 @@ class Manager(object):
 
         output_directory = os.path.abspath(args.d)
         total = self.load_experiments(output_directory)
-        self.run_analysis(total, args.f, args.t)
-        self.run_summations(output_directory, args.f, args.t)
+        self.run_analysis(total, args.t)
+        self.run_summations(output_directory, args.t)
         logging.info('Finished!!!')
 
     @timeit
@@ -60,7 +60,7 @@ class Manager(object):
         return total
 
     @timeit
-    def run_analysis(self, total, must_run, thread_count):
+    def run_analysis(self, total, thread_count):
         '''
         Run the post run analysis on a experiement
         '''
@@ -76,16 +76,15 @@ class Manager(object):
         for exp_files in self._experiement_configurations:
             if nb_cores > 1:
                 pool.apply_async(_run_analysis, args=(
-                    exp_files, count, total, must_run))
+                    exp_files, count, total))
             else:
-                _run_analysis(exp_files,
-                              count, total, must_run)
+                _run_analysis(exp_files, count, total)
             count += 1
         pool.close()
         pool.join()
 
     @timeit
-    def run_summations(self, output_directory, must_run, thread_count):
+    def run_summations(self, output_directory, thread_count):
         '''
         Run after all experiments are complete. Compare the variables
         '''
@@ -107,10 +106,10 @@ class Manager(object):
         for exp_files in exp_grouped.values():
             if nb_cores > 1:
                 groups.append(pool.apply_async(_run_summations, args=(
-                    exp_files, count, exp_group_count, must_run)))
+                    exp_files, count, exp_group_count)))
             else:
                 groups.append(_run_summations(
-                    exp_files, count, exp_group_count, must_run))
+                    exp_files, count, exp_group_count))
             count += 1
         pool.close()
         pool.join()
@@ -155,7 +154,7 @@ def _metrics(base_path, *args):
 
 
 @timeit
-def _run_summations(exp_files, count, total, must_run):
+def _run_summations(exp_files, count, total):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
 
@@ -166,14 +165,14 @@ def _run_summations(exp_files, count, total, must_run):
     first_exp = exp_files[0]
     base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
 
-    metric_manager = MetricManager(base_path, must_run)
+    metric_manager = MetricManager(base_path)
     metric_manager.summarize()
     metric_manager.save_data()
     return metric_manager.metric_file_path
 
 
 @timeit
-def _run_analysis(exp_files, count, total, must_run):
+def _run_analysis(exp_files, count, total):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
 
@@ -183,7 +182,7 @@ def _run_analysis(exp_files, count, total, must_run):
     base_path = _get_base(exp_files[CONST_CONFIG])
 
     # calculate analysis metrics
-    metric_manager = MetricManager(base_path, must_run, count)
+    metric_manager = MetricManager(base_path, count)
     metric_manager.analyze()
     metric_manager.save_data()
     metric_manager.archive_data()
@@ -195,8 +194,6 @@ if __name__ == '__main__':
         description='Run some Anonymous P2P DHT experiment analysis.')
     PARSER.add_argument('-d', default='.', type=str,
                         help='Directory to store output in')
-    PARSER.add_argument('-f', default=False, action='store_true',
-                        help='Force the analysis to rerun')
     PARSER.add_argument('-t', default='0', type=int,
                         help='Number of threads to run. Default is the # of core CPUs available')
     Manager().main(PARSER.parse_args())
