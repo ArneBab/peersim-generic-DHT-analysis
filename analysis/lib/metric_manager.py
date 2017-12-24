@@ -38,14 +38,13 @@ class MetricManager(object):
     Manage all of the analysis metrics for a given experiment
     '''
 
-    def __init__(self, base_directory, force_run=False, experiment_id=''):
+    def __init__(self, base_directory, experiment_id=''):
         base_directory = os.path.abspath(base_directory)
         if not os.path.exists(base_directory):
             raise Exception('Unable to find the directory: %s' %
                             base_directory)
 
         self.is_dirty = False
-        self.force_run = force_run
         self.experiment_id = str(experiment_id)
 
         # can pass either full file path or directory path
@@ -64,7 +63,7 @@ class MetricManager(object):
 
         # load the metrics file if it exists
         self.metrics = {'graphs': {}, 'data': {}, 'summations': {}, 'config': None}
-        if not self.force_run and os.path.exists(self.metric_file_path):
+        if os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             try:
                 with open(self.metric_file_path, 'r') as metric_file:
