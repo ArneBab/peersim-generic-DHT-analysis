@@ -83,6 +83,11 @@ class Experiments(object):
             # write the experiment config
             exp_files = {}
             current_config = config_manager.get_config()
+            # hack to fix an issue
+            # write the settings in JSON format for easy parsing
+            with open(config_file_name, 'w') as c_file:
+                c_file.write(json.dumps(current_config))
+            # end hack
             # only write new files if there isn't already files there
             if os.path.exists(exp_archived):
                 logging.info(
