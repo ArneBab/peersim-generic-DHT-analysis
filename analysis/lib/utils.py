@@ -133,6 +133,8 @@ def metric_add(metric_obj, metric_dict, *args):
     if len(args) <= 0:
         raise Exception('Must specify a storage path')
     if len(args) == 1:
+        if args[0].startswith('___'):
+            return
         metric_dict[args[0]] = metric_obj
         return
     next_path = args[1:]

@@ -192,6 +192,14 @@ class MetricManager(object):
             metric_seq, search_dir, 'config.json')
         if exp_config.get_raw_config() is not None:
             self._set_config(exp_config.get_raw_config())
+        elif self.get_config() is None: # hack to try get the config info again
+            exp_config = ExperimentConfig()
+            metric_seq = [('___variables', '___variables', exp_config)]
+            metric_dict = self._process_metrics(
+                metric_seq, search_dir, 'config.json')
+            if exp_config.get_raw_config() is not None:
+                self._set_config(exp_config.get_raw_config())
+
         return metric_dict
 
     def _routing_choice(self):
