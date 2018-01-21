@@ -5,6 +5,7 @@ Updated on Nov, 2017
 
 Framework for processing a files
 '''
+import math
 from lib.actions.metric_base import MetricBase
 from lib.configuration import Configuration
 from lib.utils import metric_iter, metric_add, metric_get
@@ -94,7 +95,12 @@ class SummationVariableComparer(MetricBase):
             series_list.append(str(row.name))
             data = []
             for col_name, sub_col_name in data_frame.columns:
-                data.append(float(row[col_name][sub_col_name]))
+                data_value = float(row[col_name][sub_col_name])
+                # check for NaN
+                if math.isnan(data_value):
+                    data_value = 0.0
+
+                data.append(data_value)
             datas.append(data)
         return self._graph_structure(labels, datas,
                                      series_list, 'line',

@@ -87,7 +87,7 @@ class RoutingChoiceMetric(MetricBase):
             short_name = column.replace('oice ', '_') + '_a'
             metrics.append(self._w(round(data/total, 5), '',
                                    short_name, column.replace(' ', '_') + '_avg'))
-
+        self._replace_nan(metrics)
         return metrics
 
     def get_final_routing_choices(self):
