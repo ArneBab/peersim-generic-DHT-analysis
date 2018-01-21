@@ -58,7 +58,7 @@ class SummaryGraphs(Resource):
         Only supports get operation
         '''
         experiment_config_file = os.path.join(
-            current_app.config['DATA_DIRECTORY'], 'summary_display.json')
+            current_app.config['DATA_DIRECTORY'], 'metrics.json')
 
         summary_data = {}
         if os.path.exists(experiment_config_file):
@@ -76,6 +76,8 @@ class SummaryCorrelations(Resource):
         '''
         Only supports get operation
         '''
+
+        return {}
         experiment_config_file = os.path.join(
             current_app.config['DATA_DIRECTORY'], 'summary_display.json')
 

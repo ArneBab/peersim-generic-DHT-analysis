@@ -67,8 +67,9 @@ class ExperimentMetrics(Resource):
         metrics_path = os.path.join(os.path.dirname(
             experiment_config['self']), 'metrics.json')
         with open(metrics_path, 'r') as m_file:
-            experiment_config['metrics'] = json.loads(m_file.read())
-        return jsonify(experiment_config)
+            exp = json.loads(m_file.read())
+        exp['id'] = experiment_config['id']
+        return exp
 
 class ExperimentCSV(Resource):
     '''

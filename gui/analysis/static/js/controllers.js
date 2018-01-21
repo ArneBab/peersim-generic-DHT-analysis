@@ -2,103 +2,22 @@ angular.module('challengerApp.controllers', [])
   .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, ExperimentServiceV2, ExperimentCsvService, ExperimentStaticService, MetricService) {
     $scope.id = $stateParams.id
     $scope.experiment_v2 = ExperimentServiceV2.get({ id: $stateParams.id })
+    $scope.open_graph = graph_popup_factory($uibModal)
+    $scope.open_csv = csv_popup_factory($uibModal)
+    $scope.download_csv = csv_download_factory()
 
-    $scope.open = function (graph_data) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        ariaLabelledBy: 'modal-title',
-        ariaDescribedBy: 'modal-body',
-        templateUrl: 'myModalContent.html',
-        controller: 'ModalInstanceCtrl',
-        controllerAs: '$ctrl',
-        size: 'lg',
-        resolve: {
-          data: function () {
-            return graph_data
-          }
-        }
-      })
-    }
-
-    $scope.open_csv = function (cvs_data) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        ariaLabelledBy: 'modal-title',
-        ariaDescribedBy: 'modal-body',
-        templateUrl: 'myModalContentCsv.html',
-        controller: 'ModalInstanceCtrl',
-        controllerAs: '$ctrl',
-        size: 'lg',
-        resolve: {
-          data: function () {
-            var parsed = cvs_data.split('\n')
-            var data = []
-            for(var i = 1; i < parsed.length; i++){
-              var line = parsed[i]
-              if(!line) continue
-              data.push(line.split(','))
-            }
-            return {headers: parsed[0].split(','), body: data}
-          }
-        }
-      })
-    }
-
-    $scope.download_csv = function (name, cvs_data) {
-      var a = angular.element('<a></a>');
-      a.attr('href','data:application/octet-stream;base64,' + btoa(cvs_data))
-      a.attr('style', 'display:none')
-      a.attr('download', name + '.csv');
-      a[0].click()
-      a.remove();
-    }
-
-  }).controller('ModalInstanceCtrl', function ($uibModalInstance, data) {
-    var $ctrl = this
-    $ctrl.data = data
-    $ctrl.ok = function () {
-      $uibModalInstance.close()
-    }
-  })
-  .controller('SummaryController', function ($scope, $uibModal, SummaryService, SummaryGraphService) {
-    $scope.graphs = SummaryGraphService.query()
-    $scope.summary = SummaryService.query()
-    $scope.open = function (graph_data) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        ariaLabelledBy: 'modal-title',
-        ariaDescribedBy: 'modal-body',
-        templateUrl: 'myModalContent.html',
-        controller: 'ModalInstanceCtrl',
-        controllerAs: '$ctrl',
-        size: 'lg',
-        resolve: {
-          graph: function () {
-            return graph_data
-          }
-        }
-      })
-    }
   })
   .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService, SummaryCorrelationService) {
     $scope.id = $stateParams.id
     $scope.graphs = SummaryGraphService.get({ variable: $stateParams.id })
-    $scope.correlations = SummaryCorrelationService.get({ variable: $stateParams.id })
-    $scope.open = function (graph_data) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        ariaLabelledBy: 'modal-title',
-        ariaDescribedBy: 'modal-body',
-        templateUrl: 'myModalContent.html',
-        controller: 'ModalInstanceCtrl',
-        controllerAs: '$ctrl',
-        size: 'lg',
-        resolve: {
-          graph: function () {
-            return graph_data
-          }
-        }
-      })
+    //$scope.correlations = SummaryCorrelationService.get({ variable: $stateParams.id })
+    $scope.open_graph = graph_popup_factory($uibModal)
+  })
+  .controller('ModalInstanceCtrl', function ($uibModalInstance, data) {
+    var $ctrl = this
+    $ctrl.data = data
+    $ctrl.ok = function () {
+      $uibModalInstance.close()
     }
   })
   .controller('MenuController', function ($scope, $state, ExperimentService) {
@@ -125,34 +44,59 @@ angular.module('challengerApp.controllers', [])
     }
   })
 
-function basic_graph_options(title) {
-  return {
-    title: {
-      display: true,
-      text: title
-    },
-    responsive: true,
-    legend: {
-      display: false
-    },
-    elements: { line: { fill: false } }
+function graph_popup_factory($uibModal) {
+  return function (graph_data) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      ariaLabelledBy: 'modal-title',
+      ariaDescribedBy: 'modal-body',
+      templateUrl: '/static/templates/graph_popup_content.html',
+      controller: 'ModalInstanceCtrl',
+      controllerAs: '$ctrl',
+      size: 'lg',
+      resolve: {
+        data: function () {
+          return graph_data
+        }
+      }
+    })
   }
 }
 
-function stacked_graph_options(title) {
-  return {
-    title: {
-      display: true,
-      text: title
-    },
-    responsive: true,
-    elements: { line: { fill: false } },
-    scales: {
-      yAxes: [
-        {
-          stacked: true
+function csv_popup_factory($uibModal) {
+  return function (cvs_data) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      ariaLabelledBy: 'modal-title',
+      ariaDescribedBy: 'modal-body',
+      templateUrl: '/static/templates/csv_popup_content.html',
+      controller: 'ModalInstanceCtrl',
+      controllerAs: '$ctrl',
+      size: 'lg',
+      resolve: {
+        data: function () {
+          var parsed = cvs_data.split('\n')
+          var data = []
+          for (var i = 1; i < parsed.length; i++) {
+            var line = parsed[i]
+            if (!line) continue
+            data.push(line.split(','))
+          }
+          return { headers: parsed[0].split(','), body: data }
         }
-      ]
-    }
+      }
+    })
   }
 }
+
+function csv_download_factory() {
+  return function (name, cvs_data) {
+    var a = angular.element('<a></a>');
+    a.attr('href', 'data:application/octet-stream;base64,' + btoa(cvs_data))
+    a.attr('style', 'display:none')
+    a.attr('download', name + '.csv');
+    a[0].click()
+    a.remove();
+  }
+}
+

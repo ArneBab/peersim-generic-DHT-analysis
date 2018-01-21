@@ -1,19 +1,15 @@
-<script type="text/ng-template" id="myModalContent.html">
-    <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">Graph</h3>
-    </div>
-    <div class="modal-body" id="modal-body">
-        <canvas class="chart chart-base" chart-type="$ctrl.graph.type" chart-data="$ctrl.graph.data" chart-labels="$ctrl.graph.labels"
-            chart-series="$ctrl.graph.series" chart-options="$ctrl.graph.options">
-        </canvas>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
-    </div>
-</script>
-
 <h2>Variable : {{id}}</h2>
 
+<div class="row" ng-repeat="(group_name, group_data) in graphs">
+    <h3>{{group_name}}</h3>
+    <div class="col-sm-6" ng-repeat="(metric, graph_data) in group_data">
+        <canvas class="chart chart-base" chart-type="graph_data.type" chart-data="graph_data.data" chart-labels="graph_data.labels"
+            chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open_graph(graph_data)">
+        </canvas>
+    </div>
+</div>
+
+<!--
 <div class="row" ng-repeat="(group_name, group_data) in correlations">
     <details>
         <summary><span class="h3 capitalize">{{group_name | prettyName}}</span></summary>
@@ -36,8 +32,8 @@
         </div>
         <div class="col-sm-6" ng-repeat="(metric, graph_data) in graphs[group_name]">
             <canvas class="chart chart-base" chart-type="graph_data.type" chart-data="graph_data.data" chart-labels="graph_data.labels"
-                chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open(graph_data)">
+                chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open_graph(graph_data)">
             </canvas>
         </div>
     </details>
-</div>
+</div> -->

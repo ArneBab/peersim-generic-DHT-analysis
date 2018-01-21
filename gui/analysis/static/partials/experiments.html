@@ -1,50 +1,9 @@
-<script type="text/ng-template" id="myModalContent.html">
-    <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">Graph</h3>
-    </div>
-    <div class="modal-body" id="modal-body">
-        <canvas class="chart chart-base" chart-type="$ctrl.data.type" chart-data="$ctrl.data.data" chart-labels="$ctrl.data.labels"
-            chart-series="$ctrl.data.series" chart-options="$ctrl.data.options">
-        </canvas>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
-    </div>
-</script>
-
-<script type="text/ng-template" id="myModalContentCsv.html">
-    <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">CSV</h3>
-    </div>
-    <div class="modal-body" id="modal-body">
-        <table class="table table-striped pre-scrollable">
-            <thead>
-                <tr>
-                    <th ng-repeat="header in $ctrl.data.headers">
-                            {{header}}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="row in $ctrl.data.body">
-                    <td ng-repeat="col in row track by $index">
-                        {{col}}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
-    </div>
-</script>
-
 <button ui-sref="data_view({id: id})" class="btn btn-primary">Routing Data View</button>
 <h2>Experiment {{experiment_v2.id}} Data</h2>
 
 <h3>Summation Metrics</h3>
 
-<div class="row" ng-repeat-start="(group_name, group_objs) in experiment_v2.metrics.summations">
+<div class="row" ng-repeat-start="(group_name, group_objs) in experiment_v2.summations">
     <h4 class="capitalize">{{group_name | prettyName}}</h4>
 </div>
 <div ng-repeat="(key, values) in group_objs">
@@ -62,16 +21,16 @@
 
 <h3>Graphs</h3>
 
-<div class="row" ng-repeat-start="(group_name, grouped_graphs) in experiment_v2.metrics.graphs">
+<div class="row" ng-repeat-start="(group_name, grouped_graphs) in experiment_v2.graphs">
     <h4 class="capitalize">{{group_name | prettyName}}</h4>
 </div>
 <div class="col-sm-6" ng-repeat="(graph_name, graph) in grouped_graphs">
-    <canvas ng-click="open(graph)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
+    <canvas ng-click="open_graph(graph)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
         chart-series="graph.series" chart-options="graph.options">
     </canvas>
     <br/>
-    <a href="" ng-click="open_csv(experiment_v2.metrics.data[group_name][graph_name])">View CSV data</a> &nbsp;&nbsp;
-    <a href="" ng-click="download_csv(group_name + '-' + graph_name,  experiment_v2.metrics.data[group_name][graph_name])">Download CSV data</a>
+    <a href="" ng-click="open_csv(experiment_v2.data[group_name][graph_name])">View CSV data</a> &nbsp;&nbsp;
+    <a href="" ng-click="download_csv(group_name + '-' + graph_name,  experiment_v2.data[group_name][graph_name])">Download CSV data</a>
 
 </div>
 <div class="row" ng-repeat-end="">

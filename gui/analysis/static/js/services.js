@@ -20,17 +20,9 @@ angular.module('challengerApp.services', [])
     }
   })
 }).factory('ExperimentCsvService', function ($resource) {
-  return $resource('/api/v1/experiments/:id/csv/:csv', {id: '@id', csv: '@csv'}, {
-    get: {
-      method: 'GET', isArray: false
-    }
-  })
+  return $resource('/api/v1/experiments/:id/csv/:csv', {id: '@id', csv: '@csv'}, null)
 }).factory('ExperimentStaticService', function ($resource) {
-  return $resource('/api/v1/experiments/:id/static/:static', {id: '@id', static: '@static'}, {
-    get: {
-      method: 'GET', isArray: false
-    }
-  })
+  return $resource('/api/v1/experiments/:id/static/:static', {id: '@id', static: '@static'}, null)
 }).factory('SummaryService', function ($resource) {
   return $resource('/api/v1/summary', null, {
     query: {
@@ -38,15 +30,7 @@ angular.module('challengerApp.services', [])
     }
   })
 }).factory('SummaryGraphService', function ($resource) {
-  return $resource('/api/v1/summary/graphs/:variable', {variable: '@variable'}, {
-    get: {
-      method: 'GET', isArray: false
-    }
-  })
+  return $resource('/api/v1/summary/graphs/:variable', {variable: '@variable'}, null)
 }).factory('SummaryCorrelationService', function ($resource) {
-  return $resource('/api/v1/summary/correlations/:variable', {variable: '@variable'}, {
-    get: {
-      method: 'GET', isArray: false
-    }
-  })
+  return $resource('/api/v1/summary/correlations/:variable', {variable: '@variable'}, null)
 })

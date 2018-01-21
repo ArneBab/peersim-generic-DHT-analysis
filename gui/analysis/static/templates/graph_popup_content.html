@@ -1,0 +1,11 @@
+<div class="modal-header">
+    <h3 class="modal-title" id="modal-title">Graph</h3>
+</div>
+<div class="modal-body" id="modal-body">
+    <canvas class="chart chart-base" chart-type="$ctrl.data.type" chart-data="$ctrl.data.data" chart-labels="$ctrl.data.labels"
+        chart-series="$ctrl.data.series" chart-options="$ctrl.data.options">
+    </canvas>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
+</div>
