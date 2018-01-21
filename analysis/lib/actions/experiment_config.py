@@ -45,7 +45,7 @@ class ExperimentConfig(MetricBase):
         metrics = []
         for column in data_frame.keys():
             metrics.append(self._w(str(data_frame[column]), '', column, column))
-        self._replace_nan(metrics)
+
         return metrics
 
     def get_parameter(self, key):
