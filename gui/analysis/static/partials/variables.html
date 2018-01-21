@@ -1,11 +1,14 @@
 <h2>Variable : {{id}}</h2>
 
-<div class="row" ng-repeat="(group_name, group_data) in graphs">
+<div class="row" ng-repeat="(group_name, group_data) in graphs.graphs">
     <h3>{{group_name}}</h3>
-    <div class="col-sm-6" ng-repeat="(metric, graph_data) in group_data">
+    <div class="col-sm-6" ng-repeat="(graph_name, graph_data) in group_data">
         <canvas class="chart chart-base" chart-type="graph_data.type" chart-data="graph_data.data" chart-labels="graph_data.labels"
             chart-series="graph_data.series" chart-options="graph_data.options" ng-click="open_graph(graph_data)">
         </canvas>
+        <br/>
+        <a href="" ng-click="open_csv(graphs.data[group_name][graph_name])">View CSV data</a> &nbsp;&nbsp;
+        <a href="" ng-click="download_csv(group_name + '-' + graph_name,  graphs.data[group_name][graph_name])">Download CSV data</a>
     </div>
 </div>
 

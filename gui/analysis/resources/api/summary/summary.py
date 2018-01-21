@@ -64,7 +64,9 @@ class SummaryGraphs(Resource):
         if os.path.exists(experiment_config_file):
             with open(experiment_config_file, 'r') as c_file:
                 summary_data = json.loads(c_file.read())
-        variable_data = summary_data['graphs'][variable]
+        variable_data = {}
+        variable_data['graphs'] = summary_data['graphs'][variable]
+        variable_data['data'] = summary_data['data'][variable]
         return jsonify(variable_data)
 
 class SummaryCorrelations(Resource):

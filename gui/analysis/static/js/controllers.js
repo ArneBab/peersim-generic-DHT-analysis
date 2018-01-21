@@ -12,6 +12,8 @@ angular.module('challengerApp.controllers', [])
     $scope.graphs = SummaryGraphService.get({ variable: $stateParams.id })
     //$scope.correlations = SummaryCorrelationService.get({ variable: $stateParams.id })
     $scope.open_graph = graph_popup_factory($uibModal)
+    $scope.open_csv = csv_popup_factory($uibModal)
+    $scope.download_csv = csv_download_factory()
   })
   .controller('ModalInstanceCtrl', function ($uibModalInstance, data) {
     var $ctrl = this
