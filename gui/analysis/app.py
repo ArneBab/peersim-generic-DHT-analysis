@@ -33,10 +33,8 @@ def register_resources(app):
     """Register Flask blueprints."""
     import analysis.resources.handlers as handlers
     import analysis.resources.api.experiments as exp
-    import analysis.resources.api.metrics as metrics
     import analysis.resources.api.data as data
-    import analysis.resources.api.summary.summary as summary
-    import analysis.resources.api.summary.csv as csv
+    import analysis.resources.api.summary as summary
 
     # home handler
     app.add_url_rule('/', None, handlers.home_handler)
@@ -45,22 +43,11 @@ def register_resources(app):
     api = Api(app)
     api.add_resource(exp.ExperimentList, '/api/v1/experiments')
     api.add_resource(exp.Experiment, '/api/v1/experiments/<int:experiment_id>')
-    api.add_resource(exp.ExperimentMetrics,
-                     '/api/v2/experiments/<int:experiment_id>')
-    api.add_resource(metrics.Metrics,
-                     '/api/v1/experiments/<int:experiment_id>/metrics/<path:metric>')
-    api.add_resource(exp.ExperimentCSV,
-                     '/api/v1/experiments/<int:experiment_id>/csv/<path:csv_file>')
-    api.add_resource(exp.ExperimentStatic,
-                     '/api/v1/experiments/<int:experiment_id>/static/<path:static_file>')
+
     api.add_resource(data.Data, '/api/v1/data/<int:experiment_id>')
 
-    api.add_resource(summary.Summary, '/api/v1/summary')
-    api.add_resource(csv.Csv, '/api/v1/summary/csv')
     api.add_resource(summary.SummaryGraphs,
                      '/api/v1/summary/graphs/<path:variable>')
-    api.add_resource(summary.SummaryCorrelations,
-                     '/api/v1/summary/correlations/<path:variable>')
 
 
 def load_experiment_data(app):

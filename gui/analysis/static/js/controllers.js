@@ -1,16 +1,15 @@
 angular.module('challengerApp.controllers', [])
-  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService, ExperimentServiceV2, ExperimentCsvService, ExperimentStaticService, MetricService) {
+  .controller('ExperimentController', function ($scope, $stateParams, $uibModal, ExperimentService) {
     $scope.id = $stateParams.id
-    $scope.experiment_v2 = ExperimentServiceV2.get({ id: $stateParams.id })
+    $scope.experiment_v2 = ExperimentService.get({ id: $stateParams.id })
     $scope.open_graph = graph_popup_factory($uibModal)
     $scope.open_csv = csv_popup_factory($uibModal)
     $scope.download_csv = csv_download_factory()
 
   })
-  .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService, SummaryCorrelationService) {
+  .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService) {
     $scope.id = $stateParams.id
     $scope.graphs = SummaryGraphService.get({ variable: $stateParams.id })
-    //$scope.correlations = SummaryCorrelationService.get({ variable: $stateParams.id })
     $scope.open_graph = graph_popup_factory($uibModal)
     $scope.open_csv = csv_popup_factory($uibModal)
     $scope.download_csv = csv_download_factory()
@@ -24,7 +23,6 @@ angular.module('challengerApp.controllers', [])
   })
   .controller('MenuController', function ($scope, $state, ExperimentService) {
     ExperimentService.query().$promise.then(function (result) {
-      $scope.tree.push({ label: 'Summary', children: [], data: '/#/' })
       $scope.tree.push({ label: 'Variables', children: result.variables })
       $scope.tree.push({ label: 'Experiments', children: result.experiments })
     })
