@@ -5,7 +5,7 @@
     <table class="table table-striped pre-scrollable">
         <thead>
             <tr>
-                <th ng-repeat="header in $ctrl.data.headers">
+                <th ng-repeat="header in $ctrl.data.headers track by $index">
                     {{header}}
                 </th>
             </tr>
