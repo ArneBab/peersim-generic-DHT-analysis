@@ -9,4 +9,4 @@ class Config(object):
 
     SECRET_KEY = os.environ.get('ANALYSIS_SECRET', 'secret-key-analysis')  
     DEBUG = False
-    DATA_DIRECTORY = os.environ.get('ANALYSIS_DATA_DIR')
+    DATA_DIRECTORY = os.environ.get('DATA_DIR')
