@@ -260,8 +260,10 @@ class Configuration(object):
         identity = ''
         for param in Configuration.get_parameters():
             if param in excluded:
+                identity += ':'
                 continue
             if param not in config:
+                identity += ':'
                 continue
             if 'value' in config[param]:
                 identity += ':' + str(config[param]['value'])
