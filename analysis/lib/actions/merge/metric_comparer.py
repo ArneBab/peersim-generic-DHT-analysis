@@ -105,3 +105,33 @@ class SummationVariableComparer(MetricBase):
         return self._graph_structure(labels, datas,
                                      series_list, 'line',
                                      self.metric_name)
+
+    def to_csv(self, index=False):
+        '''
+        Get the JSON representation of this object
+        :return: JSON string
+        '''
+        data_frame = self.data_frame
+        headers = [str(sub_col) for col, sub_col in data_frame.columns]
+        headers.insert(0, 'experiment_name')
+        headers.append('_empty_')
+        headers.extend(Configuration.get_parameters())
+        datas = []
+        for index, row in data_frame.iterrows():
+            data = []
+            data.append(str(row.name))
+
+            for col_name, sub_col_name in data_frame.columns:
+                data_value = float(row[col_name][sub_col_name])
+                # check for NaN
+                if math.isnan(data_value):
+                    data_value = 0.0
+
+                data.append(str(data_value))
+            data.extend(str(row.name).split(':'))
+            datas.append(data)
+
+        csv_string = ','.join(headers) + '\n'
+        for row in datas:
+            csv_string += ','.join(row) + '\n'
+        return csv_string
