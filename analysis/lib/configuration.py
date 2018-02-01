@@ -229,7 +229,7 @@ class Configuration(object):
         :return: List of parameter names
         '''
         return ['topology_type', 'router_type', 'router_randomness',
-                'look_ahead', 'adversary_count', 'size', 'degree', 'repeat']
+                'look_ahead', 'adversary_count', 'router_can_backtrack', 'size', 'degree', 'repeat']
 
     @staticmethod
     def file_path_for_config(config, output_base_directory=None):
