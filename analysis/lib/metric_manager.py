@@ -142,8 +142,8 @@ class MetricManager(object):
         self._set_config(avg_repeat_exps.get_merged_config())
         merged_data = avg_repeat_exps.get_merged_data()
         for group_name, metric_name, metric_obj in metric_iter(merged_data):
-            if not self._have_metric_data(group_name, metric_name):
-                self._set_data(metric_obj.to_csv(), group_name, metric_name)
+            #if not self._have_metric_data(group_name, metric_name):
+            self._set_data(metric_obj.to_csv(), group_name, metric_name)
         # run graph calculations
         return self.analyze()
 
@@ -290,7 +290,7 @@ class MetricManager(object):
                             'Generating graph data from existing data')
                         self._set_graph(metric.create_graph(), g_name, m_name)
                 if hasattr(metric, 'create_summation'):
-                    if self._get_sum(g_name, m_name) is None:
+                    if metric.force_summation() or self._get_sum(g_name, m_name) is None:
                         logging.debug(
                             'Generating metric data from existing data')
                         self._set_sum(metric.create_summation(), g_name, m_name)

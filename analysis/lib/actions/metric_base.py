@@ -104,6 +104,13 @@ class MetricBase(object):
         # call on stop to merge data into the data frame
         self.on_stop()
 
+    def force_summation(self):
+        '''
+        Determine if summation must always be run
+        :return: True if summation need to be recalculated evey time
+        '''
+        return False
+
     def to_csv(self, index=False):
         '''
         Get the JSON representation of this object

@@ -36,6 +36,13 @@ class ExperimentConfig(MetricBase):
         self.add_row(row)
         return data_object
 
+    def force_summation(self):
+        '''
+        Determine if summation must always be run
+        :return: True if summation need to be recalculated evey time
+        '''
+        return True
+
     def create_summation(self):
         '''
         Create a list of summation metrics for this data set
