@@ -7,6 +7,6 @@ from datetime import timedelta
 class Config(object):
     """Base configuration."""
 
-    SECRET_KEY = os.environ.get('ANALYSIS_SECRET', 'secret-key-analysis')  
+    SECRET_KEY = os.environ.get('ANALYSIS_SECRET', 'secret-key-analysis')
     DEBUG = False
     DATA_DIRECTORY = os.environ.get('DATA_DIR')
