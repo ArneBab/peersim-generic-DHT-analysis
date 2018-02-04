@@ -98,9 +98,11 @@ def add_experiment_variable():
 
                         content = existing_metrics_file.read()
                         content = content.replace(folder_prefix, new_folder)
-                        content = content.replace(
-                            folder_prefix.replace('\\', '\\\\'),
-                            new_folder.replace('\\', '\\\\'))
+                        # only run this replace on Windows
+                        if '\\' in folder_prefix:
+                            content = content.replace(
+                                folder_prefix.replace('\\', '\\\\'),
+                                new_folder.replace('\\', '\\\\'))
 
                         # add new variable
                         metric_obj = json.loads(content)
