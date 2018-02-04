@@ -112,13 +112,50 @@ def add_experiment_variable():
                             var_obj)
 
                         # update variable list
-                        data_frame = pandas.read_csv(StringIO(metric_obj['data']['variables']['variables']))
+                        data_frame = pandas.read_csv(
+                            StringIO(metric_obj['data']['variables']['variables']))
                         data_frame[variable_name] = variable_value
-                        metric_obj['data']['variables']['variables'] = data_frame.to_csv(index=False)
+                        metric_obj['data']['variables']['variables'] = data_frame.to_csv(
+                            index=False)
 
                         new_metrics_file.write(json.dumps(metric_obj))
 
             experiments_file.write(json.dumps(experiments_data))
+
+
+def find_replace_metrics():
+    '''
+    Find and replace text in metrics.json
+    '''
+    base_directory = raw_input(
+        '\tEnter directory path to experiments.json file: ')
+    if not os.path.exists(base_directory):
+        print '\tUnable to find the directory'
+        return
+    experiments_file_name = os.path.join(base_directory, 'experiments.json')
+    if not os.path.exists(experiments_file_name):
+        print '\tUnable to find the experiments.json file'
+        return
+
+    find_value = raw_input('\tFind: ')
+    replace_value = raw_input('\tReplace: ')
+
+    with open(experiments_file_name) as exp_file:
+        experiments = json.loads(exp_file.read())
+        for exp in experiments:
+            # fix paths in the metrics.json
+            metrics_file_path = os.path.dirname(exp[CONST_CONFIG])
+            metrics_file_path = os.path.abspath(os.path.join(
+                base_directory, metrics_file_path, 'metrics.json'))
+
+            content = ''
+            with open(metrics_file_path, 'r') as metrics_file:
+                content = metrics_file.read()
+
+            content = content.replace(find_value, replace_value)
+
+            with open(metrics_file_path, 'w') as metrics_file:
+                metrics_file.write(content)
 
 
 def finished():
@@ -134,7 +171,7 @@ def _insert(variable, value, position, path_list):
 
 
 if __name__ == '__main__':
-    options = [add_experiment_variable, finished]
+    options = [add_experiment_variable, find_replace_metrics, finished]
 
     while True:
         print '\n\nActions:'
