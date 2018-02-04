@@ -74,7 +74,8 @@ def load_experiment_data(app):
 
     for exp in experiments_config:
         config_dir = os.path.dirname(exp['config'])
-        metrics_file_path = os.path.abspath(os.path.join(config_dir, 'metrics.json'))
+        metrics_file_path = os.path.abspath(
+            os.path.join(config_dir, 'metrics.json'))
         with open(metrics_file_path, 'r') as c_file:
             config = json.loads(c_file.read())
             config = config['config']
@@ -137,4 +138,5 @@ def _clean_path_name(path_list, id_num):
     menu_path = ':'.join(path_list).lower()
     if id_num is not None:
         menu_path = str(id_num) + ' - ' + menu_path
-    return menu_path.replace('dhtrouter', '').replace('random', 'Rand')
+    return menu_path.replace('dhtrouter', '').replace('random', 'rand')\
+                    .replace('loopdetection', '').replace('rand_erdos_', '')
