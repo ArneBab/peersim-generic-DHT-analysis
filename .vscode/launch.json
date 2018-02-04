@@ -23,6 +23,27 @@
             ]
         },
         {
+            "name": "GUI (Windows)",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/gui/run.py",
+            "cwd": "${workspaceRoot}/gui/",
+            "env": {
+                "FLASK_APP": "${workspaceRoot}/gui/start.py",
+                "DATA_DIR": "${workspaceRoot}/test_output"
+            },
+            "args": [
+                "run",
+                "--no-debugger",
+                "--no-reload"
+            ],
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        },
+        {
             "name": "Experiments",
             "type": "python",
             "request": "launch",
