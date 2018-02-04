@@ -11,7 +11,7 @@
             "cwd": "${workspaceRoot}/gui/",
             "env": {
                 "FLASK_APP": "${workspaceRoot}/gui/start.py",
-                "ANALYSIS_DATA_DIR": "${workspaceRoot}/test_output"
+                "DATA_DIR": "${workspaceRoot}/test_output"
             },
             "args": [
                 "run",
@@ -48,21 +48,6 @@
             "program": "${workspaceRoot}/analysis/analysis.py",
             "args": [
                 "-d", "${workspaceRoot}/test_output", "-t", "1"
-            ],
-            "cwd": "${workspaceRoot}/analysis",
-            "debugOptions": [
-                "RedirectOutput"
-            ]
-        },
-        {
-            "name": "Analysis Real",
-            "type": "python",
-            "request": "launch",
-            "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/analysis/analysis.py",
-            "args": [
-                "-d", "/mnt/hgfs/anp2p_data/experiments_1", "-t", "1"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
