@@ -161,5 +161,8 @@ class MetricBase(object):
                                 'stacked': stack_graph
                             }
                         ]
+                    },
+                    'tooltips': {
+                        'mode': 'single'
                     }
                 }}
