@@ -23,6 +23,21 @@ class Configuration(object):
     configuration files.
     '''
 
+    @staticmethod
+    def file_path_for_config(config, output_base_directory=None):
+        '''
+        Generate a file path for storing data related to the given configuration
+        :param config: Dictionary of the configuration values
+        :return: relative file path
+        '''
+        # needs to be before _variables or pylint complains
+        path = config['output_base_directory']
+        if output_base_directory is not None:
+            path = output_base_directory
+        for key in Configuration.get_parameters():
+            path = os.path.join(path, str(key), str(config[key]))
+        return path
+
     _variables = dict(
         random_seed=lambda x: str(randint(1, 1000000)),
         experiment_count=['1'],
@@ -52,7 +67,7 @@ class Configuration(object):
                     'random_power_law': TopGen.generate_random_power_law_topology,
                     'small_world': TopGen.generate_small_world_topology,
                     'structured': TopGen.generate_structured_topology
-                   }
+                    }
 
     def __init__(self, output_directory='', template_file_name=None):
         self._permutations = None
@@ -230,20 +245,6 @@ class Configuration(object):
         '''
         return ['topology_type', 'router_type', 'router_randomness',
                 'look_ahead', 'adversary_count', 'router_loop_detection', 'size', 'degree', 'repeat']
-
-    @staticmethod
-    def file_path_for_config(config, output_base_directory=None):
-        '''
-        Generate a file path for storing data related to the given configuration
-        :param config: Dictionary of the configuration values
-        :return: relative file path
-        '''
-        path = config['output_base_directory']
-        if output_base_directory is not None:
-            path = output_base_directory
-        for key in Configuration.get_parameters():
-            path = os.path.join(path, str(key), str(config[key]))
-        return path
 
     @staticmethod
     def get_hash(config, excluded=[]):
