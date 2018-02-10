@@ -62,7 +62,8 @@ class MetricManager(object):
         logging.debug('Metric file directory: %s', self.base_directory)
 
         # load the metrics file if it exists
-        self.metrics = {'graphs': {}, 'data': {}, 'summations': {}, 'config': None}
+        self.metrics = {'graphs': {}, 'data': {},
+                        'summations': {}, 'config': None}
         if os.path.exists(self.metric_file_path):
             logging.debug('Loading an existing metric file')
             try:
@@ -119,15 +120,17 @@ class MetricManager(object):
             finder.process_file_list(
                 self.base_directory, experiment_metric_file_paths)
 
-            for group_name, metric_name, position in metric_iter(cmp_exps.metric_map):
+            for group_name, metric_name, _ in metric_iter(cmp_exps.metric_map):
                 if group_name == 'variables':
                     continue
 
                 metric_cmp = SummationVariableComparer(
                     cmp_exps, metric_name)
                 metric_cmp.process(None)
-                self._set_data(metric_cmp.to_csv(True), variable, group_name, metric_name)
-                self._set_graph(metric_cmp.create_graph(), variable, group_name, metric_name)
+                self._set_data(metric_cmp.to_csv(True),
+                               variable, group_name, metric_name)
+                self._set_graph(metric_cmp.create_graph(),
+                                variable, group_name, metric_name)
 
     def summarize(self):
         '''
@@ -142,7 +145,7 @@ class MetricManager(object):
         self._set_config(avg_repeat_exps.get_merged_config())
         merged_data = avg_repeat_exps.get_merged_data()
         for group_name, metric_name, metric_obj in metric_iter(merged_data):
-            #if not self._have_metric_data(group_name, metric_name):
+            # if not self._have_metric_data(group_name, metric_name):
             self._set_data(metric_obj.to_csv(), group_name, metric_name)
         # run graph calculations
         return self.analyze()
@@ -181,7 +184,8 @@ class MetricManager(object):
             self._set_data(graph_manager.to_csv(), group_name, metric_name)
 
         if self._get_sum(group_name, metric_name) is None:
-            self._set_sum(graph_manager.create_summation(), group_name, metric_name)
+            self._set_sum(graph_manager.create_summation(),
+                          group_name, metric_name)
         return {group_name: {metric_name: graph_manager}}
 
     def _experiment_config(self):
@@ -192,7 +196,7 @@ class MetricManager(object):
             metric_seq, search_dir, 'config.json')
         if exp_config.get_raw_config() is not None:
             self._set_config(exp_config.get_raw_config())
-        elif self.get_config() is None: # hack to try get the config info again
+        elif self.get_config() is None:  # hack to try get the config info again
             exp_config = ExperimentConfig()
             metric_seq = [('___variables', '___variables', exp_config)]
             metric_dict = self._process_metrics(
@@ -293,14 +297,15 @@ class MetricManager(object):
                     if metric.force_summation() or self._get_sum(g_name, m_name) is None:
                         logging.debug(
                             'Generating metric data from existing data')
-                        self._set_sum(metric.create_summation(), g_name, m_name)
+                        self._set_sum(metric.create_summation(),
+                                      g_name, m_name)
                 metric_add(metric, metric_data, g_name, m_name)
             # no existing data found, will need to calculate it later
             else:
                 not_loaded_seq.append((g_name, m_name, metric))
 
         # run the missing graphs
-        metrics_list = [m_inst for g_n, m_n, m_inst in not_loaded_seq]
+        metrics_list = [m_inst for _, _, m_inst in not_loaded_seq]
         if len(metrics_list) > 0:
             file_reader = JSONFileReader(metrics_list)
             finder = FileFinder([file_reader])
@@ -311,7 +316,8 @@ class MetricManager(object):
                 if hasattr(metric_obj, 'create_graph'):
                     self._set_graph(metric_obj.create_graph(), g_name, m_name)
                 if hasattr(metric_obj, 'create_summation'):
-                    self._set_sum(metric_obj.create_summation(), g_name, m_name)
+                    self._set_sum(metric_obj.create_summation(),
+                                  g_name, m_name)
                 metric_add(metric_obj, metric_data, g_name, m_name)
         return metric_data
 
