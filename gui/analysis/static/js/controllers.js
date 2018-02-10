@@ -5,12 +5,16 @@ angular.module('challengerApp.controllers', [])
     $scope.open_graph = graph_popup_factory($uibModal)
     $scope.open_csv = csv_popup_factory($uibModal)
     $scope.download_csv = csv_download_factory()
-
   })
   .controller('VariableController', function ($scope, $stateParams, $uibModal, SummaryGraphService) {
     $scope.id = $stateParams.id
     $scope.graphs = SummaryGraphService.get({ variable: $stateParams.id })
     $scope.open_graph = graph_popup_factory($uibModal)
+    $scope.open_csv = csv_popup_factory($uibModal)
+    $scope.download_csv = csv_download_factory()
+  })
+  .controller('HomeController', function ($scope, $uibModal, SummaryDataAllService) {
+    $scope.data = SummaryDataAllService.get()
     $scope.open_csv = csv_popup_factory($uibModal)
     $scope.download_csv = csv_download_factory()
   })
@@ -23,6 +27,7 @@ angular.module('challengerApp.controllers', [])
   })
   .controller('MenuController', function ($scope, $state, ExperimentService) {
     ExperimentService.query().$promise.then(function (result) {
+      $scope.tree.push({ label: 'Home', children: [], data: '/#/' })
       $scope.tree.push({ label: 'Variables', children: result.variables })
       $scope.tree.push({ label: 'Experiments', children: result.experiments })
     })
@@ -30,21 +35,21 @@ angular.module('challengerApp.controllers', [])
     $scope.tree_handler = function (branch) {
       if (branch.data)
         window.location.href = branch.data
-      //$state.go('experiments_view', { id: branch.data.id })
+    // $state.go('experiments_view', { id: branch.data.id })
     }
   }).controller('DataController', function ($scope, $state, $stateParams, DataService) {
-    $scope.id = $stateParams.id
-    $scope.filter_text = ''
-    $scope.filtered_data = []
-    $scope.on_filter = function () {
-      $scope.filtered_data = { 'status': 'Loading....' }
-      DataService.query({ id: $stateParams.id, filter: $scope.filter_text }).$promise.then(function (result) {
-        $scope.filtered_data = result.items
-      })
-    }
-  })
+  $scope.id = $stateParams.id
+  $scope.filter_text = ''
+  $scope.filtered_data = []
+  $scope.on_filter = function () {
+    $scope.filtered_data = { 'status': 'Loading....' }
+    DataService.query({ id: $stateParams.id, filter: $scope.filter_text }).$promise.then(function (result) {
+      $scope.filtered_data = result.items
+    })
+  }
+})
 
-function graph_popup_factory($uibModal) {
+function graph_popup_factory ($uibModal) {
   return function (graph_data) {
     var modalInstance = $uibModal.open({
       animation: true,
@@ -63,7 +68,7 @@ function graph_popup_factory($uibModal) {
   }
 }
 
-function csv_popup_factory($uibModal) {
+function csv_popup_factory ($uibModal) {
   return function (cvs_data) {
     var modalInstance = $uibModal.open({
       animation: true,
@@ -89,14 +94,13 @@ function csv_popup_factory($uibModal) {
   }
 }
 
-function csv_download_factory() {
+function csv_download_factory () {
   return function (name, cvs_data) {
-    var a = angular.element('<a></a>');
+    var a = angular.element('<a></a>')
     a.attr('href', 'data:application/octet-stream;base64,' + btoa(cvs_data))
     a.attr('style', 'display:none')
-    a.attr('download', name + '.csv');
+    a.attr('download', name + '.csv')
     a[0].click()
-    a.remove();
+    a.remove()
   }
 }
-

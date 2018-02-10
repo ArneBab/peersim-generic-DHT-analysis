@@ -48,6 +48,8 @@ def register_resources(app):
 
     api.add_resource(summary.SummaryGraphs,
                      '/api/v1/summary/graphs/<path:variable>')
+    api.add_resource(summary.SummaryDataAll,
+                     '/api/v1/summary/data')
 
 
 def load_experiment_data(app):

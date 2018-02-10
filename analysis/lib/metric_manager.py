@@ -132,6 +132,14 @@ class MetricManager(object):
                 self._set_graph(metric_cmp.create_graph(),
                                 variable, group_name, metric_name)
 
+        # get one table of all the values
+        cmp_exps = MetricManagerComparer('')
+        class_reader = ClassReader([cmp_exps], MetricManager)
+        finder = FileFinder([class_reader])
+        finder.process_file_list(
+            self.base_directory, experiment_metric_file_paths)
+        self._set_data(cmp_exps.to_csv(), 'all')
+
     def summarize(self):
         '''
         Run the summation metrics over a set of experiment repeats

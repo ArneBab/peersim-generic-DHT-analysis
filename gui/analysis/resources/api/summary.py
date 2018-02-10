@@ -31,3 +31,22 @@ class SummaryGraphs(Resource):
         variable_data['graphs'] = summary_data['graphs'][variable]
         variable_data['data'] = summary_data['data'][variable]
         return jsonify(variable_data)
+
+
+class SummaryDataAll(Resource):
+    '''
+    All summary data
+    '''
+
+    def get(self):
+        '''
+        Only supports get operation
+        '''
+        experiment_config_file = os.path.join(
+            current_app.config['DATA_DIRECTORY'], 'metrics.json')
+
+        summary_data = {}
+        if os.path.exists(experiment_config_file):
+            with open(experiment_config_file, 'r') as c_file:
+                summary_data = json.loads(c_file.read())
+        return jsonify({'data': summary_data['data']['all']})
