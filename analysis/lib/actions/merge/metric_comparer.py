@@ -31,7 +31,7 @@ class MetricManagerComparer(MetricBase):
         # ensure we have all the data
         data_object.analyze()
         # check columns first
-        for group_key, metric_key, metric_obj in metric_iter(data_object.metrics['summations']):
+        for group_key, _, metric_obj in metric_iter(data_object.metrics['summations']):
             for metric in metric_obj:
                 metric_name = metric['full_name']
                 exists = metric_get(group_key, metric_name, self.metric_map)
@@ -42,13 +42,14 @@ class MetricManagerComparer(MetricBase):
                         len(self._columns_to_add) - 1
                     metric_add(position, self.metric_map,
                                group_key, metric_name)
+
         # populate the values for the table row
-        row = [None for pos in range(
+        row = [None for _ in range(
             0, len(self.data_frame.columns) + len(self._columns_to_add))]
         row[0] = Configuration.get_hash_name(
             data_object.get_config(), [self.experiment_variable, 'repeat'])
 
-        for group_key, metric_key, metric_obj in metric_iter(data_object.metrics['summations']):
+        for group_key, _, metric_obj in metric_iter(data_object.metrics['summations']):
             for metric in metric_obj:
                 metric_name = metric['full_name']
                 position = metric_get(group_key, metric_name, self.metric_map)
@@ -88,10 +89,10 @@ class SummationVariableComparer(MetricBase):
         # sum up the values based on cycle
         data_frame = self.data_frame
 
-        labels = [str(sub_col) for col, sub_col in data_frame.columns]
+        labels = [str(sub_col) for _, sub_col in data_frame.columns]
         series_list = []
         datas = []
-        for index, row in data_frame.iterrows():
+        for _, row in data_frame.iterrows():
             series_list.append(str(row.name))
             data = []
             for col_name, sub_col_name in data_frame.columns:
@@ -112,7 +113,7 @@ class SummationVariableComparer(MetricBase):
         :return: JSON string
         '''
         data_frame = self.data_frame
-        headers = [str(sub_col) for col, sub_col in data_frame.columns]
+        headers = [str(sub_col) for _, sub_col in data_frame.columns]
         headers.insert(0, 'experiment_name')
         headers.append('_empty_')
         headers.extend(Configuration.get_parameters())
