@@ -61,6 +61,9 @@ class AnonymityMetrics(MetricBase):
         # average up the values based on choice
         data_frame = self.data_frame
         metrics = []
+        # check if me have data
+        if len(data_frame) <= 0:
+            return metrics
         # entropy exponential backoff
         metrics.append(self._w(round(data_frame.entropy.mean(), 5), '',
                                'EN_a', 'entropy_avg'))
@@ -121,6 +124,8 @@ class AnonymityEntropy(MetricBase):
         '''
         # sum up the values based on cycle
         data_frame = self.anonymity_metrics.data_frame
+        if len(data_frame) <= 0:
+            return {}
         set_counts, r_bins = numpy.histogram(
             data_frame[self.column_name], bins=20)
 
@@ -150,6 +155,8 @@ class AnonymityEntropyAtHop(MetricBase):
         '''
         # sum up the values based on cycle
         data_frame = self.anonymity_metrics.data_frame
+        if len(data_frame) <= 0:
+            return {}
 
         data_avg = data_frame.groupby(['hop']).mean().reset_index()
         data_std = data_frame.groupby(['hop']).std().reset_index().fillna(0.0)
@@ -184,6 +191,8 @@ class AnonymityTopRankedSetSize(MetricBase):
         '''
         # sum up the values based on cycle
         data_frame = self.anonymity_metrics.data_frame
+        if len(data_frame) <= 0:
+            return {}
 
         data_avg = data_frame.groupby(['hop']).mean().reset_index()
         data_std = data_frame.groupby(['hop']).std().reset_index().fillna(0.0)

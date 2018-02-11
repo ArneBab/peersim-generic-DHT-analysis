@@ -85,6 +85,8 @@ class AnonymityAccuracyMetrics(MetricBase):
         # average up the values based on choice
         data_frame = self.data_frame
         metrics = []
+        if len(data_frame) <= 0:
+            return metrics
 
         missed = int(data_frame.entropy_missed.sum())
         missed_percent = percent(missed, int(
