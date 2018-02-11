@@ -152,7 +152,7 @@ class AnonymityEntropyAtHop(MetricBase):
         data_frame = self.anonymity_metrics.data_frame
 
         data_avg = data_frame.groupby(['hop']).mean().reset_index()
-        data_std = data_frame.groupby(['hop']).std().reset_index()
+        data_std = data_frame.groupby(['hop']).std().reset_index().fillna(0.0)
 
         labels = list(data_avg.hop)
         series_list = ['Entropy Average', 'Entropy Standard Deviation']
@@ -186,7 +186,7 @@ class AnonymityTopRankedSetSize(MetricBase):
         data_frame = self.anonymity_metrics.data_frame
 
         data_avg = data_frame.groupby(['hop']).mean().reset_index()
-        data_std = data_frame.groupby(['hop']).std().reset_index()
+        data_std = data_frame.groupby(['hop']).std().reset_index().fillna(0.0)
 
         labels = list(data_avg.hop)
         series_list = ['Average', 'Standard Deviation']

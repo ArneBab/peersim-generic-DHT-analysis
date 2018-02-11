@@ -50,7 +50,7 @@ class SenderSetSize(MetricBase):
         data_frame = self.data_frame[self.data_frame.sender_set_size.notnull()]
 
         bins = numpy.arange(0, data_frame.sender_set_size.max() + 2, dtype=int)
-        set_counts, r_bins = numpy.histogram(
+        set_counts, _ = numpy.histogram(
             data_frame.sender_set_size, bins=bins)
 
         labels = list(bins[:-1])
@@ -126,7 +126,7 @@ class SenderSetSizeInterceptHop(MetricBase):
         data_frame = data_frame[data_frame.sender_set_size.notnull()]
 
         data_avg = data_frame.groupby(['intercept_hop']).mean().reset_index()
-        data_std = data_frame.groupby(['intercept_hop']).std().reset_index()
+        data_std = data_frame.groupby(['intercept_hop']).std().reset_index().fillna(0.0)
 
         labels = list(data_avg.intercept_hop)
         series_list = ['Average', 'Standard Deviation']
