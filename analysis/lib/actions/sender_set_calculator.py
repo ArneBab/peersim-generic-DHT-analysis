@@ -10,6 +10,7 @@ import json
 from lib.utils import distance
 from lib.routing.tree import RoutingTree
 from lib.actions.metric_base import MetricBase
+from lib.routing.route_prediction import rank_greedy, rank_greedy_2_hop
 
 
 class SenderSetCalculator(MetricBase):
@@ -39,7 +40,8 @@ class SenderSetCalculator(MetricBase):
         '''
         super(SenderSetCalculator, self).on_start(file_path)
         directory = os.path.dirname(file_path)
-        self.output_file_path = os.path.join(directory, 'sender_set.routing.json')
+        self.output_file_path = os.path.join(
+            directory, 'sender_set.routing.json')
         self.output_file = open(self.output_file_path, 'w')
 
     def on_stop(self):
@@ -76,44 +78,44 @@ class SenderSetCalculator(MetricBase):
             self.output_file.write('\n')
             return data_object
 
-        r_tree = RoutingTree()
-        if r_tree.build(nx_graph, a_node['id'], p_node['id'], a_node['hop']):
-            a_data = {'calculated': True, 'estimated_work': r_tree.estimated_work,
-                      'hop': a_node['hop']}
-            a_set = r_tree.get_sender_set()
-            a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
-
-            # map routing type to ranking algorithm
-            router_type = self.experiment_config.get_parameter('router_type')
-            look_ahead = self.experiment_config.get_parameter('look_ahead')
-            if router_type == 'DHTRouterGreedy':
-                if int(look_ahead) == 1:
-                    route_alg = r_tree.rank_greedy
-                elif int(look_ahead) == 2:
-                    route_alg = r_tree.rank_greedy_2_hop
-                else:
-                    raise Exception('Unknown number of look ahead')
+        # map routing type to ranking algorithm
+        router_type = self.experiment_config.get_parameter('router_type')
+        look_ahead = self.experiment_config.get_parameter('look_ahead')
+        route_alg = None
+        if router_type == 'DHTRouterGreedy':
+            if int(look_ahead) == 1:
+                route_alg = rank_greedy
+            elif int(look_ahead) == 2:
+                route_alg = rank_greedy_2_hop
             else:
-                raise Exception('Unknown routing type')
-
-            a_data['ranked_set'] = r_tree.get_sender_set_rank(
-                route_alg, data_object['target'])
-            a_data['probability_set'] = r_tree.get_sender_set_distribution(
-                route_alg, r_tree.distro_rank_exponetial_backoff, data_object['target'])
-
-            # calculate the probability distribution using the actual routing choices
-            routing_choice_avg = self.routing_choice.get_final_routing_choices()
-            largest_rank = sorted(routing_choice_avg.keys())[-1]
-
-            def _distro_rank(rank):
-                if rank > largest_rank:
-                    return (routing_choice_avg[largest_rank] / (2 * (rank - largest_rank))) / 100.0
-                return routing_choice_avg[rank] / 100.0
-            a_data['probability_set_actual'] = r_tree.get_sender_set_distribution(
-                route_alg, _distro_rank, data_object['target'])
+                raise Exception('Unknown number of look ahead')
         else:
-            a_data = {'calculated': False,
-                      'hop': a_node['hop'], 'estimated_work': r_tree.estimated_work}
+            raise Exception('Unknown routing type')
+
+        # calculate sender set and preferred routes
+        r_tree = RoutingTree(nx_graph, route_alg)
+        r_tree.build(a_node['id'], p_node['id'],
+                     a_node['hop'], data_object['target'])
+
+        a_data = {'calculated': True, 'hop': a_node['hop']}
+        a_set = r_tree.get_sender_set()
+        a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
+
+        a_data['ranked_set'] = r_tree.get_sender_set_rank()
+        a_data['probability_set'] = r_tree.get_sender_set_distribution(
+            r_tree.distro_rank_exponetial_backoff)
+
+        # calculate the probability distribution using the actual routing choices
+        routing_choice_avg = self.routing_choice.get_final_routing_choices()
+        largest_rank = sorted(routing_choice_avg.keys())[-1]
+
+        def _distro_rank(rank):
+            if rank > largest_rank:
+                return (routing_choice_avg[largest_rank] / (2 * (rank - largest_rank))) / 100.0
+            return routing_choice_avg[rank] / 100.0
+        a_data['probability_set_actual'] = r_tree.get_sender_set_distribution(
+            _distro_rank)
+
         data_object['anonymity_set'] = a_data
 
         self.output_file.write(json.dumps(data_object))
