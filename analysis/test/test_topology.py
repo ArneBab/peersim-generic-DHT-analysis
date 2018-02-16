@@ -18,26 +18,26 @@ class TestTopology(unittest.TestCase):
     def test_structured(self):
         graph = TopologyGenerator.generate_structured_topology(10, 3)
         self.assertTrue(graph.number_of_nodes() == 10)
-        self.assertTrue(len(graph.edge[0]) == 3)
+        self.assertTrue(len(graph.adj[0]) == 3)
         self.assertTrue(graph.graph['invariant'] == 2)
 
         graph = TopologyGenerator.generate_structured_topology(10, 4)
         self.assertTrue(graph.number_of_nodes() == 10)
-        self.assertTrue(len(graph.edge[0]) == 5)
+        self.assertTrue(len(graph.adj[0]) == 5)
         self.assertTrue(graph.graph['invariant'] == 4)
 
         graph = TopologyGenerator.generate_structured_topology(10, 5)
         self.assertTrue(graph.number_of_nodes() == 10)
-        self.assertTrue(len(graph.edge[0]) == 5)
+        self.assertTrue(len(graph.adj[0]) == 5)
         self.assertTrue(graph.graph['invariant'] == 4)
 
         graph = TopologyGenerator.generate_structured_topology(10, 6)
         self.assertTrue(graph.number_of_nodes() == 10)
-        self.assertTrue(len(graph.edge[0]) == 7)
+        self.assertTrue(len(graph.adj[0]) == 7)
         self.assertTrue(graph.graph['invariant'] == 8)
 
 
         graph = TopologyGenerator.generate_structured_topology(1000, 6)
         self.assertTrue(graph.number_of_nodes() == 1000)
-        self.assertTrue(len(graph.edge[0]) == 7)
+        self.assertTrue(len(graph.adj[0]) == 7)
         self.assertTrue(graph.graph['invariant'] == 8)
