@@ -260,7 +260,7 @@ class RoutingTree(object):
         :param child: new object to be added
         :return: new node added to the tree
         '''
-        if node_rank > self._max_rank and self._max_rank > 0:
+        if self._max_rank > 0 and node_rank > self._max_rank:
             return None
 
         level = node.level + 1
