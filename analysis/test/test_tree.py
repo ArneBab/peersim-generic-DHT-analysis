@@ -9,13 +9,23 @@ import unittest
 
 from lib.routing.tree import RoutingTree
 from lib.routing.route_prediction import rank_greedy, rank_greedy_2_hop
-from .utils import get_nx_graphs, get_nx_graphs_100, list_equals
+from .utils import get_nx_graphs, get_nx_graphs_100, list_equals, get_nx_graphs_100_structured
 
 
 class TestTree(unittest.TestCase):
     '''
     Test the RoutingTree Class
     '''
+
+    def test_structured_prediction(self):
+        nx_graph = get_nx_graphs_100_structured()[0]
+        tree = RoutingTree(nx_graph, rank_greedy, 1)
+        tree.build(105, 104, 8, .05)
+        
+        self.assertTrue(tree.get_height() == 9)
+        ranked = tree.get_sender_set_rank()
+        self.assertTrue(162 in ranked[1])
+
 
     def test_works(self):
         nx_graph = get_nx_graphs()[0]
@@ -100,6 +110,30 @@ class TestTree(unittest.TestCase):
         self.assertTrue(list_equals([2, 12, 8], ranked[2]))
         self.assertTrue(list_equals([7, 9], ranked[4]))
 
+        # reduce the max rank
+        tree = RoutingTree(nx_graph, rank_greedy, 1)
+        tree.build(13, 5, 4, 0.29)
+        self.assertTrue(tree.get_height() == 5)
+        distro = tree.get_sender_set_distribution(
+            tree.distro_rank_exponetial_backoff)
+
+        self.assertTrue(round(distro[0], 3) == 0.0)
+        self.assertTrue(round(distro[1], 3) == 0.0)
+        self.assertTrue(round(distro[2], 3) == 0.333)
+        self.assertTrue(round(distro[4], 3) == 0.0)
+        self.assertTrue(round(distro[5], 3) == 0.0)
+        self.assertTrue(round(distro[6], 3) == 0.0)
+        self.assertTrue(round(distro[7], 3) == 0.0)
+        self.assertTrue(round(distro[8], 3) == 0.333)
+        self.assertTrue(round(distro[9], 3) == 0.0)
+        self.assertTrue(round(distro[10], 3) == 0.0)
+        self.assertTrue(round(distro[12], 3) == 0.333)
+        self.assertTrue(len(distro) == 11)
+
+        ranked = tree.get_sender_set_rank()
+
+        self.assertTrue(list_equals([2, 12, 8], ranked[2]))
+
     def test_distro_rank_greedy_2(self):
         nx_graph = get_nx_graphs()[0]
         tree = RoutingTree(nx_graph, rank_greedy, -1)
@@ -120,11 +154,11 @@ class TestTree(unittest.TestCase):
         distro = tree.get_sender_set_distribution(
             tree.distro_rank_exponetial_backoff)
 
-        self.assertTrue(round(distro[0], 3) == 0.048)
-        self.assertTrue(round(distro[5], 3) == 0.19)
-        self.assertTrue(round(distro[2], 3) == 0.19)
-        self.assertTrue(round(distro[6], 3) == 0.19)
-        self.assertTrue(round(distro[10], 3) == 0.381)
+        self.assertTrue(round(distro[0], 3) == 0.111)
+        self.assertTrue(round(distro[5], 3) == 0.222)
+        self.assertTrue(round(distro[2], 3) == 0.222)
+        self.assertTrue(round(distro[6], 3) == 0.222)
+        self.assertTrue(round(distro[10], 3) == 0.222)
 
     def test_out_of_bounds(self):
         nx_graph = get_nx_graphs()[0]

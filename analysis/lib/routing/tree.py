@@ -50,7 +50,7 @@ class RoutingTree(object):
         self._sender_set = set()
         self._cache_rank_calculations = {}
 
-        #if max_hop > 10:
+        # if max_hop > 10:
         #    return False
 
         # calculate the preferred routing paths
@@ -161,9 +161,9 @@ class RoutingTree(object):
 
         assert(len(distro) > 0)
 
-        ## it is possible to have a distribution of zero
+        # it is possible to have a distribution of zero
         #all_zero = True
-        #for node, prob in distro:
+        # for node, prob in distro:
         #    if prob > 0.0:
         #        all_zero = False
         #        break
@@ -180,7 +180,7 @@ class RoutingTree(object):
         #
         #
         #
-        #if all_zero:
+        # if all_zero:
         #    distro = [(node, 0.00001) for node, prob in distro]
         #
         #
@@ -229,7 +229,7 @@ class RoutingTree(object):
 
     def to_bracket(self):
         """Return the bracket representation of the tree
-        
+
         Returns:
             string -- String bracket representation of this tree
         """

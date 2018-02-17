@@ -26,6 +26,15 @@ def get_nx_graphs_100():
     nx_graph = nx.read_gml(graph_file, 'id')
     return {0: nx_graph}
 
+def get_nx_graphs_100_structured():
+    '''
+    Get the test network graph
+    '''
+    current_dir = os.path.dirname(__file__)
+    graph_file = os.path.join(current_dir, 'resources', 'size_100_structured.gml')
+    nx_graph = nx.read_gml(graph_file, 'id')
+    return {0: nx_graph}
+
 def get_route_json_path_100():
     '''
     Get the test routing data file path
