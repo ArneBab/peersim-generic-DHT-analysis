@@ -88,6 +88,11 @@ class AnonymityAccuracyMetrics(MetricBase):
         if len(data_frame) <= 0:
             return metrics
 
+        # total
+        metrics.append(self._w(len(data_frame), '',
+                               'EN_T', 'entropy_calculated_count'))
+
+        # miss count
         missed = int(data_frame.entropy_missed.sum())
         missed_percent = percent(missed, int(
             data_frame.entropy_missed.count()))
