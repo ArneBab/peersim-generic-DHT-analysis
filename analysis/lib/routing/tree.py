@@ -50,11 +50,14 @@ class RoutingTree(object):
         self._sender_set = set()
         self._cache_rank_calculations = {}
 
+        #if max_hop > 10:
+        #    return False
+
         # calculate the preferred routing paths
         self._root = RoutingTree._Entry(adversary_node_id, 0)
         self._levels[0] = [self._root]
-        self._build_tree(previous_node_id, max_hop + 1,
-                         self._root, [adversary_node_id], target_address, 1)
+        prev_node = self._add_child(self._root, previous_node_id, 1, False)
+        self._build_tree([prev_node], max_hop, target_address)
 
         # calculate the sender set
         self._sender_set.add(adversary_node_id)
@@ -66,6 +69,8 @@ class RoutingTree(object):
         if self.get_height() == 1:
             # add an empty level after
             self._levels[2] = []
+
+        return True
 
     def get_data_at_level(self, level):
         '''
@@ -154,8 +159,43 @@ class RoutingTree(object):
         # every node in the sender set and not in this distribution set has a probability of zero
         # Don't need to add these since they will not affect the final probability distribution
 
-        # combine entries for the same nodes
         assert(len(distro) > 0)
+
+        ## it is possible to have a distribution of zero
+        #all_zero = True
+        #for node, prob in distro:
+        #    if prob > 0.0:
+        #        all_zero = False
+        #        break
+        # will artificially bump it up since these are still better guesses than anything else
+        # TODO fix this. Not giving me the desired result
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #if all_zero:
+        #    distro = [(node, 0.00001) for node, prob in distro]
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+
+        # combine entries for the same nodes
         distro_set = {}
         total = 0.0
         for node, prob in distro:
@@ -187,6 +227,22 @@ class RoutingTree(object):
         """
         return 0.5 ** rank
 
+    def to_bracket(self):
+        """Return the bracket representation of the tree
+        
+        Returns:
+            string -- String bracket representation of this tree
+        """
+        return self._to_bracket(self._root)
+
+    def _to_bracket(self, node):
+        if node is None:
+            return ''
+        bracket_str = '({}--{}'.format(node.data, node.rank)
+        for child in node.children:
+            bracket_str += self._to_bracket(child)
+        return bracket_str + ')'
+
     def _assign_sender_dist(self, dist_function, node, current_hop_count, prob):
         distro = []
         for child in node.children:
@@ -205,38 +261,43 @@ class RoutingTree(object):
         ranked_nodes = self._routing_algorithm(
             from_node_id, target_address, self._nx_graph, self._cache_rank_calculations)
         for i in range(0, len(ranked_nodes)):
-            if ranked_nodes[i] == to_node_id:
+            if to_node_id in ranked_nodes[i]:
                 return i + 1
         raise Exception('Unable to find path between nodes')
 
-    def _build_tree(self, node_id, current_hop, parent_node, current_path, target_address, override_rank=None):
+    def _build_tree(self, node_list, current_hop, target_address):
         if current_hop < 1:
             return
 
-        # check if we already routed through this node
-        if node_id in current_path:
-            return
+        children_added = []
+        children_inspected = []
 
-        new_path = current_path[:]
-        new_path.append(node_id)
+        for node in node_list:
+            path = node.get_path()
+            for child_id in self._nx_graph.neighbors(node.data):
+                if child_id in path:
+                    continue
+                rank = self._get_node_rank(node.data, child_id, target_address)
+                children_inspected.append((rank, child_id, node))
 
-        # check to see if an override rank value was supplied
-        if override_rank is not None:
-            node_rank = override_rank
-        else:
-            node_rank = self._get_node_rank(
-                parent_node.data, node_id, target_address)
+                new_node = self._add_child(node, child_id, rank)
+                if new_node is None:
+                    continue
+                children_added.append(new_node)
 
-        new_node = self._add_child(parent_node, node_id, node_rank)
-        if new_node is None:
-            return
+        # check if we added no children
+        # this is done incase there is a level where there are no children
+        # that have low enough rank
+        if len(children_added) < 1 and len(children_inspected) > 0:
+            # in which case, add the children with the best rank
+            best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
+            for rank, child_id, node in children_inspected:
+                if rank == best_rank:
+                    children_added.append(self._add_child(
+                        node, child_id, rank, False))
 
-        if current_hop <= 1:
-            return
-        # add children node
-        for child_id in self._nx_graph.neighbors(node_id):
-            self._build_tree(child_id, current_hop - 1,
-                             new_node, new_path, target_address)
+        # process next tree level
+        self._build_tree(children_added, current_hop - 1, target_address)
 
     def _build_sender_set(self, node_id_list, current_hop_count):
         # needs to search breadth first, otherwise some nodes can be skipped
@@ -253,14 +314,14 @@ class RoutingTree(object):
         # process next level
         self._build_sender_set(next_node_ids, current_hop_count - 1)
 
-    def _add_child(self, node, child, node_rank):
+    def _add_child(self, node, child, node_rank, check_rank=True):
         '''
         Add new data element to the tree
         :param node: parent node
         :param child: new object to be added
         :return: new node added to the tree
         '''
-        if self._max_rank > 0 and node_rank > self._max_rank:
+        if check_rank and self._max_rank > 0 and node_rank > self._max_rank:
             return None
 
         level = node.level + 1
@@ -282,3 +343,11 @@ class RoutingTree(object):
             self.level = level
             self.parent = parent
             self.rank = node_rank
+
+        def get_path(self):
+            path = []
+            walker = self
+            while walker is not None:
+                path.insert(0, walker.data)
+                walker = walker.parent
+            return path
