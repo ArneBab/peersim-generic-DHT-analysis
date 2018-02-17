@@ -109,6 +109,7 @@ class FileArchiver(FileFinder):
             for file_found in fnmatch.filter(sorted(file_names), pattern):
                 excluded.add(file_found)
         excluded.add('archive.zip')
+        excluded.add('archive.zip.processing')
         return included - excluded
 
     def _process_file(self, file_path):
