@@ -27,7 +27,8 @@ def distance(x_l, y_l):
     :parame y: second address
     :return: difference
     '''
-    return min([abs(x_l - y_l), abs((x_l + 1) - y_l), abs(x_l - (y_l + 1))])
+    value = min([abs(x_l - y_l), abs((x_l + 1) - y_l), abs(x_l - (y_l + 1))])
+    return round(value, 10)
 
 
 def entropy_normalized(distro):
