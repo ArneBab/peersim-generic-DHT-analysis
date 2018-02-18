@@ -93,15 +93,12 @@ class SenderSetCalculator(MetricBase):
             raise Exception('Unknown routing type')
 
         # calculate sender set and preferred routes
-        r_tree = RoutingTree(nx_graph, route_alg, max_rank=1)
+        r_tree = RoutingTree(nx_graph, route_alg, max_rank=2, max_length=0)
         if r_tree.build(a_node['id'], p_node['id'],
                         a_node['hop'], data_object['target']):
 
             a_data = {'calculated': True, 'hop': a_node['hop']}
-            a_set = r_tree.get_sender_set()
-            a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
             a_data['tree'] = r_tree.to_bracket()
-
             a_data['ranked_set'] = r_tree.get_sender_set_rank()
             a_data['probability_set'] = r_tree.get_sender_set_distribution(
                 r_tree.distro_rank_exponetial_backoff)
@@ -111,13 +108,16 @@ class SenderSetCalculator(MetricBase):
             largest_rank = sorted(routing_choice_avg.keys())[-1]
 
             def _distro_rank(rank):
-                if rank > largest_rank:
+                if rank > largest_rank or routing_choice_avg[rank] == 0.0:
                     return (routing_choice_avg[largest_rank] / (2 * (rank - largest_rank))) / 100.0
                 return routing_choice_avg[rank] / 100.0
             a_data['probability_set_actual'] = r_tree.get_sender_set_distribution(
                 _distro_rank)
         else:
             a_data = {'calculated': False, 'hop': a_node['hop']}
+
+        a_set = r_tree.get_sender_set()
+        a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
 
         data_object['anonymity_set'] = a_data
 
