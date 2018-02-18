@@ -18,16 +18,20 @@ class AdversaryInterceptHop(MetricBase):
         super(AdversaryInterceptHop, self).__init__()
         self.sender_set_size = sender_set_size
 
+    def on_stop(self):
+        super(AdversaryInterceptHop, self).on_stop()
+        self.data_frame = self.sender_set_size.data_frame
+
     def create_graph(self):
         '''
         Create a graph for the data set
         :return: graph data dict
         '''
         # sum up the values based on cycle
-        data_frame = self.sender_set_size.data_frame
+        data_frame = self.data_frame
 
         bins = numpy.arange(0, data_frame.intercept_hop.max() + 2, dtype=int)
-        set_counts, r_bins = numpy.histogram(
+        set_counts, _ = numpy.histogram(
             data_frame.intercept_hop, bins=bins)
 
         labels = list(bins[:-1])
@@ -46,19 +50,23 @@ class AdversaryInterceptHopCalculated(MetricBase):
         super(AdversaryInterceptHopCalculated, self).__init__()
         self.sender_set_size = sender_set_size
 
+    def on_stop(self):
+        super(AdversaryInterceptHopCalculated, self).on_stop()
+        self.data_frame = self.sender_set_size.data_frame
+
     def create_graph(self):
         '''
         Create a graph for the data set
         :return: graph data dict
         '''
         # sum up the values based on cycle
-        data_frame = self.sender_set_size.data_frame
+        data_frame = self.data_frame
 
         # only get calculated sender sets
         data_frame = data_frame[data_frame.sender_set_size.notnull()]
 
         bins = numpy.arange(0, data_frame.intercept_hop.max() + 2, dtype=int)
-        set_counts, r_bins = numpy.histogram(
+        set_counts, _ = numpy.histogram(
             data_frame.intercept_hop, bins=bins)
 
         labels = list(bins[:-1])

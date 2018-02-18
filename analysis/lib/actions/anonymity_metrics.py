@@ -117,13 +117,17 @@ class AnonymityEntropy(MetricBase):
         self.column_name = column_name
         self.graph_name = graph_name
 
+    def on_stop(self):
+        super(AnonymityEntropy, self).on_stop()
+        self.data_frame = self.anonymity_metrics.data_frame
+
     def create_graph(self):
         '''
         Create a graph for the data set
         :return: graph data dict
         '''
         # sum up the values based on cycle
-        data_frame = self.anonymity_metrics.data_frame
+        data_frame = self.data_frame
         if len(data_frame) <= 0:
             return {}
         set_counts, r_bins = numpy.histogram(
@@ -148,13 +152,17 @@ class AnonymityEntropyAtHop(MetricBase):
         self.max_column_name = max_column_name
         self.graph_name = graph_name
 
+    def on_stop(self):
+        super(AnonymityEntropyAtHop, self).on_stop()
+        self.data_frame = self.anonymity_metrics.data_frame
+
     def create_graph(self):
         '''
         Create a graph for the data set
         :return: graph data dict
         '''
         # sum up the values based on cycle
-        data_frame = self.anonymity_metrics.data_frame
+        data_frame = self.data_frame
         if len(data_frame) <= 0:
             return {}
 

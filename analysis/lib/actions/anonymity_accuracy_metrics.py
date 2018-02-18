@@ -31,6 +31,8 @@ class AnonymityAccuracyMetrics(MetricBase):
 
         self.add_column('rank_missed')
         self.add_column('top_rank_hit')
+        self.add_column('top_rank_size')
+        self.add_column('hop')
 
         row = []
         # exponential backoff entropies
@@ -73,6 +75,12 @@ class AnonymityAccuracyMetrics(MetricBase):
             top_rank_hit = 1
         row.append(rank_missed)
         row.append(top_rank_hit)
+
+        sorted_rank = sorted(ranked_set.keys())
+        top_rank = sorted_rank[0]
+        row.append(len(ranked_set[top_rank]))
+
+        row.append(int(data_object['anonymity_set']['hop']))
 
         self.add_row(row)
         return data_object
@@ -142,6 +150,10 @@ class AnonymityAccuracyMetrics(MetricBase):
                                'TR_H_c', 'top_rank_hit_count'))
         metrics.append(self._w(round(hit_percent, 5), '',
                                'TR_H_p', 'top_rank_hit_percent'))
+        metrics.append(self._w(round(data_frame.top_rank_size.mean(), 5), '',
+                               'TR_S_a', 'top_rank_size_avg'))
+        metrics.append(self._w(round(data_frame.top_rank_size.std(), 5), '',
+                               'TR_S_s', 'top_rank_size_std'))
 
         self._replace_nan(metrics)
         return metrics
@@ -153,3 +165,46 @@ class AnonymityAccuracyMetrics(MetricBase):
             if source_node_id in ranked_set[rank]:
                 return rank - top_rank
         return -1
+
+
+class AnonymityHitAtHop(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, anonymity_accuracy):
+        super(AnonymityHitAtHop, self).__init__()
+        self.anonymity_accuracy = anonymity_accuracy
+
+    def on_stop(self):
+        super(AnonymityHitAtHop, self).on_stop()
+        data_frame = self.anonymity_accuracy.data_frame
+        if len(data_frame) <= 0:
+            return
+
+        data_sum = data_frame.groupby(['hop']).agg(
+            {'top_rank_hit': 'sum', 'best_entropy_hit': 'sum', 'best_entropy_actual_hit': 'sum', 'rank_missed': 'count'}).reset_index()
+        data_sum.rename(columns={'rank_missed': 'hop_count'}, inplace=True)
+        self.data_frame = data_sum
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.data_frame
+        if len(data_frame) <= 0:
+            return {}
+
+        labels = list(data_frame.hop)
+        series_list = ['best entropy hit percent',
+                       'best entropy actual hit percent', 'top rank hit percent']
+
+        data = [list(data_frame.best_entropy_hit / data_frame.hop_count),
+                list(data_frame.best_entropy_actual_hit / data_frame.hop_count),
+                list(data_frame.top_rank_hit / data_frame.hop_count)]
+
+        return self._graph_structure(labels, data,
+                                     series_list, 'line',
+                                     'Anonymity Metric Accuracy at Intercepted Hop: Percent')

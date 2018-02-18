@@ -19,7 +19,7 @@ from lib.actions.adversary_intercept_hop import AdversaryInterceptHop
 from lib.actions.adversary_intercept_hop import AdversaryInterceptHopCalculated
 from lib.actions.anonymity_metrics import AnonymityMetrics, AnonymityEntropy
 from lib.actions.anonymity_metrics import AnonymityEntropyAtHop, AnonymityTopRankedSetSize
-from lib.actions.anonymity_accuracy_metrics import AnonymityAccuracyMetrics
+from lib.actions.anonymity_accuracy_metrics import AnonymityAccuracyMetrics, AnonymityHitAtHop
 from lib.actions.merge.metric_merger import MetricManagerMerger
 from lib.actions.merge.metric_comparer import MetricManagerComparer, SummationVariableComparer
 
@@ -257,6 +257,7 @@ class MetricManager(object):
         top_ranked_set_avg = AnonymityTopRankedSetSize(anon_metrics)
 
         anon_accuracy_metrics = AnonymityAccuracyMetrics()
+        anon_hit_hop = AnonymityHitAtHop(anon_accuracy_metrics)
 
         metric_seq = [('routing', 'path_lengths', path_lengths),
                       ('sender_set', 'sender_set', sender_set_calc),
@@ -280,6 +281,7 @@ class MetricManager(object):
                        anon_entropy_act_norm_hop),
                       ('anonymity_accuracy', 'anonymity_accuracy',
                        anon_accuracy_metrics),
+                      ('anonymity_accuracy', 'anonymity_accuracy_at_hop', anon_hit_hop),
                       ('top_ranked', 'sender_set_size', top_ranked_set_avg)]
         search_dir = self.base_directory
         return self._process_metrics(metric_seq, search_dir, 'routing.json')
