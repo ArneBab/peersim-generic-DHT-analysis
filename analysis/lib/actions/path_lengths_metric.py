@@ -23,11 +23,14 @@ class PathLengthsMetric(MetricBase):
         super(PathLengthsMetric, self).process(data_object)
         self.add_column('Routing Path Length')
         self.add_column('Circuit Path Length')
+        self.add_column('Delivered')
 
         routing_path = data_object['routing_path']['length']
         circuit_path = data_object['connection_path']['length']
+        delivered = 0
+        delivered = 1 if data_object['delivered']
         # Add row
-        self.add_row([routing_path, circuit_path])
+        self.add_row([routing_path, circuit_path, delivered])
         return data_object
 
     def create_graph(self):
@@ -61,8 +64,18 @@ class PathLengthsMetric(MetricBase):
         # average
         route_values = list(data_frame['Routing Path Length'].values)
         circuit_values = list(data_frame['Circuit Path Length'].values)
-        metrics.append(self._w(len(route_values), '',
+        delivered_count = int(data_frame.Delivered.sum())
+        total_messages = len(route_values)
+        delivered_percent = percent(delivered_count, total_messages)
+
+        metrics.append(self._w(total_messages, '',
                                'M_c', 'message_count'))
+
+        metrics.append(self._w(delivered_count, '',
+                               'D_c', 'delivered_count'))
+        metrics.append(self._w(delivered_percent, '',
+                               'D_p', 'delivered_percent'))
+
         metrics.append(self._w(round(numpy.mean(route_values), 5), '',
                                'PR_a', 'path_length_routing_avg'))
         metrics.append(self._w(round(numpy.std(route_values), 5), '',
