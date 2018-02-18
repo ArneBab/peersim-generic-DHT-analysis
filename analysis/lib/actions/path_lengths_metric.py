@@ -6,6 +6,7 @@ Updated on Nov, 2017
 Framework for processing a files
 '''
 import numpy
+from lib.utils import percent
 from lib.actions.metric_base import MetricBase
 
 
@@ -27,8 +28,7 @@ class PathLengthsMetric(MetricBase):
 
         routing_path = data_object['routing_path']['length']
         circuit_path = data_object['connection_path']['length']
-        delivered = 0
-        delivered = 1 if data_object['delivered']
+        delivered = 1 if data_object['delivered'] else 0
         # Add row
         self.add_row([routing_path, circuit_path, delivered])
         return data_object
@@ -42,9 +42,9 @@ class PathLengthsMetric(MetricBase):
         data_frame = self.data_frame
 
         bins = numpy.arange(0, data_frame.max().max() + 2, dtype=int)
-        route_counts, r_bins = numpy.histogram(
+        route_counts, _ = numpy.histogram(
             data_frame['Routing Path Length'], bins=bins)
-        circuit_counts, r_bins = numpy.histogram(
+        circuit_counts, _ = numpy.histogram(
             data_frame['Circuit Path Length'], bins=bins)
 
         labels = list(bins[:-1])
