@@ -3,36 +3,42 @@
 
 <h3>Summation Metrics</h3>
 
-<div class="row" ng-repeat-start="(group_name, group_objs) in experiment_v2.summations">
-    <h4 class="capitalize">{{group_name | prettyName}}</h4>
-</div>
-<div ng-repeat="(key, values) in group_objs">
-    <h5>{{key | prettyName}}</h5>
-    <div class="row" ng-repeat="value in values">
-        <div class="col-sm-4 col-sm-offset-1 capitalize">
-            {{value.full_name | prettyName}}
+<div ng-repeat="(group_name, group_objs) in experiment_v2.summations">
+    <details class="row">
+        <summary>
+            <span class="h4 capitalize">{{group_name | prettyName}}</span>
+        </summary>
+        <div ng-repeat="(key, values) in group_objs">
+            <h5>{{key | prettyName}}</h5>
+            <div class="row" ng-repeat="value in values">
+                <div class="col-sm-4 col-sm-offset-1 capitalize">
+                    {{value.full_name | prettyName}}
+                </div>
+                <div class="col-sm-6">
+                    {{value.value}} {{value.description}}
+                </div>
+            </div>
         </div>
-        <div class="col-sm-6">
-            {{value.value}} {{value.description}}
-        </div>
-    </div>
+    </details>
 </div>
-<hr ng-repeat-end="" />
+<hr />
 
 <h3>Graphs</h3>
 
-<div class="row" ng-repeat-start="(group_name, grouped_graphs) in experiment_v2.graphs">
-    <h4 class="capitalize">{{group_name | prettyName}}</h4>
-</div>
-<div class="col-sm-6" ng-repeat="(graph_name, graph) in grouped_graphs">
-    <canvas ng-click="open_graph(graph)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
-        chart-series="graph.series" chart-options="graph.options">
-    </canvas>
-    <br/>
-    <a href="" ng-click="open_csv(experiment_v2.data[group_name][graph_name])">View CSV data</a> &nbsp;&nbsp;
-    <a href="" ng-click="download_csv(group_name + '-' + graph_name,  experiment_v2.data[group_name][graph_name])">Download CSV data</a>
-
-</div>
-<div class="row" ng-repeat-end="">
-    <hr />
+<div ng-repeat="(group_name, grouped_graphs) in experiment_v2.graphs">
+    <details class="row">
+        <summary>
+            <span class="h4 capitalize">{{group_name | prettyName}}</span>
+        </summary>
+        <div class="col-sm-6" ng-repeat="(graph_name, graph) in grouped_graphs">
+            <canvas ng-click="open_graph(graph)" class="chart chart-base" chart-type="graph.type" chart-data="graph.data" chart-labels="graph.labels"
+                chart-series="graph.series" chart-options="graph.options">
+            </canvas>
+            <br/>
+            <a href="" ng-click="open_csv(experiment_v2.data[group_name][graph_name])">View CSV data</a> &nbsp;&nbsp;
+            <a href="" ng-click="download_csv(group_name + '-' + graph_name,  experiment_v2.data[group_name][graph_name])">Download CSV data</a>
+            <br/>
+            <br/>
+        </div>
+    </details>
 </div>
