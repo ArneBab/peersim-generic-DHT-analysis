@@ -15,7 +15,7 @@ class RoutingTree(object):
     Represents a potential routing tree traced back from start node
     '''
 
-    def __init__(self, nx_graph, routing_algorithm, max_rank=2):
+    def __init__(self, nx_graph, routing_algorithm, max_rank=2, max_length=0):
         """Constructor
 
         Arguments:
@@ -25,6 +25,8 @@ class RoutingTree(object):
         Keyword Arguments:
             max_rank {int} -- Maximum rank of nodes to calculate
             a path for from each node. Top nodes will be followed. (default: {2})
+            max_length {int} -- Maximum number of hops to calculate routing paths.
+            (default: {0})
         """
         self._root = None
         self._levels = {}
@@ -34,6 +36,7 @@ class RoutingTree(object):
         self._nx_graph = nx_graph
         self._routing_algorithm = routing_algorithm
         self._max_rank = max_rank
+        self._max_length = max_length
 
     def build(self, adversary_node_id, previous_node_id, max_hop, target_address):
         """Build the sender set and routing paths
@@ -50,19 +53,19 @@ class RoutingTree(object):
         self._sender_set = set()
         self._cache_rank_calculations = {}
 
-        # if max_hop > 10:
-        #    return False
+        # calculate the sender set
+        self._sender_set.add(adversary_node_id)
+        self._build_sender_set([previous_node_id], max_hop)
+        self._sender_set.remove(adversary_node_id)
+
+        if self._max_length > 0 and max_hop > self._max_length:
+            return False
 
         # calculate the preferred routing paths
         self._root = RoutingTree._Entry(adversary_node_id, 0)
         self._levels[0] = [self._root]
         prev_node = self._add_child(self._root, previous_node_id, 1, False)
         self._build_tree([prev_node], max_hop, target_address)
-
-        # calculate the sender set
-        self._sender_set.add(adversary_node_id)
-        self._build_sender_set([previous_node_id], max_hop)
-        self._sender_set.remove(adversary_node_id)
 
         # check for case when all the neighbors only have a single connection
         # to the adversary node
@@ -160,40 +163,6 @@ class RoutingTree(object):
         # Don't need to add these since they will not affect the final probability distribution
 
         assert(len(distro) > 0)
-
-        # it is possible to have a distribution of zero
-        #all_zero = True
-        # for node, prob in distro:
-        #    if prob > 0.0:
-        #        all_zero = False
-        #        break
-        # will artificially bump it up since these are still better guesses than anything else
-        # TODO fix this. Not giving me the desired result
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        # if all_zero:
-        #    distro = [(node, 0.00001) for node, prob in distro]
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
 
         # combine entries for the same nodes
         distro_set = {}
