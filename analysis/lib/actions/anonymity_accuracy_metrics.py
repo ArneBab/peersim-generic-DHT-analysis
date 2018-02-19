@@ -199,11 +199,23 @@ class AnonymityHitAtHop(MetricBase):
 
         labels = list(data_frame.hop)
         series_list = ['best entropy hit percent',
-                       'best entropy actual hit percent', 'top rank hit percent']
+                       'best entropy actual hit percent', 'top rank hit percent', 
+                       'cummulative top rank hit accuracy']
 
+        # calculate cummulative accuracy
+        cummulative_data = []
+        hit_count = 0
+        total_count = 0
+        for _, row in data_frame.iterrows():
+            hit_count += row.top_rank_hit
+            total_count += row.hop_count
+            cummulative_data.append(percent(hit_count, total_count))
+
+        # other accuracies
         data = [list(data_frame.best_entropy_hit / data_frame.hop_count),
                 list(data_frame.best_entropy_actual_hit / data_frame.hop_count),
-                list(data_frame.top_rank_hit / data_frame.hop_count)]
+                list(data_frame.top_rank_hit / data_frame.hop_count),
+                cummulative_data]
 
         return self._graph_structure(labels, data,
                                      series_list, 'line',
