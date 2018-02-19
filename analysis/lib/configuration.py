@@ -35,7 +35,7 @@ class Configuration(object):
         if output_base_directory is not None:
             path = output_base_directory
         path = os.path.join(path,
-                            str(Configuration.get_group_hash(config)),
+                            str(Configuration.get_group_hash_name(config)[1:-1]),
                             str(config['repeat']))
         return path
 

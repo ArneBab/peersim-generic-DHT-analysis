@@ -163,8 +163,7 @@ def _run_summations(exp_files, count, total):
     base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
 
     # base directory
-    logging.info('Averaging group %d of %d : %s', count,
-                 total, str(first_exp[CONST_GROUP]))
+    logging.info('Averaging group %d of %d', count, total)
     count += 1
 
     metric_manager = MetricManager(base_path)
