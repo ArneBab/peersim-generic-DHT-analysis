@@ -34,8 +34,7 @@ class Configuration(object):
         path = config['output_base_directory']
         if output_base_directory is not None:
             path = output_base_directory
-        for key in Configuration.get_parameters():
-            path = os.path.join(path, str(key), str(config[key]))
+        path = os.path.join(path, str(Configuration.get_hash(config)))
         return path
 
     _variables = dict(
