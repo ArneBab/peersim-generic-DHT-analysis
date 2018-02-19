@@ -34,7 +34,9 @@ class Configuration(object):
         path = config['output_base_directory']
         if output_base_directory is not None:
             path = output_base_directory
-        path = os.path.join(path, str(Configuration.get_hash(config)))
+        path = os.path.join(path,
+                            str(Configuration.get_group_hash(config)),
+                            str(config['repeat']))
         return path
 
     _variables = dict(
@@ -265,10 +267,7 @@ class Configuration(object):
             if param not in config:
                 identity += ':'
                 continue
-            if 'value' in config[param]:
-                identity += ':' + str(config[param]['value'])
-            else:
-                identity += ':' + str(config[param])
+            identity += ':' + str(config[param])
         return identity
 
     @staticmethod
