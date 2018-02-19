@@ -259,10 +259,10 @@ class Configuration(object):
     @staticmethod
     def get_group_hash_name(config):
         """Get the hash name for the group
-        
+
         Arguments:
             config {dict} -- Configuration dictionary
-        
+
         Returns:
             str -- String representation of the group
         """
@@ -283,7 +283,13 @@ class Configuration(object):
                 identity += ':'
                 continue
             value = str(config[param]).lower()
-            value = value.replace('dhtrouter', '').replace('random', 'rand').replace('loopdetection', '')
+
+            value = value.replace('loopdetection', '').replace(
+                'random_erdos_renyi', 'erdos')
+            value = value.replace('small_world', 'small').replace(
+                'structured', 'struc')
+            value = value.replace('dhtrouter', '').replace('random', 'r_')
+
             identity += ':' + value
         return identity
 
