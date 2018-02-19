@@ -17,6 +17,7 @@ from lib.metric_manager import MetricManager
 CONST_EXPERIMENT = 'experiment'
 CONST_CONFIG = 'config'
 CONST_GROUP = 'repeat_group'
+CONST_ID = 'id'
 
 
 class Manager(object):
@@ -158,12 +159,13 @@ def _run_summations(exp_files, count, total):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
 
-    # base directory
-    logging.info('Averaging group %d of %d', count, total)
-    count += 1
-
     first_exp = exp_files[0]
     base_path = _get_base(_get_base(first_exp[CONST_CONFIG]))
+
+    # base directory
+    logging.info('Averaging group %d of %d : %s', count,
+                 total, str(first_exp[CONST_GROUP]))
+    count += 1
 
     metric_manager = MetricManager(base_path)
     metric_manager.summarize()
@@ -176,7 +178,8 @@ def _run_analysis(exp_files, count, total, should_archive):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
 
-    logging.info('Running analysis %d of %d', count, total)
+    logging.info('Running analysis %d of %d : %d',
+                 count, total, exp_files[CONST_ID])
 
     # base directory
     base_path = _get_base(exp_files[CONST_CONFIG])
