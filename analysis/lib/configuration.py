@@ -12,6 +12,7 @@ from string import Template
 
 import networkx as nx
 from lib.topology_generator import TopologyGenerator as TopGen
+from lib.parameters import Parameters
 
 ROUTING_DATA_FILE_NAME = 'routing.json'
 GRAPH_DATA_PATH = 'graphs'
@@ -22,48 +23,6 @@ class Configuration(object):
     Enumerates simulation parameters and generates corresponding Peersim simulation
     configuration files.
     '''
-
-    @staticmethod
-    def file_path_for_config(config, output_base_directory=None):
-        '''
-        Generate a file path for storing data related to the given configuration
-        :param config: Dictionary of the configuration values
-        :return: relative file path
-        '''
-        # needs to be before _variables or pylint complains
-        path = config['output_base_directory']
-        if output_base_directory is not None:
-            path = output_base_directory
-        path = os.path.join(path,
-                            str(Configuration.get_group_hash_name(config)[1:-1]),
-                            str(config['repeat']))
-        return path
-
-    _variables = dict(
-        random_seed=lambda x: str(randint(1, 1000000)),
-        experiment_count=['1'],
-        size=[1000, 2000, 3000, 4000],
-        degree=[8, 10, 12, 14],
-        repeat=[1, 2, 3],
-        look_ahead=[1, 2],
-        #adversary_count=['1%', '2%'],
-        adversary_count=['1%'],
-        traffic_step=[500],
-        traffic_generator=['RandomPingTraffic'],
-        topology_type=['random_erdos_renyi', 'small_world', 'structured'],
-        router_type=['DHTRouterGreedy'],
-        router_can_backtrack=['true'],
-        router_drop_rate=[0.0],
-        router_loop_detection=['GUIDLoopDetection', 'NoLoopDetection'],
-        router_randomness=[0.0, 0.05, 0.1],
-        routing_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x, ''), ROUTING_DATA_FILE_NAME),
-        graph_data_path=lambda x: os.path.join(
-            Configuration.file_path_for_config(x, ''), GRAPH_DATA_PATH),
-        path=lambda x: Configuration.file_path_for_config(x, ''),
-        name=lambda x: Configuration.get_hash_name(x),
-        group_name=lambda x: Configuration.get_group_hash_name(x)
-    )
 
     _top_gen_map = {'random': TopGen.generate_random_topology,
                     'random_erdos_renyi': TopGen.generate_random_topology_erdos_renyi,
@@ -83,6 +42,22 @@ class Configuration(object):
 
         with open(template_file_name, 'r') as template_file:
             self._template_string = template_file.read()
+
+        # merge peersim parameters with more constant values
+        self._variables = dict(
+            random_seed=lambda x: str(randint(1, 1000000)),
+            experiment_count=['1'],
+            traffic_step=[500],
+            traffic_generator=['RandomPingTraffic'],
+            routing_data_path=lambda x: os.path.join(
+                Configuration.file_path_for_config(x, ''), ROUTING_DATA_FILE_NAME),
+            graph_data_path=lambda x: os.path.join(
+                Configuration.file_path_for_config(x, ''), GRAPH_DATA_PATH),
+            path=lambda x: Configuration.file_path_for_config(x, ''),
+            name=lambda x: Configuration.get_hash_name(x),
+            group_name=lambda x: Configuration.get_group_hash_name(x)
+        )
+        self._variables.update(Parameters.get_parameters())
 
     def build_configs(self):
         '''
@@ -242,12 +217,29 @@ class Configuration(object):
 
     @staticmethod
     def get_parameters():
+        """Get the order list of parameter names
+        
+        Returns:
+            list -- Ordered list of parameter names
+        """
+
+        return Parameters.get_parameter_names()
+
+    @staticmethod
+    def file_path_for_config(config, output_base_directory=None):
         '''
-        Get the used experiment parameters
-        :return: List of parameter names
+        Generate a file path for storing data related to the given configuration
+        :param config: Dictionary of the configuration values
+        :return: relative file path
         '''
-        return ['topology_type', 'router_type', 'router_randomness',
-                'look_ahead', 'adversary_count', 'router_loop_detection', 'size', 'degree', 'repeat']
+        # needs to be before _variables or pylint complains
+        path = config['output_base_directory']
+        if output_base_directory is not None:
+            path = output_base_directory
+        path = os.path.join(path,
+                            str(Configuration.get_group_hash_name(config)[1:-1]),
+                            str(config['repeat']))
+        return path
 
     @staticmethod
     def get_hash(config, excluded=[]):
