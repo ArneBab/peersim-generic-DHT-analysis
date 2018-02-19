@@ -95,9 +95,6 @@ class Experiments(object):
             elif not os.path.exists(exp_file_name) or not os.path.exists(config_file_name):
                 with open(exp_file_name, 'w') as c_file:
                     c_file.write(config_manager.generate_experiement_config())
-                # write the settings in JSON format for easy parsing
-                with open(config_file_name, 'w') as c_file:
-                    c_file.write(json.dumps(current_config))
             else:
                 logging.info(
                     'Experiment config already exists, skipping file write')
