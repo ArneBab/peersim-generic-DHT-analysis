@@ -84,7 +84,7 @@ def load_experiment_data(app):
             config['id'] = exp_id
             exp_id += 1
             config['self'] = metrics_file_path
-            config['menu_path'] = _clean_path(config['path'])
+            config['menu_path'] = _clean_path(config['name'])
             config['menu_path_name'] = _clean_path_name(
                 config['menu_path'], config['id'])
             configs.append(config)
@@ -99,7 +99,7 @@ def load_experiment_data(app):
     for config in config_groups.values():
         config['id'] = exp_id
         exp_id += 1
-        config['menu_path'] = _clean_path(config['path'], True)
+        config['menu_path'] = _clean_path(config['group_name'])
         config['menu_path_name'] = _clean_path_name(
             config['menu_path'], config['id'])
 
@@ -110,7 +110,7 @@ def load_experiment_data(app):
         experiment_hier[key] = {'children': [
         ], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])}
     for config in configs:
-        group_name = _clean_path_name(_clean_path(config['path'], True), None)
+        group_name = _clean_path_name(_clean_path(config['group_name']), None)
         experiment_hier[group_name]['children'].append(
             {'children': [], 'label': config['menu_path_name'], 'data': '/#/experiments/' + str(config['id'])})
     for exp_hier in experiment_hier.values():
@@ -130,15 +130,12 @@ def load_experiment_data(app):
     app.config['EXPERIMENT_HIERARCHY'] = experiment_hier_items
 
 
-def _clean_path(path, is_group=False):
-    if is_group:
-        return path.replace('\\', '/').split('/')[1:-1:2]
-    return path.replace('\\', '/').split('/')[1::2]
-
+def _clean_path(path):
+    parsed = path.split(':')
+    return [value for value in parsed if value]
 
 def _clean_path_name(path_list, id_num):
     menu_path = ':'.join(path_list).lower()
     if id_num is not None:
         menu_path = str(id_num) + ' - ' + menu_path
-    return menu_path.replace('dhtrouter', '').replace('random', 'rand')\
-                    .replace('loopdetection', '').replace('rand_erdos_', '')
+    return menu_path
