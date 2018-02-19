@@ -35,7 +35,7 @@ class Manager(object):
 
         output_directory = os.path.abspath(args.d)
         total = self.load_experiments(output_directory)
-        self.run_analysis(total, args.t)
+        self.run_analysis(total, args.t, args.a)
         self.run_summations(output_directory, args.t)
         logging.info('Finished!!!')
 
@@ -60,7 +60,7 @@ class Manager(object):
         return total
 
     @timeit
-    def run_analysis(self, total, thread_count):
+    def run_analysis(self, total, thread_count, should_archive):
         '''
         Run the post run analysis on a experiement
         '''
@@ -76,9 +76,9 @@ class Manager(object):
         for exp_files in self._experiement_configurations:
             if nb_cores > 1:
                 pool.apply_async(_run_analysis, args=(
-                    exp_files, count, total))
+                    exp_files, count, total, should_archive))
             else:
-                _run_analysis(exp_files, count, total)
+                _run_analysis(exp_files, count, total, should_archive)
             count += 1
         pool.close()
         pool.join()
@@ -172,7 +172,7 @@ def _run_summations(exp_files, count, total):
 
 
 @timeit
-def _run_analysis(exp_files, count, total):
+def _run_analysis(exp_files, count, total, should_archive):
     # set log level (can be lost if multiprocessing is used)
     logging.getLogger().setLevel(logging.INFO)
 
@@ -185,7 +185,8 @@ def _run_analysis(exp_files, count, total):
     metric_manager = MetricManager(base_path, count)
     metric_manager.analyze()
     metric_manager.save_data()
-    metric_manager.archive_data()
+    if should_archive:
+        metric_manager.archive_data()
 
 
 if __name__ == '__main__':
@@ -196,4 +197,6 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-t', default='0', type=int,
                         help='Number of threads to run. Default is the # of core CPUs available')
+    PARSER.add_argument('-a', default=True, action='store_false',
+                        help='Turn off experiment archiving')
     Manager().main(PARSER.parse_args())
