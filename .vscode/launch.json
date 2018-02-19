@@ -68,7 +68,7 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/analysis/analysis.py",
             "args": [
-                "-d", "${workspaceRoot}/test_output", "-t", "1"
+                "-d", "${workspaceRoot}/test_output", "-t", "1", "-a"
             ],
             "cwd": "${workspaceRoot}/analysis",
             "debugOptions": [
