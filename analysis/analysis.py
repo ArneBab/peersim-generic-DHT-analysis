@@ -120,6 +120,7 @@ class Manager(object):
             holder = [result.get() for result in groups]
             groups = holder
 
+        logging.info('Running final summation')
         # caluclate the summary comparision of the experiment runs
         manager = MetricManager(output_directory)
         manager.compare_experiments(groups)
