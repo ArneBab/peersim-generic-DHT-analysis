@@ -60,7 +60,9 @@ class Configuration(object):
             Configuration.file_path_for_config(x, ''), ROUTING_DATA_FILE_NAME),
         graph_data_path=lambda x: os.path.join(
             Configuration.file_path_for_config(x, ''), GRAPH_DATA_PATH),
-        path=lambda x: Configuration.file_path_for_config(x, '')
+        path=lambda x: Configuration.file_path_for_config(x, ''),
+        name=lambda x: Configuration.get_hash_name(x),
+        group_name=lambda x: Configuration.get_group_hash_name(x)
     )
 
     _top_gen_map = {'random': TopGen.generate_random_topology,
@@ -255,6 +257,19 @@ class Configuration(object):
         return hash(Configuration.get_hash_name(config, excluded))
 
     @staticmethod
+    def get_group_hash_name(config):
+        """Get the hash name for the group
+        
+        Arguments:
+            config {dict} -- Configuration dictionary
+        
+        Returns:
+            str -- String representation of the group
+        """
+
+        return Configuration.get_hash_name(config, ['repeat'])
+
+    @staticmethod
     def get_hash_name(config, excluded=[]):
         '''
         Get a hash of the used variables as a string
@@ -267,7 +282,9 @@ class Configuration(object):
             if param not in config:
                 identity += ':'
                 continue
-            identity += ':' + str(config[param])
+            value = str(config[param]).lower()
+            value = value.replace('dhtrouter', '').replace('random', 'rand').replace('loopdetection', '')
+            identity += ':' + value
         return identity
 
     @staticmethod
