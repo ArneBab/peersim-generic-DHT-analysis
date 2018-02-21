@@ -66,7 +66,7 @@ class GraphManager(MetricBase):
         # load graph data into list for faster look ups
         # data is frequently accessed and data frames are slow
         self.loaded_graphs = []
-        for index, row in self.data_frame.iterrows():
+        for _, row in self.data_frame.iterrows():
             self.loaded_graphs.append((int(row.cycle), str(row.file_path)))
 
     def get_graph(self, cylce):

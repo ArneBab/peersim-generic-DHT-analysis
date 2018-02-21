@@ -15,6 +15,10 @@ class AnonymityMetrics(MetricBase):
     Generic interface for JSON based actions
     '''
 
+    def __init__(self, graph_manager):
+        super(AnonymityMetrics, self).__init__()
+        self.graph_manager = graph_manager
+
     def process(self, data_object):
         data_object = super(AnonymityMetrics, self).process(data_object)
         # no anonymity set calculated
@@ -27,31 +31,37 @@ class AnonymityMetrics(MetricBase):
 
         self.add_column('entropy_actual')
         self.add_column('normalized_entropy_actual')
-        self.add_column('max_entropy_actual')
 
         self.add_column('entropy_top_rank')
         self.add_column('normalized_entropy_top_rank')
-        self.add_column('max_entropy_top_rank')
+
+        self.add_column('entropy_sender_set')
+        self.add_column('normalized_entropy_sender_set')
 
         self.add_column('top_rank_set_size')
         self.add_column('hop')
+
+        nx_graph = self.graph_manager.get_graph(data_object['cycle'])
+        total_nodes = nx_graph.number_of_nodes()
 
         row = []
         # exponential backoff entropies
         entropy_set = data_object['anonymity_set']['probability_set']
         row.append(entropy(entropy_set.values()))
-        row.append(entropy_normalized(entropy_set.values()))
-        row.append(max_entropy(entropy_set.values()))
+        row.append(entropy_normalized(entropy_set.values(), total_nodes))
+        row.append(max_entropy(total_nodes))
         # actual backoff entropies
         entropy_set = data_object['anonymity_set']['probability_set_actual']
         row.append(entropy(entropy_set.values()))
-        row.append(entropy_normalized(entropy_set.values()))
-        row.append(max_entropy(entropy_set.values()))
+        row.append(entropy_normalized(entropy_set.values(), total_nodes))
         # top rank entropies
         entropy_set = data_object['anonymity_set']['probability_set_top_rank']
         row.append(entropy(entropy_set.values()))
-        row.append(entropy_normalized(entropy_set.values()))
-        row.append(max_entropy(entropy_set.values()))
+        row.append(entropy_normalized(entropy_set.values(), total_nodes))
+        # sender set entropies
+        entropy_set = data_object['anonymity_set']['probability_set_sender_set']
+        row.append(entropy(entropy_set.values()))
+        row.append(entropy_normalized(entropy_set.values(), total_nodes))
         # top rank
         ranked_set = data_object['anonymity_set']['ranked_set']
         top_rank = sorted(ranked_set.keys())[0]
@@ -100,11 +110,6 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.normalized_entropy_actual.std(), 5), '',
                                'EN_N_A_s', 'normalized_entropy_actual_std'))
 
-        metrics.append(self._w(round(data_frame.max_entropy_actual.mean(), 5), '',
-                               'EN_M_A_a', 'max_entropy_actual_avg'))
-        metrics.append(self._w(round(data_frame.max_entropy_actual.std(), 5), '',
-                               'EN_M_A_s', 'max_entropy_actual_std'))
-
         # entropy using top rank
         metrics.append(self._w(round(data_frame.entropy_top_rank.mean(), 5), '',
                                'EN_T_a', 'entropy_top_rank_avg'))
@@ -116,10 +121,16 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.normalized_entropy_top_rank.std(), 5), '',
                                'EN_N_T_s', 'normalized_entropy_top_rank_std'))
 
-        metrics.append(self._w(round(data_frame.max_entropy_top_rank.mean(), 5), '',
-                               'EN_M_T_a', 'max_entropy_top_rank_avg'))
-        metrics.append(self._w(round(data_frame.max_entropy_top_rank.std(), 5), '',
-                               'EN_M_T_s', 'max_entropy_top_rank_std'))
+        # entropy using sender set
+        metrics.append(self._w(round(data_frame.entropy_sender_set.mean(), 5), '',
+                               'EN_SS_a', 'entropy_sender_set_avg'))
+        metrics.append(self._w(round(data_frame.entropy_sender_set.std(), 5), '',
+                               'EN_SS_s', 'entropy_sender_set_std'))
+
+        metrics.append(self._w(round(data_frame.normalized_entropy_sender_set.mean(), 5), '',
+                               'EN_N_SS_a', 'normalized_entropy_sender_set_avg'))
+        metrics.append(self._w(round(data_frame.normalized_entropy_sender_set.std(), 5), '',
+                               'EN_N_SS_s', 'normalized_entropy_sender_set_std'))
 
         # top rank
         metrics.append(self._w(round(data_frame.top_rank_set_size.mean(), 5), '',

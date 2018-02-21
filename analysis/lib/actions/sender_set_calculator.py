@@ -106,6 +106,7 @@ class SenderSetCalculator(MetricBase):
 
             a_set = r_tree.get_sender_set()
             a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
+            a_data['probability_set_sender_set'] = r_tree.get_sender_set_distribution_full()
 
             # calculate the probability distribution using the actual routing choices
             routing_choice_avg = self.routing_choice.get_final_routing_choices()

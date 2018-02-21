@@ -145,6 +145,21 @@ class RoutingTree(object):
 
         return rank_set
 
+    def get_sender_set_distribution_full(self):
+        """Calculate the probability distribution only using the sender set
+        
+        Returns:
+            dict -- Dict with key of node id and value of normalized probability
+        """
+        sender_set = self.get_sender_set()
+        distro_set = {}
+        total = len(sender_set)
+        for node in sender_set:
+            distro_set[node] = 1.0 / + total
+
+        return distro_set
+        
+
     def get_sender_set_distribution_by_top_rank(self):
         """Calculate the probability distribution for the sender set using top rank
 

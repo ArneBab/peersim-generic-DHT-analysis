@@ -31,17 +31,21 @@ def distance(x_l, y_l):
     return round(value, 10)
 
 
-def entropy_normalized(distro):
-    '''
-    Normalized Shannon Enropy
-    :param distro: list of output probabilities
-    :return: entropy
-    '''
+def entropy_normalized(distro, total_node_count):
+    """Normalized Shannon Entropy
+    
+    Arguments:
+        distro {list} -- List of probabilities
+        total_node_count {int} -- Total number of nodes in the topology
+    
+    Returns:
+        float -- Entropy
+    """
     entropy_value = entropy(distro)
-    max_ent = max_entropy(distro)
+    max_ent = max_entropy(total_node_count)
     if max_ent == 0.0:
         return 0.0
-    return entropy_value / float(max_entropy(distro))
+    return entropy_value / float(max_ent)
 
 
 def entropy(distro):
@@ -60,13 +64,16 @@ def entropy(distro):
     return entropy_value
 
 
-def max_entropy(distro):
-    '''
-    Maximum Shannon entropy
-    :param distro: List of the output distribution
-    :return: Shannon maximum entropy
-    '''
-    return math.log(len(distro), 2)
+def max_entropy(total_node_count):
+    """Maximum Shannon entropy
+    
+    Arguments:
+        total_node_count {int} -- Total nodes in topology
+    
+    Returns:
+        float -- Maximum entropy
+    """
+    return math.log(total_node_count, 2)
 
 
 def percent(selected, total):

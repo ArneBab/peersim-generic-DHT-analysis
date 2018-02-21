@@ -235,7 +235,7 @@ class MetricManager(object):
         intercept_hop_calced = AdversaryInterceptHopCalculated(sender_set_size)
         sender_set_size_inter = SenderSetSizeInterceptHop(sender_set_size)
 
-        anon_metrics = AnonymityMetrics()
+        anon_metrics = AnonymityMetrics(graph_manager)
 
         anon_entropy = AnonymityEntropy(anon_metrics, 'entropy', 'Entropy')
         anon_entropy_norm = AnonymityEntropy(
@@ -250,7 +250,7 @@ class MetricManager(object):
         anon_entropy_norm_act = AnonymityEntropy(
             anon_metrics, 'normalized_entropy_actual', 'Actual Entropy Normalized')
         anon_entropy_act_hop = AnonymityEntropyAtHop(
-            anon_metrics, 'entropy_actual', 'max_entropy_actual', 'Actual Entropy')
+            anon_metrics, 'entropy_actual', 'max_entropy', 'Actual Entropy')
         anon_entropy_act_norm_hop = AnonymityEntropyAtHop(
             anon_metrics, 'normalized_entropy_actual', '', 'Actual Entropy Normalized')
 
@@ -259,9 +259,18 @@ class MetricManager(object):
         anon_entropy_norm_top = AnonymityEntropy(
             anon_metrics, 'normalized_entropy_top_rank', 'Entropy by Top Rank Normalized')
         anon_entropy_top_hop = AnonymityEntropyAtHop(
-            anon_metrics, 'entropy_top_rank', 'max_entropy_top_rank', 'Entropy by Top Rank')
+            anon_metrics, 'entropy_top_rank', 'max_entropy', 'Entropy by Top Rank')
         anon_entropy_top_norm_hop = AnonymityEntropyAtHop(
             anon_metrics, 'normalized_entropy_top_rank', '', 'Entropy by Top Rank Normalized')
+
+        anon_entropy_set = AnonymityEntropy(
+            anon_metrics, 'entropy_sender_set', 'Entropy by Sender Set')
+        anon_entropy_norm_set = AnonymityEntropy(
+            anon_metrics, 'normalized_entropy_sender_set', 'Entropy by Sender Set Normalized')
+        anon_entropy_set_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'entropy_sender_set', 'max_entropy', 'Entropy by Sender Set')
+        anon_entropy_set_norm_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'normalized_entropy_sender_set', '', 'Entropy by Sender Set Normalized')
 
         top_ranked_set_avg = AnonymityTopRankedSetSize(anon_metrics)
 
@@ -297,7 +306,15 @@ class MetricManager(object):
                        anon_entropy_top_hop),
                       ('anonymity_top_rank', 'anonymity_entropy_normalized_at_hop',
                        anon_entropy_top_norm_hop),
-                      #
+                      # entropy by sender set 
+                      ('anonymity_sender_set', 'anonymity_entropy', anon_entropy_set),
+                      ('anonymity_sender_set', 'anonymity_entropy_normalized',
+                       anon_entropy_norm_set),
+                      ('anonymity_sender_set', 'anonymity_entropy_at_hop',
+                       anon_entropy_set_hop),
+                      ('anonymity_sender_set', 'anonymity_entropy_normalized_at_hop',
+                       anon_entropy_set_norm_hop),
+                       #
                       ('anonymity_accuracy', 'anonymity_accuracy',
                        anon_accuracy_metrics),
                       ('anonymity_accuracy', 'anonymity_accuracy_at_hop', anon_hit_hop),
