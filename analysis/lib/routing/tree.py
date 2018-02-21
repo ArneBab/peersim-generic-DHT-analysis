@@ -272,7 +272,7 @@ class RoutingTree(object):
             return
 
         children_added = []
-        #children_inspected = []
+        children_inspected = []
 
         for node in node_list:
             path = node.get_path()
@@ -280,7 +280,7 @@ class RoutingTree(object):
                 if child_id in path:
                     continue
                 rank = self._get_node_rank(node.data, child_id, target_address)
-        #        children_inspected.append((rank, child_id, node))
+                children_inspected.append((rank, child_id, node))
 
                 new_node = self._add_child(node, child_id, rank)
                 if new_node is None:
@@ -290,13 +290,13 @@ class RoutingTree(object):
         # check if we added no children
         # this is done incase there is a level where there are no children
         # that have low enough rank
-        # if len(children_added) < 1 and len(children_inspected) > 0:
-        #    # in which case, add the children with the best rank
-        #    best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
-        #    for rank, child_id, node in children_inspected:
-        #        if rank == best_rank:
-        #            children_added.append(self._add_child(
-        #                node, child_id, rank, False))
+        if len(children_added) < 1 and len(children_inspected) > 0:
+            # in which case, add the children with the best rank
+            best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
+            for rank, child_id, node in children_inspected:
+                if rank == best_rank:
+                    children_added.append(self._add_child(
+                        node, child_id, rank, False))
 
         # process next tree level
         self._build_tree(children_added, current_hop - 1, target_address)
