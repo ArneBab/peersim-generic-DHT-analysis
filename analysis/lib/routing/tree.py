@@ -103,10 +103,12 @@ class RoutingTree(object):
         return list(self._sender_set)
 
     def get_sender_set_rank(self):
-        '''
-        Calculate the rank of the sender set
-        :return: dict of the sender set nodes by rank
-        '''
+        """Calculate the rank of the sender set
+
+        Returns:
+            dict -- Dict of the sender set nodes keyed by rank,
+            each entry is a list of nodes
+        """
         if self.get_height() < 2:
             return {}
         if self.get_height() == 2:
@@ -143,6 +145,31 @@ class RoutingTree(object):
 
         return rank_set
 
+    def get_sender_set_distribution_by_top_rank(self):
+        """Calculate the probability distribution for the sender set using top rank
+
+        Returns:
+            dict -- Dict with key of node id and value of normalized probability
+        """
+        ranked = self.get_sender_set_rank()
+        if len(ranked) <= 0:
+            return {}
+
+        top_rank = sorted(ranked.keys())[0]
+
+        distro_set = {}
+        total = len(ranked[top_rank])
+        for node in ranked[top_rank]:
+            distro_set[node] = 1.0 / + total
+
+        # add in any missing nodes from the sender set
+        for node_id in self.get_sender_set():
+            if node_id not in distro_set:
+                distro_set[node_id] = 0.0
+
+        assert(len(distro_set) > 0)
+        return distro_set
+
     def get_sender_set_distribution(self, dist_function):
         '''
         Calculate the probability distribution for the sender set
@@ -174,8 +201,14 @@ class RoutingTree(object):
             total = total + prob
 
         # normalize the distributions (e.g. their sum == 1)
-        for node, prob in distro_set.items():
-            distro_set[node] = prob / total
+        if total > 0.0:
+            # only run if a clear path was found
+            for node, prob in distro_set.items():
+                distro_set[node] = prob / total
+        else:
+            # add all nodes with equal distribution
+            for node_id in self.get_sender_set():
+                distro_set[node_id] = 1.0 / len(self.get_sender_set())
 
         # add in any missing nodes from the sender set
         for node_id in self.get_sender_set():
@@ -239,7 +272,7 @@ class RoutingTree(object):
             return
 
         children_added = []
-        children_inspected = []
+        #children_inspected = []
 
         for node in node_list:
             path = node.get_path()
@@ -247,7 +280,7 @@ class RoutingTree(object):
                 if child_id in path:
                     continue
                 rank = self._get_node_rank(node.data, child_id, target_address)
-                children_inspected.append((rank, child_id, node))
+        #        children_inspected.append((rank, child_id, node))
 
                 new_node = self._add_child(node, child_id, rank)
                 if new_node is None:
@@ -257,13 +290,13 @@ class RoutingTree(object):
         # check if we added no children
         # this is done incase there is a level where there are no children
         # that have low enough rank
-        if len(children_added) < 1 and len(children_inspected) > 0:
-            # in which case, add the children with the best rank
-            best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
-            for rank, child_id, node in children_inspected:
-                if rank == best_rank:
-                    children_added.append(self._add_child(
-                        node, child_id, rank, False))
+        # if len(children_added) < 1 and len(children_inspected) > 0:
+        #    # in which case, add the children with the best rank
+        #    best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
+        #    for rank, child_id, node in children_inspected:
+        #        if rank == best_rank:
+        #            children_added.append(self._add_child(
+        #                node, child_id, rank, False))
 
         # process next tree level
         self._build_tree(children_added, current_hop - 1, target_address)

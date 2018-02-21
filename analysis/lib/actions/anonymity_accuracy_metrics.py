@@ -30,9 +30,12 @@ class AnonymityAccuracyMetrics(MetricBase):
         self.add_column('best_entropy_actual_hit')
 
         self.add_column('rank_missed')
+        self.add_column('rank_hit_in')
         self.add_column('top_rank_hit')
         self.add_column('top_rank_size')
         self.add_column('hop')
+
+        self.add_column('sender_set_missed')
 
         row = []
         # exponential backoff entropies
@@ -67,6 +70,8 @@ class AnonymityAccuracyMetrics(MetricBase):
         # top rank
         ranked_set = data_object['anonymity_set']['ranked_set']
         diff = self._ranked_nodes_diff(ranked_set, data_object['source_node'])
+        relative_rank_hit_in = self._get_relative_rank_count(
+            ranked_set, data_object['source_node'])
         rank_missed = 1
         top_rank_hit = 0
         if diff >= 0:
@@ -74,6 +79,7 @@ class AnonymityAccuracyMetrics(MetricBase):
         if diff == 0:
             top_rank_hit = 1
         row.append(rank_missed)
+        row.append(relative_rank_hit_in)
         row.append(top_rank_hit)
 
         sorted_rank = sorted(ranked_set.keys())
@@ -81,6 +87,10 @@ class AnonymityAccuracyMetrics(MetricBase):
         row.append(len(ranked_set[top_rank]))
 
         row.append(int(data_object['anonymity_set']['hop']))
+
+        sender_set = data_object['anonymity_set']['full_set']['nodes']
+        sender_set_missed = 0 if data_object['source_node'] in sender_set else 1
+        row.append(sender_set_missed)
 
         self.add_row(row)
         return data_object
@@ -108,6 +118,15 @@ class AnonymityAccuracyMetrics(MetricBase):
                                'EN_M_c', 'entropy_missed_source_node_count'))
         metrics.append(self._w(round(missed_percent, 5), '',
                                'EN_M_p', 'entropy_missed_source_node_percent'))
+
+        # sender set missed
+        missed = int(data_frame.sender_set_missed.sum())
+        missed_percent = percent(missed, int(
+            data_frame.sender_set_missed.count()))
+        metrics.append(self._w(missed, '',
+                               'SS_M_c', 'sender_set_missed_count'))
+        metrics.append(self._w(round(missed_percent, 5), '',
+                               'SS_M_p', 'sender_set_missed_percent'))
 
         # entropy exponential backoff
         hit = int(data_frame.best_entropy_hit.sum())
@@ -154,6 +173,10 @@ class AnonymityAccuracyMetrics(MetricBase):
                                'TR_S_a', 'top_rank_size_avg'))
         metrics.append(self._w(round(data_frame.top_rank_size.std(), 5), '',
                                'TR_S_s', 'top_rank_size_std'))
+        metrics.append(self._w(round(data_frame.rank_hit_in.mean(), 5), '',
+                               'RR_H_a', 'relative_rank_hit_avg'))
+        metrics.append(self._w(round(data_frame.rank_hit_in.std(), 5), '',
+                               'RR_H_s', 'relative_rank_hit_std'))
 
         self._replace_nan(metrics)
         return metrics
@@ -165,6 +188,15 @@ class AnonymityAccuracyMetrics(MetricBase):
             if source_node_id in ranked_set[rank]:
                 return rank - top_rank
         return -1
+
+    def _get_relative_rank_count(self, ranked_set, source_node_id):
+        sorted_rank = sorted(ranked_set.keys())
+        rank_count = 1
+        for rank in sorted_rank:
+            if source_node_id in ranked_set[rank]:
+                return rank_count
+            rank_count += 1
+        return 0
 
 
 class AnonymityHitAtHop(MetricBase):
@@ -199,7 +231,7 @@ class AnonymityHitAtHop(MetricBase):
 
         labels = list(data_frame.hop)
         series_list = ['best entropy hit percent',
-                       'best entropy actual hit percent', 'top rank hit percent', 
+                       'best entropy actual hit percent', 'top rank hit percent',
                        'cummulative top rank hit accuracy']
 
         # calculate cummulative accuracy
@@ -216,7 +248,57 @@ class AnonymityHitAtHop(MetricBase):
                 list(data_frame.best_entropy_actual_hit / data_frame.hop_count),
                 list(data_frame.top_rank_hit / data_frame.hop_count),
                 cummulative_data]
+        data = self._round(data)
 
         return self._graph_structure(labels, data,
                                      series_list, 'line',
                                      'Anonymity Metric Accuracy at Intercepted Hop: Percent')
+
+
+class AnonymityTopRankAccuracyByRank(MetricBase):
+    '''
+    Generic interface for JSON based actions
+    '''
+
+    def __init__(self, anonymity_accuracy):
+        super(AnonymityTopRankAccuracyByRank, self).__init__()
+        self.anonymity_accuracy = anonymity_accuracy
+
+    def on_stop(self):
+        super(AnonymityTopRankAccuracyByRank, self).on_stop()
+        data_frame = self.anonymity_accuracy.data_frame
+        if len(data_frame) <= 0:
+            return
+
+        data_frame = data_frame.groupby(['rank_hit_in']).count().reset_index()
+        self.data_frame = data_frame
+
+    def create_graph(self):
+        '''
+        Create a graph for the data set
+        :return: graph data dict
+        '''
+        # sum up the values based on cycle
+        data_frame = self.data_frame
+        if len(data_frame) <= 0:
+            return {}
+
+        labels = list(data_frame.rank_hit_in)
+        series_list = ['relative rank hit percent', 'cummulative relative rank hit percent']
+        total_count = len(self.anonymity_accuracy.data_frame)
+        data_frame = data_frame.apply(lambda c: c / total_count, axis=1)
+
+        # calculate cummulative hits
+        cummulative_data = []
+        cummulative_hits = 0.0
+        for _, row in data_frame.iterrows():
+            cummulative_hits += row.hop
+            cummulative_data.append(cummulative_hits)
+
+        # other accuracies
+        data = [list(data_frame.hop), cummulative_data]
+        data = self._round(data)
+
+        return self._graph_structure(labels, data,
+                                     series_list, 'line',
+                                     'Cummulative Relative Rank Hit Percent')

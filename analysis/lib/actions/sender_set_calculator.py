@@ -100,6 +100,7 @@ class SenderSetCalculator(MetricBase):
             a_data = {'calculated': True, 'hop': a_node['hop']}
             a_data['tree'] = r_tree.to_bracket()
             a_data['ranked_set'] = r_tree.get_sender_set_rank()
+            a_data['probability_set_top_rank'] = r_tree.get_sender_set_distribution_by_top_rank()
             a_data['probability_set'] = r_tree.get_sender_set_distribution(
                 r_tree.distro_rank_exponetial_backoff)
 

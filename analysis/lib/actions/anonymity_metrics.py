@@ -29,6 +29,10 @@ class AnonymityMetrics(MetricBase):
         self.add_column('normalized_entropy_actual')
         self.add_column('max_entropy_actual')
 
+        self.add_column('entropy_top_rank')
+        self.add_column('normalized_entropy_top_rank')
+        self.add_column('max_entropy_top_rank')
+
         self.add_column('top_rank_set_size')
         self.add_column('hop')
 
@@ -40,6 +44,11 @@ class AnonymityMetrics(MetricBase):
         row.append(max_entropy(entropy_set.values()))
         # actual backoff entropies
         entropy_set = data_object['anonymity_set']['probability_set_actual']
+        row.append(entropy(entropy_set.values()))
+        row.append(entropy_normalized(entropy_set.values()))
+        row.append(max_entropy(entropy_set.values()))
+        # top rank entropies
+        entropy_set = data_object['anonymity_set']['probability_set_top_rank']
         row.append(entropy(entropy_set.values()))
         row.append(entropy_normalized(entropy_set.values()))
         row.append(max_entropy(entropy_set.values()))
