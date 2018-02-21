@@ -4,7 +4,7 @@
 <h3>Summation Metrics</h3>
 
 <div ng-repeat="(group_name, group_objs) in experiment_v2.summations">
-    <details class="row">
+    <details>
         <summary>
             <span class="h4 capitalize">{{group_name | prettyName}}</span>
         </summary>
@@ -14,7 +14,7 @@
                 <div class="col-sm-4 col-sm-offset-1 capitalize">
                     {{value.full_name | prettyName}}
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-5">
                     {{value.value}} {{value.description}}
                 </div>
             </div>
