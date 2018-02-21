@@ -105,6 +105,22 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.max_entropy_actual.std(), 5), '',
                                'EN_M_A_s', 'max_entropy_actual_std'))
 
+        # entropy using top rank
+        metrics.append(self._w(round(data_frame.entropy_top_rank.mean(), 5), '',
+                               'EN_T_a', 'entropy_top_rank_avg'))
+        metrics.append(self._w(round(data_frame.entropy_top_rank.std(), 5), '',
+                               'EN_T_s', 'entropy_top_rank_std'))
+
+        metrics.append(self._w(round(data_frame.normalized_entropy_top_rank.mean(), 5), '',
+                               'EN_N_T_a', 'normalized_entropy_top_rank_avg'))
+        metrics.append(self._w(round(data_frame.normalized_entropy_top_rank.std(), 5), '',
+                               'EN_N_T_s', 'normalized_entropy_top_rank_std'))
+
+        metrics.append(self._w(round(data_frame.max_entropy_top_rank.mean(), 5), '',
+                               'EN_M_T_a', 'max_entropy_top_rank_avg'))
+        metrics.append(self._w(round(data_frame.max_entropy_top_rank.std(), 5), '',
+                               'EN_M_T_s', 'max_entropy_top_rank_std'))
+
         # top rank
         metrics.append(self._w(round(data_frame.top_rank_set_size.mean(), 5), '',
                                'TR_S_a', 'top_rank_set_size_avg'))

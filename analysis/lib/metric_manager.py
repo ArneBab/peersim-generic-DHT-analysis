@@ -254,6 +254,15 @@ class MetricManager(object):
         anon_entropy_act_norm_hop = AnonymityEntropyAtHop(
             anon_metrics, 'normalized_entropy_actual', '', 'Actual Entropy Normalized')
 
+        anon_entropy_top = AnonymityEntropy(
+            anon_metrics, 'entropy_top_rank', 'Entropy by Top Rank')
+        anon_entropy_norm_top = AnonymityEntropy(
+            anon_metrics, 'normalized_entropy_top_rank', 'Entropy by Top Rank Normalized')
+        anon_entropy_top_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'entropy_top_rank', 'max_entropy_top_rank', 'Entropy by Top Rank')
+        anon_entropy_top_norm_hop = AnonymityEntropyAtHop(
+            anon_metrics, 'normalized_entropy_top_rank', '', 'Entropy by Top Rank Normalized')
+
         top_ranked_set_avg = AnonymityTopRankedSetSize(anon_metrics)
 
         anon_accuracy_metrics = AnonymityAccuracyMetrics()
@@ -280,6 +289,15 @@ class MetricManager(object):
                        anon_entropy_act_hop),
                       ('anonymity_actual', 'anonymity_entropy_normalized_at_hop',
                        anon_entropy_act_norm_hop),
+                      # entropy by top rank
+                      ('anonymity_top_rank', 'anonymity_entropy', anon_entropy_top),
+                      ('anonymity_top_rank', 'anonymity_entropy_normalized',
+                       anon_entropy_norm_top),
+                      ('anonymity_top_rank', 'anonymity_entropy_at_hop',
+                       anon_entropy_top_hop),
+                      ('anonymity_top_rank', 'anonymity_entropy_normalized_at_hop',
+                       anon_entropy_top_norm_hop),
+                      #
                       ('anonymity_accuracy', 'anonymity_accuracy',
                        anon_accuracy_metrics),
                       ('anonymity_accuracy', 'anonymity_accuracy_at_hop', anon_hit_hop),
