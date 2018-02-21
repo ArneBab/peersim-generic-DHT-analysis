@@ -104,6 +104,9 @@ class SenderSetCalculator(MetricBase):
             a_data['probability_set'] = r_tree.get_sender_set_distribution(
                 r_tree.distro_rank_exponetial_backoff)
 
+            a_set = r_tree.get_sender_set()
+            a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
+
             # calculate the probability distribution using the actual routing choices
             routing_choice_avg = self.routing_choice.get_final_routing_choices()
             largest_rank = sorted(routing_choice_avg.keys())[-1]
@@ -116,9 +119,6 @@ class SenderSetCalculator(MetricBase):
                 _distro_rank)
         else:
             a_data = {'calculated': False, 'hop': a_node['hop']}
-
-        a_set = r_tree.get_sender_set()
-        a_data['full_set'] = {'length': len(a_set), 'nodes': a_set}
 
         data_object['anonymity_set'] = a_data
 

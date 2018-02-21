@@ -53,13 +53,13 @@ class RoutingTree(object):
         self._sender_set = set()
         self._cache_rank_calculations = {}
 
+        if self._max_length > 0 and max_hop > self._max_length:
+            return False
+
         # calculate the sender set
         self._sender_set.add(adversary_node_id)
         self._build_sender_set([previous_node_id], max_hop)
         self._sender_set.remove(adversary_node_id)
-
-        if self._max_length > 0 and max_hop > self._max_length:
-            return False
 
         # calculate the preferred routing paths
         self._root = RoutingTree._Entry(adversary_node_id, 0)
