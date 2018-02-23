@@ -6,7 +6,7 @@ Updated on Nov, 2017
 Calculate the send set for each captured route
 '''
 import numpy
-from lib.utils import entropy, max_entropy, entropy_normalized
+from lib.utils import entropy, max_entropy, entropy_normalized, percent
 from lib.actions.metric_base import MetricBase
 
 
@@ -205,10 +205,25 @@ class AnonymityEntropyAtHop(MetricBase):
         data_avg = data_frame.groupby(['hop']).mean().reset_index()
         data_std = data_frame.groupby(['hop']).std().reset_index().fillna(0.0)
 
+        # calculate cummulative entropy
+        data_sum = data_frame.groupby(['hop']).agg(
+            {self.column_name: 'sum', 'top_rank_set_size': 'count'}).reset_index()
+        data_sum.rename(columns={'top_rank_set_size': 'hop_count'}, inplace=True)
+
+        cummulative_data = []
+        entropy_sum = 0
+        total_count = 0
+        for _, row in data_sum.iterrows():
+            entropy_sum += row[self.column_name]
+            total_count += row.hop_count
+            cummulative_data.append(percent(entropy_sum, total_count))
+
         labels = list(data_avg.hop)
-        series_list = ['Entropy Average', 'Entropy Standard Deviation']
+        series_list = ['Entropy Average', 'Entropy Standard Deviation',
+                       'Cummulative Entropy Average']
         data = [list(data_avg[self.column_name]),
-                list(data_std[self.column_name])]
+                list(data_std[self.column_name]),
+                cummulative_data]
 
         if self.max_column_name:
             series_list.insert(0, 'Max Entropy Average')
