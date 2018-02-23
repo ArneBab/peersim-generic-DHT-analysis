@@ -269,10 +269,10 @@ class Configuration(object):
         identity = ''
         for param in Configuration.get_parameters():
             if param in excluded:
-                identity += ':'
+                identity += '-'
                 continue
             if param not in config:
-                identity += ':'
+                identity += '-'
                 continue
             value = str(config[param]).lower()
 
@@ -282,7 +282,7 @@ class Configuration(object):
                 'structured', 'struc')
             value = value.replace('dhtrouter', '').replace('random', 'r_')
 
-            identity += ':' + value
+            identity += '-' + value
         return identity
 
     @staticmethod
