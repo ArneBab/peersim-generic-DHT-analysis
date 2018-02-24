@@ -7,7 +7,8 @@ Calculate the send set for each captured route
 '''
 import os
 import json
-from lib.utils import distance
+import logging
+from lib.utils import distance, timeit
 from lib.routing.tree import RoutingTree
 from lib.actions.metric_base import MetricBase
 from lib.routing.route_prediction import rank_greedy, rank_greedy_2_hop
@@ -53,6 +54,7 @@ class SenderSetCalculator(MetricBase):
             self.output_file.close()
         self.output_file = None
 
+    #@timeit
     def process(self, data_object):
         '''
         Process a given file
@@ -93,7 +95,8 @@ class SenderSetCalculator(MetricBase):
             raise Exception('Unknown routing type')
 
         # calculate sender set and preferred routes
-        r_tree = RoutingTree(nx_graph, route_alg, max_rank=2, max_length=25)
+        logging.info('Hop : %d', a_node['hop'])
+        r_tree = RoutingTree(nx_graph, route_alg, max_length=20)
         if r_tree.build(a_node['id'], p_node['id'],
                         a_node['hop'], data_object['target']):
 
