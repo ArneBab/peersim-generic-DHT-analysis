@@ -15,7 +15,7 @@ class RoutingTree(object):
     Represents a potential routing tree traced back from start node
     '''
 
-    def __init__(self, nx_graph, routing_algorithm, max_rank=2, max_length=0):
+    def __init__(self, nx_graph, routing_algorithm, max_length=0):
         """Constructor
 
         Arguments:
@@ -35,7 +35,6 @@ class RoutingTree(object):
 
         self._nx_graph = nx_graph
         self._routing_algorithm = routing_algorithm
-        self._max_rank = max_rank
         self._max_length = max_length
 
     def build(self, adversary_node_id, previous_node_id, max_hop, target_address):
@@ -64,14 +63,8 @@ class RoutingTree(object):
         # calculate the preferred routing paths
         self._root = RoutingTree._Entry(adversary_node_id, 0)
         self._levels[0] = [self._root]
-        prev_node = self._add_child(self._root, previous_node_id, 1, False)
+        prev_node = self._add_child(self._root, previous_node_id, 1)
         self._build_tree([prev_node], max_hop, target_address)
-
-        # check for case when all the neighbors only have a single connection
-        # to the adversary node
-        if self.get_height() == 1:
-            # add an empty level after
-            self._levels[2] = []
 
         return True
 
@@ -91,8 +84,7 @@ class RoutingTree(object):
         Height of the tree
         :return: int count of the number of levels
         '''
-        # tree has a secret extra level, we use for the ranking calculations
-        return len(self._levels.keys()) - 1
+        return len(self._levels.keys())
 
     def get_sender_set(self):
         '''
@@ -288,26 +280,69 @@ class RoutingTree(object):
                 return i + 1
         raise Exception('Unable to find path between nodes')
 
-    def _build_tree(self, node_list, current_hop, target_address):
-        if current_hop < 1:
-            return
+    def _build_tree(self, node_list, max_hop, target_address):
+        last_max_hop = 1
+        while True:
+            # try to build with only rank #1
+            new_nodes = self._build_tree_routes(
+                node_list, max_hop, target_address)
+            if len(new_nodes) > 0:
+                # reset the max hop to 1
+                last_max_hop = 1
 
-        children_added = []
+            if self.get_height() > max_hop:
+                return
+            # didn't build a complete path
+            # add next rank to all existing nodes
+            last_max_hop += 1
+            all_nodes = self._get_all_nodes()
+            added_nodes = []
+            for node in all_nodes:
+                added_nodes.extend(self._build_tree_routes_node(
+                    node, target_address, last_max_hop))
 
-        for node in node_list:
-            path = node.get_path()
-            for child_id in self._nx_graph.neighbors(node.data):
-                if child_id in path:
+            if len(added_nodes) > 0:
+                # reset the max hop to 1
+                last_max_hop = 1
+            # only need to start building the tree from the new added nodes
+            node_list = added_nodes
+
+    def _get_all_nodes(self):
+        all_nodes = []
+        for level, values in self._levels.items():
+            if level == 0:
+                continue
+            all_nodes.extend(values)
+        return all_nodes
+
+    def _build_tree_routes(self, node_list, max_hops, target_address):
+        process_nodes = node_list
+        all_nodes_added = []
+        while len(process_nodes) > 0:
+            added_leaves = []
+            for node in process_nodes:
+                if node.level >= max_hops:
                     continue
-                rank = self._get_node_rank(node.data, child_id, target_address)
+                new_nodes = self._build_tree_routes_node(
+                    node, target_address, 1)
+                added_leaves.extend(new_nodes)
+                all_nodes_added.extend(new_nodes)
+            process_nodes = added_leaves
+        return all_nodes_added
 
-                new_node = self._add_child(node, child_id, rank)
-                if new_node is None:
-                    continue
-                children_added.append(new_node)
-
-        # process next tree level
-        self._build_tree(children_added, current_hop - 1, target_address)
+    def _build_tree_routes_node(self, node, target_address, max_rank):
+        added_children = []
+        path = node.get_path()
+        children_ids = node.get_child_ids()
+        for child_id in self._nx_graph.neighbors(node.data):
+            if child_id in path:
+                continue
+            if child_id in children_ids:
+                continue
+            rank = self._get_node_rank(node.data, child_id, target_address)
+            if rank <= max_rank:
+                added_children.append(self._add_child(node, child_id, rank))
+        return added_children
 
     def _build_sender_set(self, node_id_list, current_hop_count):
         # needs to search breadth first, otherwise some nodes can be skipped
@@ -324,16 +359,13 @@ class RoutingTree(object):
         # process next level
         self._build_sender_set(next_node_ids, current_hop_count - 1)
 
-    def _add_child(self, node, child, node_rank, check_rank=True):
+    def _add_child(self, node, child, node_rank):
         '''
         Add new data element to the tree
         :param node: parent node
         :param child: new object to be added
         :return: new node added to the tree
         '''
-        if check_rank and self._max_rank > 0 and node_rank > self._max_rank:
-            return None
-
         level = node.level + 1
         new_entry = RoutingTree._Entry(child, level, node, node_rank)
         node.children.append(new_entry)
@@ -361,3 +393,12 @@ class RoutingTree(object):
                 path.insert(0, walker.data)
                 walker = walker.parent
             return path
+
+        def get_child_ids(self):
+            child_ids = []
+            for child in self.children:
+                child_ids.append(child.data)
+            return child_ids
+
+        def __repr__(self):
+            return str(self.data)
