@@ -95,7 +95,7 @@ class SenderSetCalculator(MetricBase):
             raise Exception('Unknown routing type')
 
         # calculate sender set and preferred routes
-        logging.info('Hop : %d', a_node['hop'])
+        # logging.info('Hop : %d', a_node['hop'])
         r_tree = RoutingTree(nx_graph, route_alg, max_length=20)
         if r_tree.build(a_node['id'], p_node['id'],
                         a_node['hop'], data_object['target']):
