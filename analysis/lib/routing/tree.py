@@ -293,7 +293,6 @@ class RoutingTree(object):
             return
 
         children_added = []
-        children_inspected = []
 
         for node in node_list:
             path = node.get_path()
