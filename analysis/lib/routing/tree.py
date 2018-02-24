@@ -118,9 +118,11 @@ class RoutingTree(object):
         # use rank value instead of a distribution
         def dist_function(rank): return rank
 
+        def add_function(a, b): return a + b
+
         # assign distribution
         ranks = self._assign_sender_dist(
-            dist_function, self._root.children[0], self.get_height() - 3, 1)
+            dist_function, self._root.children[0], self.get_height() - 3, 1, add_function)
         rank_set = {}
         largest_rank = 0
         processed_set = set()
@@ -147,7 +149,7 @@ class RoutingTree(object):
 
     def get_sender_set_distribution_full(self):
         """Calculate the probability distribution only using the sender set
-        
+
         Returns:
             dict -- Dict with key of node id and value of normalized probability
         """
@@ -158,7 +160,6 @@ class RoutingTree(object):
             distro_set[node] = 1.0 / + total
 
         return distro_set
-        
 
     def get_sender_set_distribution_by_top_rank(self):
         """Calculate the probability distribution for the sender set using top rank
@@ -198,8 +199,10 @@ class RoutingTree(object):
             return {self._root.children[0].data: 1}
         # known its 100% for the level 1 node (previous), so we can skip
 
+        def mult(a, b): return a * b
+
         distro = self._assign_sender_dist(
-            dist_function, self._root.children[0], self.get_height() - 3, 1)
+            dist_function, self._root.children[0], self.get_height() - 3, 1, mult)
 
         # every node in the sender set and not in this distribution set has a probability of zero
         # Don't need to add these since they will not affect the final probability distribution
@@ -260,18 +263,21 @@ class RoutingTree(object):
             bracket_str += self._to_bracket(child)
         return bracket_str + ')'
 
-    def _assign_sender_dist(self, dist_function, node, current_hop_count, prob):
+    def _assign_sender_dist(self, dist_function, node, current_hop_count, prob, action):
         distro = []
         for child in node.children:
             child_prob = dist_function(child.rank)
 
+            combined_prob = action(prob, child_prob)
+
             if current_hop_count == 0:
-                distro.append((child.data, prob * child_prob))
+                distro.append((child.data, combined_prob))
             else:
                 distro.extend(self._assign_sender_dist(dist_function,
                                                        child,
                                                        current_hop_count - 1,
-                                                       prob * child_prob))
+                                                       combined_prob,
+                                                       action))
         return distro
 
     def _get_node_rank(self, to_node_id, from_node_id, target_address):
@@ -295,23 +301,11 @@ class RoutingTree(object):
                 if child_id in path:
                     continue
                 rank = self._get_node_rank(node.data, child_id, target_address)
-                children_inspected.append((rank, child_id, node))
 
                 new_node = self._add_child(node, child_id, rank)
                 if new_node is None:
                     continue
                 children_added.append(new_node)
-
-        # check if we added no children
-        # this is done incase there is a level where there are no children
-        # that have low enough rank
-        if len(children_added) < 1 and len(children_inspected) > 0:
-            # in which case, add the children with the best rank
-            best_rank = sorted(children_inspected, key=lambda x: x[0])[0][0]
-            for rank, child_id, node in children_inspected:
-                if rank == best_rank:
-                    children_added.append(self._add_child(
-                        node, child_id, rank, False))
 
         # process next tree level
         self._build_tree(children_added, current_hop - 1, target_address)
