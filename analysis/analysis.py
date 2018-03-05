@@ -200,6 +200,6 @@ if __name__ == '__main__':
                         help='Directory to store output in')
     PARSER.add_argument('-t', default='0', type=int,
                         help='Number of threads to run. Default is the # of core CPUs available')
-    PARSER.add_argument('-a', default=True, action='store_false',
-                        help='Turn off experiment archiving')
+    PARSER.add_argument('-a', default=False, action='store_true',
+                        help='Turn on experiment archiving')
     Manager().main(PARSER.parse_args())
