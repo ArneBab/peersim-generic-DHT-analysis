@@ -20,6 +20,7 @@ class MetricBase(object):
         self.data_frame = pandas.DataFrame()
         self._columns_to_add = []
         self._rows_to_add = []
+        self._version = 1.0
 
     def process(self, data_object):
         '''
@@ -52,7 +53,7 @@ class MetricBase(object):
                 [numpy.nan] * (column_len - len(row))
         # get existing data
         existing_data = [list(row.values)
-                         for index, row in self.data_frame.iterrows()]
+                         for _, row in self.data_frame.iterrows()]
         # normalize existing data
         for row_index in range(len(existing_data)):
             row = existing_data[row_index]
@@ -99,7 +100,7 @@ class MetricBase(object):
         for column_name in other.data_frame.columns:
             self.add_column(column_name)
         # insert data from other into self
-        for index, row in other.data_frame.iterrows():
+        for _, row in other.data_frame.iterrows():
             self.add_row(list(row.values))
         # call on stop to merge data into the data frame
         self.on_stop()
@@ -120,15 +121,46 @@ class MetricBase(object):
             return ''
         return self.data_frame.to_csv(index=index)
 
-    def load(self, csv_string):
-        '''
-        Load a JSON action from a CSV string
-        :param csv_string: String representation of a JSONAction object
-        :return: object
-        '''
-        if not csv_string:
-            return
-        self.data_frame = pandas.read_csv(StringIO(csv_string))
+    def to_string(self, index=False):
+        """Convert to string object
+        
+        Keyword Arguments:
+            index {bool} -- Include the pandas index (default: {False})
+
+        Returns:
+            dict -- Returns dict string object representing this metric
+        """
+        return {'version': self.get_version(), 'csv_string': self.to_csv(index)}
+
+    def get_version(self):
+        """Get the version of the metric
+
+        Returns:
+            float -- Version number
+        """
+        return self._version
+
+    def load(self, obj_string):
+        """Load a metric from stored data
+
+        Arguments:
+            obj_string {dict} -- CVS String representing object returned from to_string
+
+        Returns:
+            bool -- Returns true if the data was successfully loaded
+        """
+        # check if just string was passed in (pre-version data)
+        # set default version of 1.0
+        if not isinstance(obj_string, dict):
+            obj_string = {'version': 1.0, 'csv_string': obj_string}
+
+        # load the string data
+        if obj_string['version'] != self._version:
+            return False
+        if not obj_string['csv_string']:
+            return True
+        self.data_frame = pandas.read_csv(StringIO(obj_string['csv_string']))
+        return True
 
     def _w(self, value, description, short_name, full_name):
         return {'value': value, 'description': description,

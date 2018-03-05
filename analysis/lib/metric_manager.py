@@ -127,7 +127,7 @@ class MetricManager(object):
                 metric_cmp = SummationVariableComparer(
                     cmp_exps, metric_name)
                 metric_cmp.process(None)
-                self._set_data(metric_cmp.to_csv(True),
+                self._set_data(metric_cmp.to_string(True),
                                variable, group_name, metric_name)
                 self._set_graph(metric_cmp.create_graph(),
                                 variable, group_name, metric_name)
@@ -138,7 +138,7 @@ class MetricManager(object):
         finder = FileFinder([class_reader])
         finder.process_file_list(
             self.base_directory, experiment_metric_file_paths)
-        self._set_data(cmp_exps.to_csv(), 'all')
+        self._set_data(cmp_exps.to_string(), 'all')
 
     def summarize(self):
         '''
@@ -154,7 +154,7 @@ class MetricManager(object):
         merged_data = avg_repeat_exps.get_merged_data()
         for group_name, metric_name, metric_obj in metric_iter(merged_data):
             # if not self._have_metric_data(group_name, metric_name):
-            self._set_data(metric_obj.to_csv(), group_name, metric_name)
+            self._set_data(metric_obj.to_string(), group_name, metric_name)
         # run graph calculations
         return self.analyze()
 
@@ -181,15 +181,14 @@ class MetricManager(object):
         metric_name = 'graph'
         graph_manager = GraphManager()
         # check if data is already available
-        if self._have_metric_data(group_name, metric_name):
-            graph_manager.load(self._get_data(group_name, metric_name))
-        else:
+        if not self._have_data(group_name, metric_name) or \
+                not graph_manager.load(self._get_data(group_name, metric_name)):
             # No data available, get it
             search_dir = os.path.join(self.base_directory, 'graphs')
             finder = FileFinder([graph_manager])
             finder.process(search_dir, '*.gml')
             # store the results
-            self._set_data(graph_manager.to_csv(), group_name, metric_name)
+            self._set_data(graph_manager.to_string(), group_name, metric_name)
 
         if self._get_sum(group_name, metric_name) is None:
             self._set_sum(graph_manager.create_summation(),
@@ -306,7 +305,7 @@ class MetricManager(object):
                        anon_entropy_top_hop),
                       ('anonymity_top_rank', 'anonymity_entropy_normalized_at_hop',
                        anon_entropy_top_norm_hop),
-                      # entropy by sender set 
+                      # entropy by sender set
                       ('anonymity_sender_set', 'anonymity_entropy', anon_entropy_set),
                       ('anonymity_sender_set', 'anonymity_entropy_normalized',
                        anon_entropy_norm_set),
@@ -314,7 +313,7 @@ class MetricManager(object):
                        anon_entropy_set_hop),
                       ('anonymity_sender_set', 'anonymity_entropy_normalized_at_hop',
                        anon_entropy_set_norm_hop),
-                       #
+                      #
                       ('anonymity_accuracy', 'anonymity_accuracy',
                        anon_accuracy_metrics),
                       ('anonymity_accuracy', 'anonymity_accuracy_at_hop', anon_hit_hop),
@@ -330,10 +329,10 @@ class MetricManager(object):
         # try graphs first
         for g_name, m_name, metric in metric_seq:
             # data was found
-            if self._have_metric_data(g_name, m_name):
+            if self._have_data(g_name, m_name) and metric.load(self._get_data(g_name, m_name)):
                 logging.debug('Loading existing data for %s:%s',
                               g_name, m_name)
-                metric.load(self._get_data(g_name, m_name))
+
                 # check if we have graph data
                 if hasattr(metric, 'create_graph'):
                     if self._get_graph(g_name, m_name) is None:
@@ -347,8 +346,8 @@ class MetricManager(object):
                         self._set_sum(metric.create_summation(),
                                       g_name, m_name)
                 metric_add(metric, metric_data, g_name, m_name)
-            # no existing data found, will need to calculate it later
             else:
+                # no existing data found, will need to calculate it later
                 not_loaded_seq.append((g_name, m_name, metric))
 
         # run the missing graphs
@@ -359,7 +358,7 @@ class MetricManager(object):
             finder.process(folder_path, file_filter)
             # save the results of running the metrics
             for g_name, m_name, metric_obj in not_loaded_seq:
-                self._set_data(metric_obj.to_csv(), g_name, m_name)
+                self._set_data(metric_obj.to_string(), g_name, m_name)
                 if hasattr(metric_obj, 'create_graph'):
                     self._set_graph(metric_obj.create_graph(), g_name, m_name)
                 if hasattr(metric_obj, 'create_summation'):
@@ -368,7 +367,7 @@ class MetricManager(object):
                 metric_add(metric_obj, metric_data, g_name, m_name)
         return metric_data
 
-    def _have_metric_data(self, group_name, metric_name):
+    def _have_data(self, group_name, metric_name):
         return self._get_data(group_name, metric_name) is not None
 
     def _get_data(self, group_name, metric_name):

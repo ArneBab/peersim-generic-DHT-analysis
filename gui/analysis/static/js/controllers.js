@@ -70,6 +70,7 @@ function graph_popup_factory ($uibModal) {
 
 function csv_popup_factory ($uibModal) {
   return function (cvs_data) {
+    if (cvs_data.csv_string) cvs_data = cvs_data.csv_string
     var modalInstance = $uibModal.open({
       animation: true,
       ariaLabelledBy: 'modal-title',
