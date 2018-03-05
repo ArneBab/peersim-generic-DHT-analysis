@@ -15,9 +15,10 @@ class AnonymityMetrics(MetricBase):
     Generic interface for JSON based actions
     '''
 
-    def __init__(self, graph_manager):
+    def __init__(self, graph_manager, path_lengths):
         super(AnonymityMetrics, self).__init__()
         self.graph_manager = graph_manager
+        self.path_lengths = path_lengths
 
     def process(self, data_object):
         data_object = super(AnonymityMetrics, self).process(data_object)
@@ -72,6 +73,13 @@ class AnonymityMetrics(MetricBase):
         self.add_row(row)
         return data_object
 
+    def force_summation(self):
+        '''
+        Determine if summation must always be run
+        :return: True if summation need to be recalculated evey time
+        '''
+        return True
+
     def create_summation(self):
         '''
         Create a list of summation metrics for this data set
@@ -83,6 +91,10 @@ class AnonymityMetrics(MetricBase):
         # check if me have data
         if len(data_frame) <= 0:
             return metrics
+
+        message_intercepted = len(data_frame) / float(self.path_lengths.get_message_count())
+        weighted_entropy_missed = data_frame.max_entropy.mean() * (1 - message_intercepted)
+
         # entropy exponential backoff
         metrics.append(self._w(round(data_frame.entropy.mean(), 5), '',
                                'EN_a', 'entropy_avg'))
@@ -105,6 +117,11 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.entropy_actual.std(), 5), '',
                                'EN_A_s', 'entropy_actual_std'))
 
+        weighted_entropy = data_frame.entropy_actual.mean() * message_intercepted
+        weighted_entropy += weighted_entropy_missed
+        metrics.append(self._w(round(weighted_entropy, 5), '',
+                               'EN_A_w', 'entropy_actual_weighted_protocol'))
+
         metrics.append(self._w(round(data_frame.normalized_entropy_actual.mean(), 5), '',
                                'EN_N_A_a', 'normalized_entropy_actual_avg'))
         metrics.append(self._w(round(data_frame.normalized_entropy_actual.std(), 5), '',
@@ -116,10 +133,20 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.entropy_top_rank.std(), 5), '',
                                'EN_T_s', 'entropy_top_rank_std'))
 
+        weighted_entropy = data_frame.entropy_top_rank.mean() * message_intercepted
+        weighted_entropy += weighted_entropy_missed
+        metrics.append(self._w(round(weighted_entropy, 5), '',
+                               'EN_T_w', 'entropy_top_rank_weighted_protocol'))
+
         metrics.append(self._w(round(data_frame.normalized_entropy_top_rank.mean(), 5), '',
                                'EN_N_T_a', 'normalized_entropy_top_rank_avg'))
         metrics.append(self._w(round(data_frame.normalized_entropy_top_rank.std(), 5), '',
                                'EN_N_T_s', 'normalized_entropy_top_rank_std'))
+
+        weighted_entropy = data_frame.normalized_entropy_top_rank.mean() * message_intercepted
+        weighted_entropy += (1 - message_intercepted)
+        metrics.append(self._w(round(weighted_entropy, 5), '',
+                               'EN_N_T_w', 'normalized_entropy_top_rank_weighted_protocol'))
 
         # entropy using sender set
         metrics.append(self._w(round(data_frame.entropy_sender_set.mean(), 5), '',
@@ -127,16 +154,30 @@ class AnonymityMetrics(MetricBase):
         metrics.append(self._w(round(data_frame.entropy_sender_set.std(), 5), '',
                                'EN_SS_s', 'entropy_sender_set_std'))
 
+        weighted_entropy = data_frame.entropy_sender_set.mean() * message_intercepted
+        weighted_entropy += weighted_entropy_missed
+        metrics.append(self._w(round(weighted_entropy, 5), '',
+                               'EN_SS_w', 'entropy_sender_set_weighted_protocol'))
+
         metrics.append(self._w(round(data_frame.normalized_entropy_sender_set.mean(), 5), '',
                                'EN_N_SS_a', 'normalized_entropy_sender_set_avg'))
         metrics.append(self._w(round(data_frame.normalized_entropy_sender_set.std(), 5), '',
                                'EN_N_SS_s', 'normalized_entropy_sender_set_std'))
+
+        weighted_entropy = data_frame.normalized_entropy_sender_set.mean() * message_intercepted
+        weighted_entropy += (1 - message_intercepted)
+        metrics.append(self._w(round(weighted_entropy, 5), '',
+                               'EN_N_SS_w', 'normalized_entropy_sender_set_weighted_protocol'))
 
         # top rank
         metrics.append(self._w(round(data_frame.top_rank_set_size.mean(), 5), '',
                                'TR_S_a', 'top_rank_set_size_avg'))
         metrics.append(self._w(round(data_frame.top_rank_set_size.std(), 5), '',
                                'TR_S_s', 'top_rank_set_size_std'))
+
+        # Percent messages intercepted
+        metrics.append(self._w(round(message_intercepted, 5), '',
+                               'M_I_p', 'messages_intercepted_per'))
 
         self._replace_nan(metrics)
         return metrics

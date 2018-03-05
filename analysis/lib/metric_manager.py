@@ -234,7 +234,7 @@ class MetricManager(object):
         intercept_hop_calced = AdversaryInterceptHopCalculated(sender_set_size)
         sender_set_size_inter = SenderSetSizeInterceptHop(sender_set_size)
 
-        anon_metrics = AnonymityMetrics(graph_manager)
+        anon_metrics = AnonymityMetrics(graph_manager, path_lengths)
 
         anon_entropy = AnonymityEntropy(anon_metrics, 'entropy', 'Entropy')
         anon_entropy_norm = AnonymityEntropy(
