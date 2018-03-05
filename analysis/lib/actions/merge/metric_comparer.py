@@ -129,7 +129,7 @@ class SummationVariableComparer(MetricBase):
                     data_value = 0.0
 
                 data.append(str(data_value))
-            data.extend(str(row.name).split(':'))
+            data.extend(str(row.name).split('-'))
             datas.append(data)
 
         csv_string = ','.join(headers) + '\n'
