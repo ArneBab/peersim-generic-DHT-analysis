@@ -131,11 +131,11 @@ def load_experiment_data(app):
 
 
 def _clean_path(path):
-    parsed = path.split(':')
+    parsed = path.split('-')
     return [value for value in parsed if value]
 
 def _clean_path_name(path_list, id_num):
-    menu_path = ':'.join(path_list).lower()
+    menu_path = '-'.join(path_list).lower()
     if id_num is not None:
         menu_path = str(id_num) + ' - ' + menu_path
     return menu_path
