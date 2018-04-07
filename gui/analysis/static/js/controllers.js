@@ -98,7 +98,7 @@ function csv_popup_factory ($uibModal) {
 function csv_download_factory () {
   return function (name, cvs_data) {
     var a = angular.element('<a></a>')
-    a.attr('href', 'data:application/octet-stream;base64,' + btoa(cvs_data))
+    a.attr('href', 'data:application/octet-stream;base64,' + btoa(cvs_data.csv_string))
     a.attr('style', 'display:none')
     a.attr('download', name + '.csv')
     a[0].click()
