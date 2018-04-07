@@ -121,8 +121,8 @@ class RoutingTree(object):
 
         for node, rank in ranks:
             if rank not in rank_set:
-                rank_set[rank] = []
-            rank_set[rank].append(node)
+                rank_set[rank] = set()
+            rank_set[rank].add(node)
 
             if rank > largest_rank:
                 largest_rank = rank
@@ -134,8 +134,12 @@ class RoutingTree(object):
             if node in processed_set:
                 continue
             if largest_rank not in rank_set:
-                rank_set[largest_rank] = []
-            rank_set[largest_rank].append(node)
+                rank_set[largest_rank] = set()
+            rank_set[largest_rank].add(node)
+
+        # convert all sets into lists
+        for rank in rank_set.keys():
+            rank_set[rank] = list(rank_set[rank])
 
         return rank_set
 
